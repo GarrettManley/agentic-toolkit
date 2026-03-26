@@ -17,15 +17,21 @@ MAX_PARALLEL = 4
 
 def get_persona_rubrics():
     with open(PERSONA_MATRIX_PATH, "r", encoding="utf-8") as f:
-        content = f.read()
-    personas = {}
-    blocks = re.split(r"### 🎭 ", content)
-    for block in blocks[1:]:
-        lines = block.split("\n")
-        name = lines[0].split("(")[0].strip()
-        checklist = "\n".join([l for l in lines if l.startswith("- [ ]") or l.startswith("- **New Rule**")])
-        personas[name] = checklist
-    return personas
+        def extract_json(text):
+            start = text.find("{")
+            if start == -1:
+                return text.strip()
+
+            depth = 0
+            for i in range(start, len(text)):
+                if text[i] == "{":
+                    depth += 1
+                elif text[i] == "}":
+                    depth -= 1
+                    if depth == 0:
+                        return text[start:i+1]
+            return text[start:].strip()
+
 
 def audit_and_fix(page_data, persona_name, rubric):
     """Atomic unit of work for one persona on one page."""

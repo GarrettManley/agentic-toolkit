@@ -22,10 +22,20 @@ Wait for results. Do not explain.
 def extract_json(text):
     # Find the outermost { and } to capture the full object
     start = text.find("{")
-    end = text.rfind("}")
-    if start != -1 and end != -1:
-        return text[start:end+1].strip()
-    return text.strip()
+    if start == -1:
+        return text.strip()
+    
+    depth = 0
+    for i in range(start, len(text)):
+        if text[i] == "{":
+            depth += 1
+        elif text[i] == "}":
+            depth -= 1
+            if depth == 0:
+                # Found the true end of the first object
+                return text[start:i+1]
+    
+    return text[start:].strip()
 
 def execute_host_command(command, args=None):
     full_args = args or []
