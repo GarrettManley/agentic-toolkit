@@ -15,14 +15,23 @@
         "everything-search-mcp"
       ]
     },
-    "universal-sandbox": {
-      "command": "uv",
+    "python-sandbox": {
+      "command": "C:/Users/Garre/AppData/Local/Microsoft/WinGet/Links/uv.exe",
       "args": [
-        "run",
-        "--with", "fastmcp",
-        "--with", "docker",
-        "C:/Users/Garre/Workspace/.ai/scripts/sandbox_server.py"
+        "x",
+        "mcp-run-python",
+        "stdio"
       ]
+    },
+    "host-shell": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "super-shell-mcp"
+      ],
+      "env": {
+        "COMMAND_WHITELIST": "firebase,git,npm,dotnet,dir,uv,uvx"
+      }
     }
   }
 }

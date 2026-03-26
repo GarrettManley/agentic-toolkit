@@ -3,7 +3,7 @@ topic: Python Engineering Standards
 last_verified: 2026-03-25
 source_tier: 1 (Canonical)
 proof_type: Internal (Empirical)
-verification_cmd: "ruff --version; pytest --version"
+verification_cmd: "uvx ruff --version; uvx pytest --version"
 evidence: "Verified modern toolset availability"
 model_used: Gemini Pro
 ---

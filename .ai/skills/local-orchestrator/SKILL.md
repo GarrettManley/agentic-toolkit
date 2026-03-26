@@ -30,9 +30,9 @@ When triggering a hand-off:
 ### 1. Local Hand-Off Command
 When proposing a hand-off, use the following PowerShell 7 template:
 ```powershell
-# Send task to local DeepSeek-R1 (8B) via the Gateway
-Invoke-RestMethod -Uri "http://localhost:8000/api/chat" -Method Post -Body (@{
-    model = "deepseek-r1-8b-agent"
+# Send task to the Tooling-Tier model via the Gateway
+Invoke-RestMethod -Uri "http://localhost:8000/api/chat" -Method Post -ContentType "application/json" -Body (@{
+    model = "tooling-tier" # Resolved via ADR 002
     messages = @(@{ role = "user"; content = "TASK_DESCRIPTION" })
 } | ConvertTo-Json)
 ```

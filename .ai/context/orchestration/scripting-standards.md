@@ -3,8 +3,8 @@ topic: Cross-Platform Scripting Standards
 last_verified: 2026-03-25
 source_tier: 1 (Canonical)
 proof_type: Internal (Empirical)
-verification_cmd: "docker --version"
-evidence: "Docker selected as universal compute backend"
+verification_cmd: "uvx mcp-run-python --help"
+evidence: "Verified mcp-run-python availability via uvx"
 model_used: Gemini Pro
 ---
 

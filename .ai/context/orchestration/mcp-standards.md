@@ -3,8 +3,8 @@ topic: MCP Port & Gateway Standards
 last_verified: 2026-03-25
 source_tier: 1 (Canonical)
 proof_type: Internal (Empirical)
-verification_cmd: "Get-NetTCPConnection -LocalPort 8000"
-evidence: "Confirmed port 8000 is reserved for ollama-mcp-bridge"
+verification_cmd: "Invoke-RestMethod -Uri http://localhost:8000/health"
+evidence: "Verified bridge health endpoint is responsive"
 model_used: Gemini Pro
 ---
 

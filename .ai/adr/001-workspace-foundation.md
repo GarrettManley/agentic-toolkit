@@ -2,7 +2,8 @@
 
 **Date:** 2026-03-25  
 **Status:** ✅ Accepted  
-**Agent:** Gemini CLI (Architect)
+**Agent:** Gemini CLI (Architect)  
+**Trace ID:** `trace-20260325-001`
 
 ## Context
 We are establishing a "best-in-class" agentic workspace across multiple project repos. We need a way to store knowledge that is:
