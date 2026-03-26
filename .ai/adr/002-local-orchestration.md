@@ -9,9 +9,10 @@ To achieve "best-in-class" efficiency, we need to offload token-intensive tasks 
 
 ## Decision
 We will implement a local orchestration layer using the following stack:
-1.  **Primary Local Model**: `MFDoom/deepseek-r1-tool-calling` (quantized as appropriate for the machine's VRAM).
-2.  **MCP Integration**: `ollama-mcp-bridge` to bridge local inference with workspace tools.
-3.  **Discovery Logic**: A "Local-First" protocol where the cloud agent acts as the *Architect* and the local agent acts as the *Specialized Builder*.
+1.  **Primary Local Model**: `MFDoom/deepseek-r1-tool-calling:8b` (Optimized for 8GB VRAM).
+2.  **Fallback Model**: `deepseek-r1-tool-calling:14b` (For high-complexity tasks only).
+3.  **MCP Integration**: `ollama-mcp-bridge` to bridge local inference with workspace tools.
+4.  **Discovery Logic**: A "Local-First" protocol where the cloud agent acts as the *Architect* and the local agent acts as the *Specialized Builder*.
 
 ## Rationale
 - **Cost**: Reduces metered token usage for repetitive reasoning steps.
