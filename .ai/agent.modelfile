@@ -1,0 +1,4 @@
+FROM MFDoom/deepseek-r1-tool-calling:8b
+PARAMETER num_ctx 4096
+PARAMETER num_gpu 99
+PARAMETER temperature 0.1
