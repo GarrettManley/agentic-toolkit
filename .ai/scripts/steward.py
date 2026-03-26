@@ -75,7 +75,8 @@ def run_audit():
                 with open(file_path, "r", encoding="utf-8") as f:
                     content = f.read()
                 
-                match = re.search(r'verification_cmd:\s*"(.*)"', content)
+                # Extract verification_cmd using TDD-verified robust regex
+                match = re.search(r'verification_cmd:\s*"((?:[^"\\]|\\.)*)"', content, re.DOTALL)
                 if match:
                     cmd = match.group(1)
                     print(f"🔍 Verifying: {file}")
