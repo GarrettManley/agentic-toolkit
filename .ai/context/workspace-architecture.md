@@ -1,10 +1,10 @@
 ---
 topic: Workspace Architecture
-last_verified: 2026-03-25
+last_verified: 2026-03-25 22:58:00
 source_tier: 1 (Canonical)
 proof_type: Internal (Empirical)
-verification_cmd: "dir .ai /s"
-evidence: "Directory structure created successfully"
+verification_cmd: "dir .ai -Recurse; git ls-files .ai"
+evidence: "10 files confirmed in physical storage and Git index."
 model_used: Gemini Pro
 ---
 
