@@ -1,7 +1,8 @@
-# Ignore everything by default
-*
+# Ignore all top-level files/folders by default
+/*
 
 # Allow-list for Workspace Configuration
 !.gitignore
 !.ai/
 !docs/
+!README.md
