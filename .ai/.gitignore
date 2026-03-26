@@ -1,0 +1,8 @@
+# Workspace-level Gitignore
+.env
+.env.*
+node_modules/
+bin/
+obj/
+*.log
+.gemini/tmp/

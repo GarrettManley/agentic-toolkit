@@ -1,0 +1,7 @@
+# Ignore everything by default
+*
+
+# Allow-list for Workspace Configuration
+!.gitignore
+!.ai/
+!docs/
