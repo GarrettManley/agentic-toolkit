@@ -25,5 +25,20 @@ When triggering a hand-off:
 2.  **Context**: Provide only the necessary context fragments.
 3.  **Command**: Propose the exact command for the user to trigger local inference.
 
-## Technical Details
-See [the hand-off guide](references/HANDOFF_GUIDE.md) for command patterns and model-specific tuning.
+## Technical Directives
+
+### 1. Local Hand-Off Command
+When proposing a hand-off, use the following PowerShell 7 template:
+```powershell
+# Send task to local DeepSeek-R1 (8B) via the Gateway
+Invoke-RestMethod -Uri "http://localhost:8000/api/chat" -Method Post -Body (@{
+    model = "deepseek-r1-8b-agent"
+    messages = @(@{ role = "user"; content = "TASK_DESCRIPTION" })
+} | ConvertTo-Json)
+```
+
+### 2. Return Synthesis
+After receiving a response from the local model:
+- **Thought Capture**: Extract the `<think>` block to understand the local reasoning chain.
+- **Evidence Verification**: The result MUST contain a shell command or web excerpt to be valid.
+- **State-Sync**: Update the global `.ai/context/` if the local agent discovered a new fact.
