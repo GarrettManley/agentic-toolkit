@@ -1,0 +1,28 @@
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "C:/Users/Garre/Workspace"
+      ]
+    },
+    "everything-search": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "everything-search-mcp"
+      ]
+    },
+    "universal-sandbox": {
+      "command": "uv",
+      "args": [
+        "run",
+        "--with", "fastmcp",
+        "--with", "docker",
+        "C:/Users/Garre/Workspace/.ai/scripts/sandbox_server.py"
+      ]
+    }
+  }
+}
