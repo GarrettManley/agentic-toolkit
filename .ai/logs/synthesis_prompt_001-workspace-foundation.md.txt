@@ -1,0 +1,102 @@
+
+    You are Garrett Manley. Expert Agentic Architect.
+    
+    TASK: Rewrite the following documentation to satisfy the expert critiques provided.
+    
+    STRICT CONSTRAINTS:
+    - Voice: Direct, technical, minimalist, authoritative.
+    - Format: High-fidelity Markdown. No preambles like "Here is the fixed version."
+    - Authorship: Must be 'Garrett Manley'. Remove all agent footers.
+    - Commands: Use PowerShell 7 syntax.
+    
+    CRITIQUES TO ADDRESS:
+    CRITIQUE FROM The Skeptic:
+Error auditing The Skeptic: llama runner process has terminated: %!w(<nil>) (status code: 500)
+CRITIQUE FROM The Product Manager:
+Error auditing The Product Manager: llama runner process has terminated: %!w(<nil>) (status code: 500)
+    
+    ORIGINAL CONTENT:
+    Understood. I'll apply the fixes from The Maintainer to ensure the document meets the "New Rule" requirements. Here's how we can address each flaw:
+
+### 1. Lack of Clear Next Steps Section
+
+**Fix:** Add a dedicated "Next Steps" section at the end of the document.
+
+**Example:**
+```markdown
+# Next Steps
+
+1. **Implementation**: Review and implement the guidelines as outlined in this document.
+2. **Approval**: Submit the implementation plan to the designated approvers for review.
+3. **Post-Implementation Actions**: Conduct a post-implementation review to ensure all guidelines are followed correctly.
+4. **Feedback Collection**: Gather feedback from users to identify any areas that need further clarification or improvement.
+5. **Documentation Update**: Document any changes made during the implementation process and update this document accordingly.
+```
+
+### 2. Inadequate Maintenance Section
+
+**Fix:** Add a "Maintenance" section outlining how the document should be updated and revised.
+
+**Example:**
+```markdown
+# Maintenance
+
+1. **Responsibilities**: The Project Manager is responsible for maintaining this document.
+2. **Frequency**: Updates will be conducted quarterly, or as needed based on changes in guidelines or user feedback.
+3. **Criteria for Changes**: Any changes to the document must be reviewed and approved by the Project Manager before implementation.
+4. **Tracking Changes**: All changes will be tracked using a version control system (e.g., Git).
+5. **Version History**: A detailed version history will be maintained, including dates of updates and responsible parties.
+```
+
+### 3. Insufficient Version Control Information
+
+**Fix:** Add a section detailing the version control process.
+
+**Example:**
+```markdown
+# Version Control
+
+1. **Tool**: We will use Git for version control.
+2. **Responsibilities**: The Project Manager is responsible for managing the repository and ensuring all changes are tracked.
+3. **Tracking Changes**: Each commit should include a clear description of the change made.
+4. **Version History**: A detailed history of versions will be maintained, including dates, commit messages, and responsible parties.
+```
+
+### Summary
+
+By adding these sections, the document will have a clearer lifecycle management process, ensuring that it remains up-to-date and easy to manage over time.
+
+**Final Document Structure:**
+
+```markdown
+# Document Title
+
+## Introduction
+[Document content here]
+
+## Next Steps
+
+1. **Implementation**: Review and implement the guidelines as outlined in this document.
+2. **Approval**: Submit the implementation plan to the designated approvers for review.
+3. **Post-Implementation Actions**: Conduct a post-implementation review to ensure all guidelines are followed correctly.
+4. **Feedback Collection**: Gather feedback from users to identify any areas that need further clarification or improvement.
+5. **Documentation Update**: Document any changes made during the implementation process and update this document accordingly.
+
+## Maintenance
+
+1. **Responsibilities**: The Project Manager is responsible for maintaining this document.
+2. **Frequency**: Updates will be conducted quarterly, or as needed based on changes in guidelines or user feedback.
+3. **Criteria for Changes**: Any changes to the document must be reviewed and approved by the Project Manager before implementation.
+4. **Tracking Changes**: All changes will be tracked using a version control system (e.g., Git).
+5. **Version History**: A detailed version history will be maintained, including dates of updates and responsible parties.
+
+## Version Control
+
+1. **Tool**: We will use Git for version control.
+2. **Responsibilities**: The Project Manager is responsible for managing the repository and ensuring all changes are tracked.
+3. **Tracking Changes**: Each commit should include a clear description of the change made.
+4. **Version History**: A detailed history of versions will be maintained, including dates, commit messages, and responsible parties.
+```
+
+This structure ensures that the document has a comprehensive lifecycle management process, making it easier to maintain and update over time.
+    
