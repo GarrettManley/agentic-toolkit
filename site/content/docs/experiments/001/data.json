@@ -1,0 +1,12 @@
+{
+  "id": "001",
+  "name": "Hybrid Cognitive Balancing",
+  "trials": 100,
+  "successes": 98,
+  "tokens": 145020,
+  "cost_usd": 0.052,
+  "baseline_pass_k": 0.20,
+  "baseline_cps": 0.00,
+  "baseline_steps": 8.2,
+  "current_steps": 3.2
+}
