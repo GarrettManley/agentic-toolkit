@@ -1,0 +1,10 @@
+baseURL = "https://garrettmanley.dev"
+title = "The Architecture of Hybrid Context Synthesis"
+theme = "hextra"
+
+[markup.goldmark.renderer]
+unsafe = true # Required for some Hextra features
+
+[params]
+description = "A formal inquiry into scalable, cost-optimized agentic orchestration across multi-project environments."
+github_repo = "https://github.com/Garre/Workspace"

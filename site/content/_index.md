@@ -1,9 +1,9 @@
 ---
-title: "The Architect's Laboratory"
+title: "The Architecture of Hybrid Context Synthesis"
 layout: "docs"
 ---
 
-This repository serves as the authoritative source for **Agentic Engineering** standards. We transition from heuristic prompt engineering to substantiated orchestration, governed by **ISO/IEC 25059:2026** and **IEEE P8000** validation trajectories.
+This repository serves as the authoritative source for the **Architecture of Hybrid Context Synthesis**. We transition from heuristic prompt engineering to scalable, cost-optimized agentic orchestration across multi-project environments.
 
 ## Infrastructure for Truth
 Architectural decisions within this workspace are not subjective; they are proven. Every change is substantiated by:
