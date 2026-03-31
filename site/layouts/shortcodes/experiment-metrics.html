@@ -1,0 +1,33 @@
+{{ $id := .Get "id" }}
+{{ $data := index .Site.Data.experiments $id }}
+
+{{ if $data }}
+{{ $pass_k := mul (div $data.successes $data.trials) 100 }}
+{{ $cps := div $data.cost_usd $data.successes }}
+
+<div class="metrics-card border rounded p-4 my-4 bg-gray-50 dark:bg-gray-800">
+  <h4 class="text-lg font-bold mb-2">Experiment Metrics (Auto-calculated)</h4>
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <div>
+      <span class="block text-sm text-gray-500">Pass^k (Reliability)</span>
+      <span class="text-xl font-mono">{{ printf "%.1f" $pass_k }}%</span>
+    </div>
+    <div>
+      <span class="block text-sm text-gray-500">Cost-per-Success</span>
+      <span class="text-xl font-mono">${{ printf "%.3f" $cps }}</span>
+    </div>
+    <div>
+      <span class="block text-sm text-gray-500">Token Efficiency</span>
+      <span class="text-xl font-mono">{{ div $data.tokens $data.successes | lang.FormatNumber 0 }} t/s</span>
+    </div>
+    <div>
+      <span class="block text-sm text-gray-500">Convergence</span>
+      <span class="text-xl font-mono">{{ $data.current_steps }} steps</span>
+    </div>
+  </div>
+</div>
+{{ else }}
+<div class="bg-red-50 text-red-500 p-4 rounded border border-red-200">
+  <strong>Error:</strong> Experiment data for ID "{{ $id }}" not found in site data layer.
+</div>
+{{ end }}
