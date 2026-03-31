@@ -1,0 +1,12 @@
+{
+  "id": "005",
+  "name": "Local Pre-commit Linting",
+  "trials": 10,
+  "successes": 10,
+  "tokens": 25000,
+  "cost_usd": 0.05,
+  "baseline_pass_k": 0.80,
+  "baseline_cps": 0.15,
+  "baseline_steps": 5.0,
+  "current_steps": 2.0
+}

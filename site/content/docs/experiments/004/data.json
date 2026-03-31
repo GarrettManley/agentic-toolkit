@@ -1,0 +1,12 @@
+{
+  "id": "004",
+  "name": "Surgical Replace",
+  "trials": 10,
+  "successes": 6,
+  "tokens": 15000,
+  "cost_usd": 0.02,
+  "baseline_pass_k": 1.00,
+  "baseline_cps": 0.15,
+  "baseline_steps": 1.0,
+  "current_steps": 3.0
+}

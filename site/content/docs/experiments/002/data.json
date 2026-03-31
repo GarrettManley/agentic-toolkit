@@ -1,0 +1,12 @@
+{
+  "id": "002",
+  "name": "Token-Budgeted Discovery",
+  "trials": 10,
+  "successes": 10,
+  "tokens": 42000,
+  "cost_usd": 0.045,
+  "baseline_pass_k": 1.00,
+  "baseline_cps": 0.10,
+  "baseline_steps": 2.0,
+  "current_steps": 2.0
+}
