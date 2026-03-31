@@ -1,0 +1,25 @@
+{
+  "name": "The Architecture of Hybrid Context Synthesis",
+  "version": "1.0.0",
+  "description": "A formal inquiry into scalable, cost-optimized agentic orchestration across multi-project environments.",
+  "author": "Garrett Manley",
+  "pillars": [
+    "Hierarchical Truth-Base",
+    "Authoritative Proof Protocol",
+    "Local-First Orchestration",
+    "Resilient Maintenance Loop",
+    "Substantiated Documentation"
+  ],
+  "core_files": {
+    "global_context": ".ai/context/",
+    "adr_registry": ".ai/adr/",
+    "skill_library": ".ai/skills/",
+    "maintenance_engine": ".ai/scripts/steward.py"
+  },
+  "dependencies": {
+    "inference": "Ollama (DeepSeek-R1 8B)",
+    "orchestration": "Qwen 2.5 Coder 7B",
+    "package_manager": "uv",
+    "cli": "Gemini CLI / Claude Code"
+  }
+}
