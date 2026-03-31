@@ -1,8 +1,8 @@
-# Agentic Engineering Workspace
+# The Architecture of Hybrid Context Synthesis
 
 **Status:** 🚀 Active | **Version:** 1.0.0
 
-A high-fidelity, hierarchical agentic engineering environment designed for architectural rigor and empirical proof. This workspace manages multiple professional repositories while maintaining a centralized, agent-agnostic "Living Truth-Base."
+The Architecture of Hybrid Context Synthesis is a high-fidelity, hierarchical agentic engineering environment designed for architectural rigor and empirical proof. This workspace manages multiple professional repositories while maintaining a centralized, agent-agnostic "Living Truth-Base."
 
 ---
 
@@ -38,7 +38,7 @@ To eliminate "vibe coding" and hallucinations, all knowledge in this workspace i
 ## 📜 Repository Guidelines
 
 This root repository tracks the **meta-data and configuration** of the workspace.
-*   **Read-Only Repos**: `/malachite/` and `/architecture/` are authoritative work sources and are never modified by agentic tasks.
+*   **Read-Only Repos**: Corporate and architectural repositories are authoritative work sources and are never modified by agentic tasks.
 *   **Agent Autonomy**: Agents have "Verified-Trust" permissions to update context and skills but must propose code commits for manual review.
 
 ---
