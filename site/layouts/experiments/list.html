@@ -15,20 +15,31 @@
           {{ .Content }}
         </div>
 
+        <div class="hx:mb-6 hx:flex hx:items-center hx:gap-3 hx:bg-slate-50 dark:hx:bg-slate-900 hx:p-3 hx:rounded-lg hx:border hx:border-slate-200 dark:hx:border-slate-800">
+          <span class="hx:text-xs hx:font-semibold hx:text-slate-500 hx:uppercase hx:tracking-wider">Dashboard View:</span>
+          <div class="hx:flex hx:bg-white dark:hx:bg-black hx:p-1 hx:rounded-md hx:border hx:border-slate-200 dark:hx:border-slate-800">
+            <button id="view-executive" class="hx:px-3 hx:py-1 hx:text-xs hx:font-medium hx:rounded hx:transition-colors hx:bg-primary-600 hx:text-white" onclick="toggleView('executive')">Executive</button>
+            <button id="view-research" class="hx:px-3 hx:py-1 hx:text-xs hx:font-medium hx:rounded hx:transition-colors hx:text-slate-600 dark:hx:text-slate-400 hover:hx:bg-slate-100 dark:hover:hx:bg-slate-900" onclick="toggleView('research')">Research</button>
+          </div>
+        </div>
+
         <div class="hx:mt-8 hx:border hx:border-slate-200 dark:hx:border-slate-800 hx:rounded-lg hx:overflow-hidden hx:shadow-sm">
           <div class="hx:bg-slate-50 dark:hx:bg-slate-900 hx:px-4 hx:py-3 hx:border-b hx:border-slate-200 dark:hx:border-slate-800 hx:flex hx:items-center hx:justify-between">
             <h2 class="hx:m-0 hx:text-sm hx:font-bold hx:tracking-widest hx:uppercase hx:text-slate-500">Validated Metrics Comparison Table</h2>
             <span class="hx:text-[10px] hx:font-mono hx:bg-primary-100 hx:text-primary-800 dark:hx:bg-primary-900 dark:hx:text-primary-200 hx:px-2 hx:py-0.5 hx:rounded hx:uppercase">Live Data</span>
           </div>
           <div class="hx:overflow-x-auto">
-            <table class="hx:w-full hx:border-collapse hx:text-left hx:text-sm">
+            <table id="metrics-table" class="hx:w-full hx:border-collapse hx:text-left hx:text-sm">
               <thead>
                 <tr class="hx:bg-white dark:hx:bg-black hx:border-b hx:border-slate-100 dark:hx:border-slate-900">
                   <th class="hx:whitespace-nowrap hx:px-4 hx:py-3 hx:font-semibold hx:text-slate-900 dark:hx:text-slate-100 hx:border-r hx:border-slate-50 dark:hx:border-slate-900">Exp. ID</th>
                   <th class="hx:whitespace-nowrap hx:px-4 hx:py-3 hx:font-semibold hx:text-slate-900 dark:hx:text-slate-100">Scientific Title</th>
+                  <th class="view-research hx:hidden hx:whitespace-nowrap hx:px-4 hx:py-3 hx:font-semibold hx:text-slate-900 dark:hx:text-slate-100">Trials</th>
+                  <th class="view-research hx:hidden hx:whitespace-nowrap hx:px-4 hx:py-3 hx:font-semibold hx:text-slate-900 dark:hx:text-slate-100">Tokens</th>
                   <th class="hx:whitespace-nowrap hx:px-4 hx:py-3 hx:font-semibold hx:text-slate-900 dark:hx:text-slate-100">Pass^k</th>
                   <th class="hx:whitespace-nowrap hx:px-4 hx:py-3 hx:font-semibold hx:text-slate-900 dark:hx:text-slate-100">CPS ($)</th>
                   <th class="hx:whitespace-nowrap hx:px-4 hx:py-3 hx:font-semibold hx:text-slate-900 dark:hx:text-slate-100">Convergence</th>
+                  <th class="view-executive hx:whitespace-nowrap hx:px-4 hx:py-3 hx:font-semibold hx:text-slate-900 dark:hx:text-slate-100">Abstract Summary</th>
                 </tr>
               </thead>
               <tbody>
@@ -39,15 +50,18 @@
                     <tr class="hx:border-b hx:border-slate-100 dark:hx:border-slate-900 hover:hx:bg-slate-50 dark:hover:hx:bg-slate-900/50">
                       <td class="hx:px-4 hx:py-3 hx:font-mono hx:text-slate-600 dark:hx:text-slate-400 hx:border-r hx:border-slate-50 dark:hx:border-slate-900">{{ $json.id }}</td>
                       <td class="hx:px-4 hx:py-3"><a href="{{ .RelPermalink }}" class="hx:text-primary-600 dark:hx:text-primary-400 hover:hx:underline hx:font-medium">{{ .Title }}</a></td>
+                      <td class="view-research hx:hidden hx:px-4 hx:py-3 hx:font-mono">{{ $json.trials }}</td>
+                      <td class="view-research hx:hidden hx:px-4 hx:py-3 hx:font-mono">{{ printf "%.1fk" (div $json.tokens 1000.0) }}</td>
                       <td class="hx:px-4 hx:py-3">{{ if isset $json "baseline_pass_k" }}{{ printf "%.1f%%" (mul $json.baseline_pass_k 100) }}{{ else }}---{{ end }}</td>
                       <td class="hx:px-4 hx:py-3">${{ if isset $json "baseline_cps" }}{{ printf "%.4f" $json.baseline_cps }}{{ else }}0.0000{{ end }}</td>
                       <td class="hx:px-4 hx:py-3">{{ if isset $json "current_steps" }}{{ $json.current_steps }} steps{{ else }}---{{ end }}</td>
+                      <td class="view-executive hx:px-4 hx:py-3 hx:text-xs hx:text-slate-500 dark:hx:text-slate-400 hx:italic hx:max-w-xs hx:truncate">{{ .Params.abstract }}</td>
                     </tr>
                   {{ else }}
                     <tr class="hx:border-b hx:border-slate-100 dark:hx:border-slate-900 hover:hx:bg-slate-50 dark:hover:hx:bg-slate-900/50">
                       <td class="hx:px-4 hx:py-3 hx:font-mono hx:text-slate-400 hx:border-r hx:border-slate-50 dark:hx:border-slate-900">---</td>
                       <td class="hx:px-4 hx:py-3"><a href="{{ .RelPermalink }}" class="hx:text-primary-600 dark:hx:text-primary-400 hover:hx:underline hx:font-medium">{{ .Title }}</a></td>
-                      <td class="hx:px-4 hx:py-3 hx:text-slate-400" colspan="3">Awaiting Data.json</td>
+                      <td class="hx:px-4 hx:py-3 hx:text-slate-400" colspan="6">Awaiting Data.json</td>
                     </tr>
                   {{ end }}
                 {{ end }}
@@ -55,6 +69,31 @@
             </table>
           </div>
         </div>
+
+        <script>
+          function toggleView(view) {
+            const execElements = document.querySelectorAll('.view-executive');
+            const resElements = document.querySelectorAll('.view-research');
+            const execBtn = document.getElementById('view-executive');
+            const resBtn = document.getElementById('view-research');
+
+            if (view === 'executive') {
+              execElements.forEach(el => el.classList.remove('hx:hidden'));
+              resElements.forEach(el => el.classList.add('hx:hidden'));
+              execBtn.classList.add('hx:bg-primary-600', 'hx:text-white');
+              execBtn.classList.remove('hx:text-slate-600', 'dark:hx:text-slate-400', 'hover:hx:bg-slate-100', 'dark:hover:hx:bg-slate-900');
+              resBtn.classList.remove('hx:bg-primary-600', 'hx:text-white');
+              resBtn.classList.add('hx:text-slate-600', 'dark:hx:text-slate-400', 'hover:hx:bg-slate-100', 'dark:hover:hx:bg-slate-900');
+            } else {
+              execElements.forEach(el => el.classList.add('hx:hidden'));
+              resElements.forEach(el => el.classList.remove('hx:hidden'));
+              resBtn.classList.add('hx:bg-primary-600', 'hx:text-white');
+              resBtn.classList.remove('hx:text-slate-600', 'dark:hx:text-slate-400', 'hover:hx:bg-slate-100', 'dark:hover:hx:bg-slate-900');
+              execBtn.classList.remove('hx:bg-primary-600', 'hx:text-white');
+              execBtn.classList.add('hx:text-slate-600', 'dark:hx:text-slate-400', 'hover:hx:bg-slate-100', 'dark:hover:hx:bg-slate-900');
+            }
+          }
+        </script>
 
         {{ partial "components/last-updated.html" . }}
         {{- if (site.Params.page.displayPagination | default true) -}}

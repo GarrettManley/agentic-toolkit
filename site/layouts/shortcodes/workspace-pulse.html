@@ -1,0 +1,149 @@
+<div class="hx:mt-10 hx:mb-10 hx:p-6 hx:bg-white dark:hx:bg-black hx:border hx:border-slate-200 dark:hx:border-slate-800 hx:rounded-xl hx:shadow-sm">
+  <div class="hx:flex hx:items-center hx:justify-between hx:mb-6">
+    <div>
+      <h3 class="hx:text-lg hx:font-bold hx:text-slate-900 dark:hx:text-slate-100">Workspace Pulse</h3>
+      <p class="hx:text-xs hx:text-slate-500 hx:mt-1">Longitudinal performance trend across all validated experiments.</p>
+    </div>
+    <div class="hx:flex hx:gap-2">
+      <span class="hx:flex hx:items-center hx:gap-1.5 hx:text-[10px] hx:font-medium hx:text-slate-600 dark:hx:text-slate-400 hx:bg-slate-100 dark:hx:bg-slate-900 hx:px-2 hx:py-1 hx:rounded">
+        <span class="hx:w-2 hx:h-2 hx:rounded-full hx:bg-primary-500"></span> Pass^k
+      </span>
+      <span class="hx:flex hx:items-center hx:gap-1.5 hx:text-[10px] hx:font-medium hx:text-slate-600 dark:hx:text-slate-400 hx:bg-slate-100 dark:hx:bg-slate-900 hx:px-2 hx:py-1 hx:rounded">
+        <span class="hx:w-2 hx:h-2 hx:rounded-full hx:bg-emerald-500"></span> CPS ($)
+      </span>
+    </div>
+  </div>
+  
+  <div class="hx:relative hx:h-64 hx:w-full">
+    <canvas id="pulseChart"></canvas>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    {{ $data := slice }}
+    {{ range (where site.RegularPages "Section" "docs") }}
+      {{ if in .RelPermalink "/experiments/" }}
+        {{ $jsonFile := .Resources.GetMatch "data.json" }}
+        {{ if $jsonFile }}
+          {{ $json := $jsonFile.Content | transform.Unmarshal }}
+          {{ $data = $data | append (dict "id" $json.id "pass_k" $json.baseline_pass_k "cps" $json.baseline_cps) }}
+        {{ end }}
+      {{ end }}
+    {{ end }}
+
+    const chartData = {{ $data | jsonify | safeJS }};
+    // Sort by ID to ensure chronological/sequential order
+    chartData.sort((a, b) => a.id.localeCompare(b.id));
+
+    const ctx = document.getElementById('pulseChart').getContext('2d');
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: chartData.map(d => `Exp ${d.id}`),
+        datasets: [
+          {
+            label: 'Pass^k (%)',
+            data: chartData.map(d => d.pass_k * 100),
+            borderColor: '#3b82f6', // primary-500
+            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            borderWidth: 3,
+            tension: 0.4,
+            yAxisID: 'y',
+            pointBackgroundColor: '#3b82f6',
+            pointRadius: 4,
+            pointHoverRadius: 6
+          },
+          {
+            label: 'CPS ($)',
+            data: chartData.map(d => d.cps),
+            borderColor: '#10b981', // emerald-500
+            backgroundColor: 'transparent',
+            borderWidth: 2,
+            borderDash: [5, 5],
+            tension: 0.1,
+            yAxisID: 'y1',
+            pointBackgroundColor: '#10b981',
+            pointRadius: 4,
+            pointHoverRadius: 6
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: {
+          mode: 'index',
+          intersect: false,
+        },
+        plugins: {
+          legend: {
+            display: false
+          },
+          tooltip: {
+            padding: 12,
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            titleFont: { size: 13, weight: 'bold' },
+            bodyFont: { size: 12 },
+            callbacks: {
+              label: function(context) {
+                let label = context.dataset.label || '';
+                if (label) {
+                  label += ': ';
+                }
+                if (context.datasetIndex === 0) {
+                  label += context.parsed.y.toFixed(1) + '%';
+                } else {
+                  label += '$' + context.parsed.y.toFixed(4);
+                }
+                return label;
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            grid: {
+              display: false
+            },
+            ticks: {
+              font: { size: 11 }
+            }
+          },
+          y: {
+            type: 'linear',
+            display: true,
+            position: 'left',
+            title: {
+              display: true,
+              text: 'Pass^k Consistency (%)',
+              font: { size: 10, weight: 'bold' }
+            },
+            min: 0,
+            max: 100,
+            ticks: {
+              callback: value => value + '%'
+            }
+          },
+          y1: {
+            type: 'linear',
+            display: true,
+            position: 'right',
+            title: {
+              display: true,
+              text: 'CPS (USD)',
+              font: { size: 10, weight: 'bold' }
+            },
+            grid: {
+              drawOnChartArea: false,
+            },
+            ticks: {
+              callback: value => '$' + value.toFixed(2)
+            }
+          }
+        }
+      }
+    });
+  });
+</script>
