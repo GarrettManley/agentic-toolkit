@@ -1,4 +1,4 @@
-# ADR 001: Workspace Foundation & Truth Protocol
+# ADR 001: Architecture of Hybrid Context Synthesis
 
 **Date:** 2026-03-25  
 **Status:** ✅ Accepted  
@@ -6,20 +6,19 @@
 **Trace ID:** `trace-20260325-001`
 
 ## Context
-We are establishing a "best-in-class" agentic workspace across multiple project repos. We need a way to store knowledge that is:
+We are establishing the "Architecture of Hybrid Context Synthesis" to manage knowledge across multiple project repos. We need a system that is:
 1. Agent-agnostic (Standard Markdown).
 2. Hierarchical (Global + Local inheritance).
 3. Verified (Empirical Code Proof + Authoritative Web Proof).
-4. Cost-Aware (Tiered model usage).
+4. Token-Budgeted (Efficient discovery protocols).
 
 ## Decision
-We will implement a dual-tier `.ai/` directory structure. All "Facts" will be stored in fragmented Markdown files with YAML metadata for verification tracking.
+We will implement a dual-tier `.ai/` directory structure for Hybrid Context Synthesis. All "Facts" must undergo **Mandatory Verification Discovery** before commitment.
 
-### Local Orchestration Stack (Vetted 2026-03-25)
-- **Model**: `deepseek-r1` via Ollama.
-- **Orchestrator**: `deepseek-thinker-mcp` (Reasoning preservation).
-- **Search**: `everything-search-mcp` (Native OS indexing).
-- **Bridge**: `ollama-mcp-bridge` (Tool enablement).
+### Hybrid Orchestration Stack (Vetted 2026-03-25)
+- **Model**: `deepseek-r1` via Ollama (Reasoning).
+- **Protocol**: Token-budgeted discovery (Minimize context bloat).
+- **Verification**: Mandatory traces (Terminal/Web proof).
 
 ## Verification (The Proof)
 *   **Empirical Proof:** Success of `write_file` on 2026-03-25 confirmed the workspace root is writable.

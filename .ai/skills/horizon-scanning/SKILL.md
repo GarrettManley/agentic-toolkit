@@ -1,15 +1,15 @@
 ---
 name: horizon-scanning
-description: Periodically researches Tier 1 authoritative sources to identify the "Latest and Greatest" models and MCP servers. Use when the user asks "What's new?" or when a "Re-evaluation Schedule" is triggered in the context.
+description: Periodically researches Tier 1 authoritative sources to identify the latest models and MCP servers for the Architecture of Hybrid Context Synthesis.
 compatibility: Requires web_fetch and google_web_search tools.
 metadata:
-  version: "1.0.0"
+  version: "1.1.0"
   author: Agentic Architect
 ---
 
 # Horizon Scanning Skill
 
-This skill ensures the workspace stays "Best-in-Class" by preventing model lock-in.
+This skill ensures the Architecture of Hybrid Context Synthesis stays "Best-in-Class" by preventing model lock-in.
 
 ## Core Directives
 

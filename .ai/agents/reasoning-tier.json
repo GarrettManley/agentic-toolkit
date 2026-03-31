@@ -1,0 +1,33 @@
+{
+  "name": "ReasoningTier",
+  "description": "Optimized for multi-step Chain of Thought, strategic planning, and complex problem-solving.",
+  "url": "http://localhost:8000/api/chat",
+  "version": "1.0.0",
+  "tier": "Specialist",
+  "model": "deepseek-r1:8b",
+  "capabilities": {
+    "streaming": true,
+    "thought_block": true,
+    "long_context": true,
+    "stateTransitionHistory": true
+  },
+  "authentication": {
+    "schemes": ["local-only"]
+  },
+  "defaultInputModes": ["text"],
+  "defaultOutputModes": ["text", "thought"],
+  "skills": [
+    {
+      "id": "strategic_planning",
+      "name": "Strategic Planning",
+      "description": "Decomposes high-level goals into actionable, multi-step technical plans.",
+      "tags": ["planning", "architecture"]
+    },
+    {
+      "id": "code_review_critic",
+      "name": "Code Review Critic",
+      "description": "Performs adversarial reviews of code changes to identify logical flaws and style violations.",
+      "tags": ["review", "security", "style"]
+    }
+  ]
+}

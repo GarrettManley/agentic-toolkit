@@ -1,15 +1,15 @@
 ---
 name: citation-seeker
-description: Enforces high-fidelity engineering documentation by requiring authoritative, peer-reviewed, or canonical citations for all technical claims. Use before generating public documentation, specs, or blog posts.
+description: Enforces high-fidelity engineering documentation by requiring authoritative, peer-reviewed, or canonical citations for all technical claims within the Architecture of Hybrid Context Synthesis. Use before generating public documentation, specs, or blog posts.
 compatibility: Requires web_fetch and google_web_search tools.
 metadata:
-  version: "1.0.0"
+  version: "1.1.0"
   author: Agentic Architect
 ---
 
 # Citation-Seeker Skill
 
-This skill ensures all workspace documentation is substantiated by evidence and authoritative research.
+This skill ensures all workspace documentation is substantiated by evidence and authoritative research, supporting the Architecture of Hybrid Context Synthesis.
 
 ## Core Directives
 

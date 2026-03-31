@@ -1,0 +1,30 @@
+{
+  "task": "High-level goal description",
+  "steps": [
+    {
+      "step_id": 1,
+      "description": "Atomic sub-task description",
+      "tier": "ToolingTier",
+      "tools": ["list_directory", "read_file"],
+      "dependencies": []
+    },
+    {
+      "step_id": 2,
+      "description": "Atomic sub-task description",
+      "tier": "ToolingTier",
+      "tools": ["replace"],
+      "dependencies": [1]
+    },
+    {
+      "step_id": 3,
+      "description": "Security and style critique",
+      "tier": "ReasoningTier",
+      "tools": [],
+      "dependencies": [2]
+    }
+  ],
+  "verification": {
+    "command": "npm test",
+    "expected_output": "Success"
+  }
+}

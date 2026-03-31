@@ -1,15 +1,15 @@
 ---
 name: truth-seeker
-description: Ensures all agent findings are verified via empirical proof or authoritative web research before being committed to the Truth-Base. Use when the user asks to "verify," "audit," "check," or before updating any context files.
+description: Ensures all agent findings are verified via mandatory verification traces within the Architecture of Hybrid Context Synthesis. Use before updating any context files.
 compatibility: Requires grep_search, glob, and web_fetch tools.
 metadata:
-  version: "1.1.0"
+  version: "1.2.0"
   author: Agentic Architect
 ---
 
 # Truth-Seeker Skill
 
-This skill enforces high-fidelity engineering by requiring evidence for every fact.
+This skill enforces high-fidelity engineering by requiring mandatory verification traces for every fact in the Architecture of Hybrid Context Synthesis.
 
 ## Core Directives
 

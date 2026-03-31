@@ -1,0 +1,33 @@
+{
+  "name": "ToolingTier",
+  "description": "Optimized for high-accuracy tool calling, JSON formatting, and code implementation.",
+  "url": "http://localhost:8000/api/chat",
+  "version": "1.0.0",
+  "tier": "Specialist",
+  "model": "qwen2.5-coder:7b",
+  "capabilities": {
+    "streaming": true,
+    "tool_use": true,
+    "structured_output": "JSON",
+    "stateTransitionHistory": true
+  },
+  "authentication": {
+    "schemes": ["local-only"]
+  },
+  "defaultInputModes": ["text"],
+  "defaultOutputModes": ["text", "code", "json"],
+  "skills": [
+    {
+      "id": "code_implementation",
+      "name": "Code Implementation",
+      "description": "Writes production-ready code based on technical specifications.",
+      "tags": ["code", "typescript", "python", "javascript"]
+    },
+    {
+      "id": "surgical_search",
+      "name": "Surgical Search",
+      "description": "Identifies precise code fragments across a multi-file workspace.",
+      "tags": ["search", "grep"]
+    }
+  ]
+}
