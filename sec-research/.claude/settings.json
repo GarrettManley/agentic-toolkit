@@ -1,0 +1,58 @@
+{
+  "$schema_note": "Workspace-scoped Claude Code settings for sec-research/. These hooks layer ON TOP OF the global ~/.claude/settings.json hookify hooks; they do not replace them. Path matchers ensure these only fire when work is happening inside sec-research/.",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python ${CLAUDE_PROJECT_DIR}\\sec-research\\hooks\\pretooluse.py",
+            "timeout": 15
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python ${CLAUDE_PROJECT_DIR}\\sec-research\\hooks\\posttooluse.py",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python ${CLAUDE_PROJECT_DIR}\\sec-research\\hooks\\stop.py",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python ${CLAUDE_PROJECT_DIR}\\sec-research\\hooks\\userpromptsubmit.py",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  },
+  "_workspace_invariants_summary": {
+    "scope_bounded": "Every network call, file write outside this dir, and target identifier must trace back to a loaded programs/<slug>/scope.yaml. No exceptions without a signed override.",
+    "evidence_grounded": "No claim ships without Citation+Proof+runnable-PoC. Extends citation-seeker.",
+    "human_gated": "Every submission requires a human-signed approval token. Drafts auto; sends never."
+  },
+  "_override_key_path": "~/.claude/sec-research-override-key",
+  "_no_override_rules": ["PT-2", "PT-6", "G-2"]
+}

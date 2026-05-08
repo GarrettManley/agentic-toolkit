@@ -1,0 +1,24 @@
+#!/bin/sh
+# G-4: if any findings/ files are in this commit, the commit message must contain Trace-ID.
+
+set -eu
+
+MSG_FILE="$1"
+WORKSPACE_ROOT="$(git rev-parse --show-toplevel)"
+
+# Are there any findings/ files in this commit?
+STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^sec-research/findings/' || true)
+
+if [ -z "$STAGED" ]; then
+    # No findings/ files — G-4 doesn't apply
+    exit 0
+fi
+
+# Check for Trace-ID line in the commit message
+if grep -qE '^\s*Trace-ID:\s*FIND-[0-9]{4}-[0-9]{2}-[0-9]{2}-[0-9]{3}\s*$' "$MSG_FILE"; then
+    exit 0
+fi
+
+echo "[commit-msg] BLOCKED by G-4: commit modifies sec-research/findings/ but lacks Trace-ID line."
+echo "[commit-msg] Add a line like: 'Trace-ID: FIND-2026-05-07-001' to the commit message."
+exit 1

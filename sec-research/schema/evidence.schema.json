@@ -1,0 +1,120 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sec-research.local/schema/evidence.schema.json",
+  "title": "Class-Specific Evidence Requirements",
+  "description": "Map of vuln_class -> required evidence fields. Read by verify_finding.py to ensure class-appropriate evidence is captured.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "dependency-cve": {
+      "type": "object",
+      "required": ["package_ecosystem", "package_name", "affected_versions_range", "vulnerable_function_path", "cve_id_proposed_or_assigned", "attack_vector"],
+      "additionalProperties": false,
+      "properties": {
+        "package_ecosystem": {"enum": ["npm", "pypi", "cargo", "maven", "gem", "nuget", "go", "rubygems", "composer"]},
+        "package_name": {"type": "string", "minLength": 1},
+        "affected_versions_range": {"type": "string", "minLength": 1},
+        "fixed_version": {"type": "string"},
+        "vulnerable_function_path": {
+          "type": "string",
+          "minLength": 1,
+          "description": "src/parser.js#L42 style"
+        },
+        "cve_id_proposed_or_assigned": {
+          "type": "string",
+          "pattern": "^(CVE-[0-9]{4}-[0-9]{4,}|CVE-PROPOSED|CVE-RESERVED)$"
+        },
+        "attack_vector": {"type": "string", "minLength": 20}
+      }
+    },
+    "supply-chain-malicious-pkg": {
+      "type": "object",
+      "required": ["package_ecosystem", "package_name", "malicious_version", "payload_type", "delivery_mechanism"],
+      "additionalProperties": false,
+      "properties": {
+        "package_ecosystem": {"enum": ["npm", "pypi", "cargo", "maven", "gem", "nuget", "go", "rubygems", "composer"]},
+        "package_name": {"type": "string", "minLength": 1},
+        "malicious_version": {"type": "string", "minLength": 1},
+        "payload_type": {"enum": ["data-exfil", "cryptominer", "persistence", "token-stealer", "wrapper", "other"]},
+        "delivery_mechanism": {"enum": ["typosquat", "dependency-confusion", "account-takeover", "postinstall", "malicious-update", "other"]},
+        "c2_indicator": {
+          "type": "string",
+          "description": "URL or domain. DO NOT actively probe. Treat as Tier-1 finding only."
+        }
+      }
+    },
+    "code-injection": {
+      "type": "object",
+      "required": ["injection_point", "execution_context", "payload_template"],
+      "properties": {
+        "injection_point": {"type": "string"},
+        "execution_context": {"type": "string"},
+        "payload_template": {"type": "string"}
+      }
+    },
+    "auth-bypass": {
+      "type": "object",
+      "required": ["bypass_mechanism", "affected_endpoints"],
+      "properties": {
+        "bypass_mechanism": {"type": "string"},
+        "affected_endpoints": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "ssrf": {
+      "type": "object",
+      "required": ["entry_point", "target_protocol", "blind_or_full"],
+      "properties": {
+        "entry_point": {"type": "string"},
+        "target_protocol": {"type": "array", "items": {"enum": ["http", "https", "file", "gopher", "dict", "ftp"]}},
+        "blind_or_full": {"enum": ["blind", "semi-blind", "full"]}
+      }
+    },
+    "rce": {
+      "type": "object",
+      "required": ["execution_path", "privilege_level"],
+      "properties": {
+        "execution_path": {"type": "string"},
+        "privilege_level": {"enum": ["unauth-remote", "auth-remote", "local-priv-esc"]}
+      }
+    },
+    "info-disclosure": {
+      "type": "object",
+      "required": ["disclosed_data_class", "exposure_mechanism"],
+      "properties": {
+        "disclosed_data_class": {"type": "string"},
+        "exposure_mechanism": {"type": "string"}
+      }
+    },
+    "dos": {
+      "type": "object",
+      "required": ["resource_consumed", "trigger_payload"],
+      "properties": {
+        "resource_consumed": {"enum": ["cpu", "memory", "disk", "network", "file-descriptors", "other"]},
+        "trigger_payload": {"type": "string"}
+      }
+    },
+    "crypto-weakness": {
+      "type": "object",
+      "required": ["primitive", "weakness_type"],
+      "properties": {
+        "primitive": {"type": "string"},
+        "weakness_type": {"type": "string"}
+      }
+    },
+    "logic-flaw": {
+      "type": "object",
+      "required": ["business_logic", "exploit_sequence"],
+      "properties": {
+        "business_logic": {"type": "string"},
+        "exploit_sequence": {"type": "string"}
+      }
+    },
+    "other": {
+      "type": "object",
+      "required": ["explanation"],
+      "properties": {
+        "explanation": {"type": "string", "minLength": 50}
+      }
+    }
+  }
+}

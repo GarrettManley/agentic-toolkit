@@ -1,0 +1,27 @@
+# Workspace-level .gitignore (also enforced from workspace root .gitignore).
+# Belt-and-suspenders: even if root .gitignore is ever rewritten, these stay denied.
+
+# Runtime artifacts (never tracked)
+runtime/
+
+# Raw evidence (only redacted versions are tracked)
+findings/**/evidence/raw/
+
+# Used override tokens (issuance event lives in submissions/ledger.jsonl)
+overrides/used/
+
+# Active approval/override tokens (regenerated per-submission; not source of truth)
+submissions/tokens/
+
+# Python artifacts
+__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
+
+# Editor / OS clutter
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db

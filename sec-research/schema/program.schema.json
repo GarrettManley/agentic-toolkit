@@ -1,0 +1,129 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sec-research.local/schema/program.schema.json",
+  "title": "Program Scope",
+  "description": "Normalized bug-bounty program scope. Source of truth for in/out-of-scope assets and submission protocol. Loaded into programs/<slug>/scope.yaml.",
+  "type": "object",
+  "required": ["program_slug", "venue", "loaded_at", "loaded_from", "in_scope", "out_of_scope", "rules", "submission"],
+  "additionalProperties": false,
+  "properties": {
+    "program_slug": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]*[a-z0-9]$",
+      "description": "kebab-case unique slug; matches programs/<slug>/ directory name"
+    },
+    "venue": {
+      "enum": ["huntr", "ghsa", "ibb-h1", "h1", "bugcrowd", "intigriti", "direct-maintainer"]
+    },
+    "venue_program_id": {
+      "type": "string",
+      "description": "Identifier the venue uses internally for this program"
+    },
+    "display_name": {
+      "type": "string"
+    },
+    "loaded_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "loaded_from": {
+      "type": "string",
+      "format": "uri",
+      "description": "URL provenance — where this scope was sourced from"
+    },
+    "in_scope": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/AssetEntry"}
+    },
+    "out_of_scope": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/AssetEntry"}
+    },
+    "rules": {
+      "type": "object",
+      "required": ["ai_assistance_allowed"],
+      "additionalProperties": false,
+      "properties": {
+        "ai_assistance_allowed": {
+          "type": "boolean",
+          "description": "If false, UPS-2 hook hard-blocks any agentic engagement with this program"
+        },
+        "ai_disclosure_required": {
+          "type": "boolean",
+          "description": "If true, finding.md must include an AI-assistance disclosure section"
+        },
+        "rate_limit_per_min": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "user_agent_required": {
+          "type": "string"
+        },
+        "no_dast_against_prod": {
+          "type": "boolean"
+        },
+        "embargo_period_days": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "notes": {"type": "string"}
+      }
+    },
+    "submission": {
+      "type": "object",
+      "required": ["protocol"],
+      "additionalProperties": false,
+      "properties": {
+        "protocol": {
+          "enum": ["huntr-api", "ghsa-cli", "h1-api", "bugcrowd-api", "intigriti-api", "email", "manual-form"]
+        },
+        "endpoint": {
+          "type": "string",
+          "description": "URL for API protocols; mailto: for email; submission form URL for manual-form"
+        },
+        "auth_ref": {
+          "type": "object",
+          "required": ["service", "username"],
+          "additionalProperties": false,
+          "properties": {
+            "service": {"type": "string", "description": "keyring service name"},
+            "username": {"type": "string", "description": "keyring username"}
+          },
+          "description": "Reference to credential stored in keyring. NEVER credentials inline."
+        }
+      }
+    }
+  },
+  "$defs": {
+    "AssetEntry": {
+      "type": "object",
+      "required": ["asset_type", "identifier"],
+      "additionalProperties": false,
+      "properties": {
+        "asset_type": {
+          "enum": ["package", "repo", "url", "host", "ip-range", "binary"]
+        },
+        "identifier": {
+          "type": "string",
+          "minLength": 1
+        },
+        "ecosystem": {
+          "enum": ["npm", "pypi", "cargo", "maven", "gem", "nuget", "go", "rubygems", "composer"]
+        },
+        "tier": {
+          "enum": ["critical", "high", "medium", "low"]
+        },
+        "max_payout_usd": {
+          "type": "number",
+          "minimum": 0
+        },
+        "notes": {"type": "string"},
+        "reason": {
+          "type": "string",
+          "description": "For out_of_scope entries: why excluded"
+        }
+      }
+    }
+  }
+}

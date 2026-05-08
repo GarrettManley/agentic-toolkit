@@ -1,0 +1,67 @@
+#!/bin/sh
+# G-1 + G-2 pre-commit gate.
+#
+# G-2: gitleaks-style secret scan on all staged content (workspace-wide).
+# G-1: if any findings/ files staged, run verify_finding.py for each.
+#
+# Override paths: signed token via sign_override.py + use --allow-incomplete
+# during commit (parsed from $GIT_AUTHOR_DATE-equivalent context — not
+# directly accessible here, so override must be pre-staged in overrides/signed/).
+#
+# Exits 0 to allow, non-zero to block.
+
+set -eu
+
+WORKSPACE_ROOT="$(git rev-parse --show-toplevel)"
+PYTHON="${PYTHON:-python}"
+
+# G-2: secret scan on all staged content
+echo "[pre-commit] G-2: scanning staged content for secrets..."
+SECRETS_FOUND=0
+git diff --cached --diff-filter=ACM --name-only -z | while IFS= read -r -d '' file; do
+    if [ -z "$file" ]; then
+        continue
+    fi
+    # Read the staged version of the file
+    staged_content=$(git show ":$file" 2>/dev/null) || continue
+    echo "$staged_content" | $PYTHON -c "
+import sys
+sys.path.insert(0, r'$WORKSPACE_ROOT/sec-research/hooks')
+from lib.secret_scan import scan_text
+content = sys.stdin.read()
+matches = scan_text(content)
+if matches:
+    print(f'SECRETS in $file:')
+    for m in matches[:5]:
+        print(f'  line {m.line_number}: {m.pattern_name}')
+    sys.exit(1)
+" || SECRETS_FOUND=1
+    if [ "$SECRETS_FOUND" -ne 0 ]; then
+        break
+    fi
+done
+
+if [ "$SECRETS_FOUND" -ne 0 ]; then
+    echo "[pre-commit] BLOCKED by G-2: secrets detected. Redact and re-stage."
+    echo "[pre-commit] (No override path for G-2 — must redact.)"
+    exit 1
+fi
+
+# G-1: verify staged findings/ entries
+STAGED_FINDINGS=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^sec-research/findings/' | head -10 || true)
+if [ -n "$STAGED_FINDINGS" ]; then
+    echo "[pre-commit] G-1: verifying staged findings..."
+    # Extract trace-ids from staged finding paths
+    TRACE_IDS=$(echo "$STAGED_FINDINGS" | sed -nE 's@sec-research/findings/[0-9-]+-(FIND-[0-9-]+)-.*@\1@p' | sort -u)
+    for tid in $TRACE_IDS; do
+        echo "  verifying $tid..."
+        if ! $PYTHON "$WORKSPACE_ROOT/sec-research/scripts/verify_finding.py" "$tid" --no-poc; then
+            echo "[pre-commit] BLOCKED by G-1: $tid failed verification."
+            echo "[pre-commit] Sign override with --allow-incomplete or fix the finding."
+            exit 1
+        fi
+    done
+fi
+
+echo "[pre-commit] OK"
+exit 0

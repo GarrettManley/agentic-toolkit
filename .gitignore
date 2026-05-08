@@ -7,3 +7,13 @@
 !docs/
 !README.md
 !site/
+!sec-research/
+
+# sec-research/ exclusions (runtime artifacts, raw evidence, used tokens)
+sec-research/runtime/
+sec-research/findings/**/evidence/raw/
+sec-research/overrides/used/
+sec-research/submissions/tokens/
+sec-research/__pycache__/
+sec-research/**/__pycache__/
+sec-research/**/*.pyc

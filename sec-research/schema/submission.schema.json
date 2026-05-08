@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sec-research.local/schema/submission.schema.json",
+  "title": "Submission Ledger Entry",
+  "description": "One JSON line in submissions/ledger.jsonl. Append-only. Captures every override issuance, approval signing, submission attempt, and status transition.",
+  "type": "object",
+  "required": ["entry_id", "event_type", "actor", "logged_at"],
+  "additionalProperties": false,
+  "properties": {
+    "entry_id": {
+      "type": "string",
+      "pattern": "^led-[0-9]{4}-[0-9]{2}-[0-9]{2}-[0-9]{3}$"
+    },
+    "event_type": {
+      "enum": [
+        "override-issued",
+        "override-used",
+        "approval-issued",
+        "submission-attempted",
+        "submission-succeeded",
+        "submission-failed",
+        "status-transition"
+      ]
+    },
+    "trace_id": {
+      "type": "string",
+      "pattern": "^FIND-[0-9]{4}-[0-9]{2}-[0-9]{2}-[0-9]{3}$",
+      "description": "Required for approval-* and submission-* and status-transition events"
+    },
+    "venue": {
+      "enum": ["huntr", "ghsa", "ibb-h1", "h1", "bugcrowd", "intigriti", "direct-maintainer", "manual-form"]
+    },
+    "submitted_at": {"type": "string", "format": "date-time"},
+    "submission_id": {
+      "type": "string",
+      "description": "Venue-assigned ID once submission succeeds"
+    },
+    "approval_token_id": {
+      "type": "string",
+      "pattern": "^apv-[0-9]{4}-[0-9]{2}-[0-9]{2}-[0-9]{3}$"
+    },
+    "override_token_id": {
+      "type": "string",
+      "pattern": "^ovr-[0-9]{4}-[0-9]{2}-[0-9]{2}-[0-9]{3}$"
+    },
+    "rule_id": {
+      "type": "string",
+      "description": "For override-* events, which rule was bypassed"
+    },
+    "outcome": {
+      "enum": ["submitted", "submitted-manual", "accepted", "rejected", "duplicate", "informational", "blocked", "failed"]
+    },
+    "outcome_at": {"type": "string", "format": "date-time"},
+    "payout_usd": {
+      "type": "number",
+      "minimum": 0
+    },
+    "from_status": {"type": "string"},
+    "to_status": {"type": "string"},
+    "actor": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Human identity or 'nightly-agent' for autonomous events"
+    },
+    "logged_at": {"type": "string", "format": "date-time"},
+    "notes": {"type": "string"}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"event_type": {"enum": ["approval-issued", "submission-attempted", "submission-succeeded", "submission-failed", "status-transition"]}}},
+      "then": {"required": ["trace_id"]}
+    },
+    {
+      "if": {"properties": {"event_type": {"enum": ["override-issued", "override-used"]}}},
+      "then": {"required": ["override_token_id", "rule_id"]}
+    },
+    {
+      "if": {"properties": {"event_type": {"const": "status-transition"}}},
+      "then": {"required": ["from_status", "to_status"]}
+    }
+  ]
+}

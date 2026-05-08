@@ -1,0 +1,39 @@
+program_slug: huntr-test
+venue: huntr
+venue_program_id: acme-test-fixture
+loaded_at: 2026-05-07T00:00:00Z
+loaded_from: https://example.invalid/fixtures/huntr-test
+display_name: "Test Fixture — fixture-pkg"
+
+in_scope:
+  - asset_type: package
+    identifier: fixture-pkg
+    ecosystem: npm
+    tier: high
+    max_payout_usd: 500
+    notes: "Test fixture for end-to-end smoke tests"
+
+  - asset_type: repo
+    identifier: github.com/acme-test/fixture-pkg
+    notes: "Test fixture repo (does not actually exist)"
+
+  - asset_type: host
+    identifier: registry.npmjs.org
+
+out_of_scope:
+  - asset_type: host
+    identifier: evil.example.invalid
+    reason: "Test fixture: explicit out-of-scope marker"
+
+rules:
+  ai_assistance_allowed: true
+  ai_disclosure_required: true
+  rate_limit_per_min: 60
+  user_agent_required: "sec-research-test/1.0"
+  no_dast_against_prod: true
+  embargo_period_days: 90
+  notes: "Test fixture rules; not a real program"
+
+submission:
+  protocol: manual-form
+  endpoint: https://example.invalid/submit

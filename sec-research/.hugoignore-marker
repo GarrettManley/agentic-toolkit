@@ -1,0 +1,8 @@
+This file is a marker. Its presence at workspace root marks `sec-research/` as
+NOT-Hugo-content. The workspace's Hugo build (`site/hugo.toml`) only roots content
+at `site/content/`, so `sec-research/` is naturally excluded; this marker is
+defense-in-depth for any future Hugo configuration changes.
+
+DO NOT REMOVE without first confirming `sec-research/` is excluded from Hugo's
+content root and from any toolkit-publishing scripts (verify in `.ai/scripts/publish_toolkit.py`
+and `.ai/scripts/generate_spec.py`).

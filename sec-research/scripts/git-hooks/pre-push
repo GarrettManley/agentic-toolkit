@@ -1,0 +1,42 @@
+#!/bin/sh
+# G-3 pre-push gate: re-run G-1 + G-2 on all unpushed commits as defense in depth.
+
+set -eu
+
+WORKSPACE_ROOT="$(git rev-parse --show-toplevel)"
+
+# Iterate refs being pushed (per Git's stdin protocol for pre-push)
+while read -r local_ref local_sha remote_ref remote_sha; do
+    if [ -z "$local_sha" ] || [ "$local_sha" = "0000000000000000000000000000000000000000" ]; then
+        continue
+    fi
+    if [ "$remote_sha" = "0000000000000000000000000000000000000000" ]; then
+        # New branch; check the last 50 commits from local_sha
+        RANGE="$local_sha~50..$local_sha"
+    else
+        RANGE="$remote_sha..$local_sha"
+    fi
+
+    echo "[pre-push] G-3: scanning $RANGE for unpushed commits..."
+    for commit in $(git rev-list "$RANGE" 2>/dev/null); do
+        # Re-run secret scan against each commit's diff
+        DIFF=$(git show --no-color "$commit" -- ':!*.lock' ':!*.png' ':!*.jpg' 2>/dev/null || true)
+        if [ -n "$DIFF" ]; then
+            echo "$DIFF" | python -c "
+import sys
+sys.path.insert(0, r'$WORKSPACE_ROOT/sec-research/hooks')
+from lib.secret_scan import scan_text
+content = sys.stdin.read()
+matches = scan_text(content)
+if matches:
+    print(f'SECRETS in commit $commit:')
+    for m in matches[:5]:
+        print(f'  line {m.line_number}: {m.pattern_name}')
+    sys.exit(1)
+" || { echo "[pre-push] BLOCKED by G-3 (G-2 layer): secrets in unpushed commit $commit"; exit 1; }
+        fi
+    done
+done
+
+echo "[pre-push] OK"
+exit 0
