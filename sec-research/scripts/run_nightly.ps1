@@ -11,7 +11,7 @@ $ErrorActionPreference = "Continue"
 $workspaceRoot = Join-Path $PSScriptRoot ".." | Resolve-Path
 Set-Location $workspaceRoot
 
-$startedAt = Get-Date -AsUTC -Format "yyyy-MM-ddTHH:mm:ssZ"
+$startedAt = [DateTime]::UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ")
 Write-Host "[run_nightly.ps1] starting at $startedAt"
 
 $python = "python"
@@ -23,7 +23,7 @@ try {
     $exitCode = 99
 }
 
-$finishedAt = Get-Date -AsUTC -Format "yyyy-MM-ddTHH:mm:ssZ"
+$finishedAt = [DateTime]::UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ")
 Write-Host "[run_nightly.ps1] finished at $finishedAt with exit $exitCode"
 
 # Append run-record
