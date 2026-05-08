@@ -3,7 +3,7 @@
 Same pipeline as nightly.py but bounded to a single program / asset and interactive.
 
 Usage:
-    python sec-research/scripts/investigate.py <program-slug> [--asset <identifier>]
+    python scripts/investigate.py <program-slug> [--asset <identifier>]
 """
 from __future__ import annotations
 
@@ -32,7 +32,7 @@ def main() -> int:
     if args.program_slug not in scopes:
         print(f"ERROR: program {args.program_slug!r} not loaded.", file=sys.stderr)
         print(f"Available: {', '.join(scopes.keys()) or '<none>'}", file=sys.stderr)
-        print(f"Load via: python sec-research/scripts/load_program.py --from-file <path>", file=sys.stderr)
+        print(f"Load via: python scripts/load_program.py --from-file <path>", file=sys.stderr)
         return 1
 
     target_scope = {args.program_slug: scopes[args.program_slug]}

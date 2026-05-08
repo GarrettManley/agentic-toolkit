@@ -12,20 +12,25 @@ A hard-bounded, evidence-disciplined security-research workspace whose purpose i
 
 ## Quickstart
 
+This is a standalone Claude Code workspace — open Claude with `sec-research/` as the working directory, and run all commands from inside it.
+
 ```powershell
+# (one-time) cd into the workspace
+Set-Location C:\Users\Garre\Workspace\sec-research
+
 # 1. Verify workspace is healthy
-python sec-research\scripts\init_workspace.py --verify
+python scripts\init_workspace.py --verify
 
 # 2. Load a program scope (Stage 2 will provide automated intake)
-python sec-research\scripts\load_program.py --venue ghsa --identifier <repo-slug>
+python scripts\load_program.py --venue ghsa --identifier <repo-slug>
 
 # 3. On-demand investigation
-python sec-research\scripts\investigate.py <program-slug> --asset <identifier>
+python scripts\investigate.py <program-slug> --asset <identifier>
 
 # 4. Pre-submission flow (HUMAN required at sign_approval)
-python sec-research\scripts\verify_finding.py <trace-id>
-python sec-research\scripts\sign_approval.py <trace-id> --venue <venue>
-python sec-research\scripts\submit.py --trace <trace-id> --token <token-id>
+python scripts\verify_finding.py <trace-id>
+python scripts\sign_approval.py <trace-id> --venue <venue>
+python scripts\submit.py --trace <trace-id> --token <token-id>
 ```
 
 ## Where things live

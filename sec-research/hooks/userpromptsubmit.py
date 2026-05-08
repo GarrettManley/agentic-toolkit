@@ -33,7 +33,7 @@ def check_ups1_scope_reminder(event: dict) -> int | None:
     # Inject reminder (non-blocking)
     sys.stdout.write(
         "\n[sec-research/UPS-1 reminder] Your prompt suggests testing or recon work, but no program scope is currently loaded. "
-        "Load a program first: `python sec-research/scripts/load_program.py --venue <v> --identifier <id>`. "
+        "Load a program first: `python scripts/load_program.py --venue <v> --identifier <id>`. "
         "Hooks will hard-block out-of-scope HTTP and ambiguous targets until a scope is active.\n"
     )
     return None
@@ -62,7 +62,7 @@ def check_ups2_ambiguous_targets(event: dict) -> int | None:
             "UPS-2",
             identifier,
             f"prompt references {asset_type}={identifier!r} which doesn't resolve to a loaded scope. Load the program first or sign an override.",
-            override_path=f"python sec-research/scripts/sign_override.py --rule UPS-2 --target {identifier}",
+            override_path=f"python scripts/sign_override.py --rule UPS-2 --target {identifier}",
         )
     return None
 

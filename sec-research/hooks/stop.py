@@ -76,7 +76,7 @@ def check_s1_completeness(event: dict) -> int | None:
             "S-1",
             str(finding_md),
             f"session-modified finding is incomplete: {err}. Either complete it, mark status: draft-incomplete, or sign an override.",
-            override_path=f"python sec-research/scripts/sign_override.py --rule S-1 --target {finding_md}",
+            override_path=f"python scripts/sign_override.py --rule S-1 --target {finding_md}",
         )
     return None
 
@@ -101,7 +101,7 @@ def check_s2_session_log(event: dict) -> int | None:
             "S-2",
             str(log_path),
             f"failed to write session log: {exc}",
-            override_path=f"python sec-research/scripts/sign_override.py --rule S-2",
+            override_path=f"python scripts/sign_override.py --rule S-2",
         )
     return None
 

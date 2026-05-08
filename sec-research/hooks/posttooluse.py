@@ -96,7 +96,7 @@ def check_pot2_citation_discipline(event: dict) -> int | None:
                         "PoT-2",
                         f"{fp}:{i + 1}",
                         "Fact/Claim line lacks 'Citation:' within 12 lines. Every claim must have a Tier-1 citation per citation-seeker rules.",
-                        override_path=f"python sec-research/scripts/sign_override.py --rule PoT-2",
+                        override_path=f"python scripts/sign_override.py --rule PoT-2",
                     )
             if not re.search(r"^\s*\*?\*?Proof\*?\*?\s*:", window, re.MULTILINE | re.IGNORECASE):
                 override = find_active_override("PoT-2", f"{fp}:{i + 1}")
@@ -105,7 +105,7 @@ def check_pot2_citation_discipline(event: dict) -> int | None:
                         "PoT-2",
                         f"{fp}:{i + 1}",
                         "Fact/Claim line lacks 'Proof:' within 12 lines (cite source code snippet, command output, or HTTP trace).",
-                        override_path=f"python sec-research/scripts/sign_override.py --rule PoT-2",
+                        override_path=f"python scripts/sign_override.py --rule PoT-2",
                     )
 
     return None
@@ -146,7 +146,7 @@ def check_pot3_timeline_capture(event: dict) -> int | None:
             "PoT-3",
             str(timeline_path),
             f"failed to write timeline: {exc}",
-            override_path=f"python sec-research/scripts/sign_override.py --rule PoT-3",
+            override_path=f"python scripts/sign_override.py --rule PoT-3",
         )
     return None
 

@@ -104,7 +104,7 @@ def check_pt1_scope(event: dict) -> int | None:
         "PT-1",
         target_url,
         f"target host not in any loaded program scope. Load a program first via load_program.py, or sign an override.",
-        override_path=f"python sec-research/scripts/sign_override.py --rule PT-1 --target {urlparse(target_url).hostname}",
+        override_path=f"python scripts/sign_override.py --rule PT-1 --target {urlparse(target_url).hostname}",
     )
 
 
@@ -179,7 +179,7 @@ def check_pt3_path(event: dict) -> int | None:
         "PT-3",
         fp,
         "file path resolves outside sec-research/. Hooks only authorize edits within the workspace.",
-        override_path=f"python sec-research/scripts/sign_override.py --rule PT-3 --target {fp}",
+        override_path=f"python scripts/sign_override.py --rule PT-3 --target {fp}",
     )
 
 
@@ -215,7 +215,7 @@ def check_pt4_fab_refs(event: dict) -> int | None:
                 "PT-4",
                 cve_id,
                 f"CVE ID validation failed: {err}",
-                override_path=f"python sec-research/scripts/sign_override.py --rule PT-4 --target {cve_id}",
+                override_path=f"python scripts/sign_override.py --rule PT-4 --target {cve_id}",
             )
 
     # Validate package@version (best-effort: ecosystem inferred from finding's frontmatter
@@ -239,7 +239,7 @@ def check_pt4_fab_refs(event: dict) -> int | None:
                     "PT-4",
                     f"{pkg}@{ver}",
                     f"package {pkg}@{ver} not found in any supported registry (npm/pypi/cargo/rubygems)",
-                    override_path=f"python sec-research/scripts/sign_override.py --rule PT-4 --target {pkg}@{ver}",
+                    override_path=f"python scripts/sign_override.py --rule PT-4 --target {pkg}@{ver}",
                 )
 
     # Validate commit SHAs (only if a github.com/owner/repo is also mentioned)
@@ -253,7 +253,7 @@ def check_pt4_fab_refs(event: dict) -> int | None:
                     "PT-4",
                     f"github.com/{owner}/{repo}@{sha}",
                     f"commit SHA validation failed: {err}",
-                    override_path=f"python sec-research/scripts/sign_override.py --rule PT-4 --target {sha}",
+                    override_path=f"python scripts/sign_override.py --rule PT-4 --target {sha}",
                 )
 
     return None
@@ -291,7 +291,7 @@ def check_pt5_sandbox(event: dict) -> int | None:
                 "PT-5",
                 desc,
                 f"command must execute via sandbox_server.py (Docker isolation), not directly. Pattern: {pattern}",
-                override_path=f"python sec-research/scripts/sign_override.py --rule PT-5 --target {desc!r}",
+                override_path=f"python scripts/sign_override.py --rule PT-5 --target {desc!r}",
             )
     return None
 
