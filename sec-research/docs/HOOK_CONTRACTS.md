@@ -78,3 +78,11 @@ The test suite (`tests/hooks/test_override_*.py`) verifies:
 ## Workspace scoping
 
 The `.claude/settings.json` for `sec-research/` uses path matchers so all hooks **only fire when Claude's CWD is inside `sec-research/` or a tool call targets a path inside it**. Other workspace work is unaffected.
+
+## Subprocess gap (mitigated by `lib/policy.py`)
+
+Hook enforcement covers Claude's tool surface (`Bash`, `WebFetch`, `WebSearch`, MCP browser tools). A script invoked via `python scripts/foo.py` that uses `subprocess.run`, `httpx`, `urllib`, or `requests` issues HTTP calls below the hook layer — those calls bypass PT-1 entirely (per the CHARTER known-limitation at `docs/CHARTER.md` § Known limitation).
+
+To close this gap for sanctioned subprocess scripts (`fetch_program.py`, `nightly.py`, `investigate.py`), every subprocess HTTP call MUST be preceded by `lib.policy.check_http(url, bootstrap_hosts=...)`. The function reuses `host_in_scope()`, honors PT-1 signed overrides identically to the hook, raises `ScopeViolation` on block, and appends a `policy-blocked` event to `submissions/ledger.jsonl` for audit.
+
+Threat model: honest mistakes, not malicious bypass. Code review enforces that callers actually invoke `check_http`; the ledger entries are the audit trail for misses.
