@@ -19,8 +19,10 @@ while read -r local_ref local_sha remote_ref remote_sha; do
 
     echo "[pre-push] G-3: scanning $RANGE for unpushed commits..."
     for commit in $(git rev-list "$RANGE" 2>/dev/null); do
-        # Re-run secret scan against each commit's diff
-        DIFF=$(git show --no-color "$commit" -- ':!*.lock' ':!*.png' ':!*.jpg' 2>/dev/null || true)
+        # Re-run secret scan against each commit's diff. The :!path exclusions
+        # mirror pre-commit's G-2 allow-list — the scanner's own test file
+        # legitimately contains synthetic pattern fixtures and must be skipped.
+        DIFF=$(git show --no-color "$commit" -- ':!*.lock' ':!*.png' ':!*.jpg' ':!sec-research/tests/hooks/test_secret_scan.py' 2>/dev/null || true)
         if [ -n "$DIFF" ]; then
             echo "$DIFF" | python -c "
 import sys

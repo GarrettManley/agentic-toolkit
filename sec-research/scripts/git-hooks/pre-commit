@@ -22,6 +22,15 @@ git diff --cached --diff-filter=ACM --name-only -z | while IFS= read -r -d '' fi
     if [ -z "$file" ]; then
         continue
     fi
+    # G-2 allow-list: the secret-scanner's own test file legitimately contains
+    # synthetic pattern fixtures to verify each detector. Skip it. Keep this
+    # list minimal; new entries demand justification (the file genuinely cannot
+    # host real credentials, e.g., a test of the detector itself).
+    case "$file" in
+        sec-research/tests/hooks/test_secret_scan.py)
+            continue
+            ;;
+    esac
     # Read the staged version of the file
     staged_content=$(git show ":$file" 2>/dev/null) || continue
     echo "$staged_content" | $PYTHON -c "
