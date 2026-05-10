@@ -81,6 +81,15 @@ Full contract definitions live in `docs/HOOK_CONTRACTS.md`.
 - Used tokens move to `overrides/used/` (gitignored).
 - **You (Claude) cannot self-issue overrides.** The HMAC key is intentionally outside the repo so that nothing inside the loop can sign tokens. Always direct the user to run `sign_override.py` manually.
 
+## Supplementary discipline (garrettmanley marketplace)
+
+In addition to the 17 PT/PoT/S/UPS/G rules above (which are sec-research-specific and load-bearing), two generic discipline skills are available from the [`evidence@garrettmanley`](https://github.com/GarrettManley/claude-marketplace) plugin:
+
+- **`evidence:citation-seeker`** — invoke before generating any public-facing doc that should hold up under scrutiny. Enforces the same Tier-1 / Tier-2 / Tier-3 taxonomy this workspace uses, framed as a generic skill for any project.
+- **`evidence:truth-seeker`** — invoke before updating context files. Enforces verification traces (internal command output OR external Tier-1/2 citation) for every load-bearing fact.
+
+These are **supplementary** — they do NOT replace any of the 17 enforced rules. The plugin's generic HMAC, scope-binding, and secret-scan implementations are intentionally LESS strict than this workspace's `lib/sign_verify.py`, `lib/scope_match.py`, and `lib/secret_scan.py`, and are not used here.
+
 ## Where to look when you need depth
 
 - `docs/CHARTER.md` — full charter, invariants, roadmap (Stages 1-7).
