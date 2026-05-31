@@ -1,5 +1,11 @@
 {{ $id := .Get "id" }}
-{{ $data := index .Site.Data.experiments $id }}
+{{ $data := "" }}
+
+{{ if .Page.Resources.GetMatch "data.json" }}
+  {{ $data = .Page.Resources.GetMatch "data.json" | transform.Unmarshal }}
+{{ else }}
+  {{ $data = index .Site.Data.experiments $id }}
+{{ end }}
 
 {{ if $data }}
 {{ $pass_k := mul (div $data.successes $data.trials) 100 }}
