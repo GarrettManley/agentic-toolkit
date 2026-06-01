@@ -99,8 +99,12 @@ Define exactly how the primary agent should parse the `<thought>` block returned
 Task the local agent with finding all `.csproj` files across the workspace using the bridge.
 Expected: Full list returned with < 5 seconds of latency.
 
-- [ ] **Step 2: Land Phase 2 completion**
-Record the milestone; commits are handled centrally and this plan does not run git directly.
+- [x] **Step 2: Commit Phase 2 Completion** — *historical; completed 2026-03. Original command preserved verbatim (this 2026-06 standardization pass commits centrally and never `git add -A`):*
+
+```bash
+git add .
+git commit -m "feat: complete phase 2 local orchestration setup"
+```
 
 ## Retrospective
 

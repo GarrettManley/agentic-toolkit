@@ -50,7 +50,12 @@ Create a pre-commit hook for the workspace repo.
 ### Task 5: Loop verification
 
 - [x] Run a manual steward audit and verify the generated morning briefing.
-- [x] Land the Phase 3 completion commit (handled centrally; this plan does not run git directly).
+- [x] **Step 2: Commit Phase 3 Completion** — *historical; completed 2026-03. Original command preserved verbatim (this 2026-06 standardization pass commits centrally and never `git add -A`):*
+
+```bash
+git add .
+git commit -m "feat: complete phase 3 learning and maintenance loop"
+```
 
 ## Retrospective
 

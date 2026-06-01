@@ -48,7 +48,12 @@ Create `.ai/context/maintenance/kpi-tracking.md`.
 ### Task 5: Global self-audit
 
 - [x] Run the full steward-to-blog loop and produce a status-report post.
-- [x] Land the Phase 4 completion commit (handled centrally; this plan does not run git directly).
+- [x] **Step 2: Final Workspace Repo Push** — *historical; completed 2026-03. Original command preserved verbatim (this 2026-06 standardization pass commits centrally and never `git add -A`):*
+
+```bash
+git add .
+git commit -m "feat: complete phase 4 productization and launch readiness"
+```
 
 ## Retrospective
 

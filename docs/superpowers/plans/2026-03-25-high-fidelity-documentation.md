@@ -48,7 +48,12 @@ Create `ai-workspace-manifest.json` and `.ai/scripts/package_sdk.py`.
 ### Task 5: Launch audit (veracity check)
 
 - [x] Run a final audit where every finding carries a linked citation.
-- [x] Land the Phase 4 commit (handled centrally; this plan does not run git directly).
+- [x] **Step 2: Final Workspace Repo Push** — *historical; completed 2026-03. Original command preserved verbatim (this 2026-06 standardization pass commits centrally and never `git add -A`):*
+
+```bash
+git add .
+git commit -m "feat: complete phase 4 high-fidelity documentation architecture"
+```
 
 ## Retrospective
 
