@@ -1,78 +1,57 @@
-# Phase 4: Technical Documentation & Productization Implementation Plan
+# High-Fidelity Documentation and Productization Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task.
+**Tracker:** hb-doc.2 · **Status:** Completed (historical, 2026-03) · **Phase:** 4
 
-**Goal:** Transform workspace reasoning traces into full, complete engineering documentation for `garrettmanley.dev`, substantiated by documented execution evidence and peer-reviewed citations.
+> For agentic workers: use `superpowers:subagent-driven-development` (preferred) or `superpowers:executing-plans` to run this plan task-by-task.
 
-**Architecture:** A "High-Fidelity Publisher" loop that connects local agentic findings to external authoritative research, outputting structured documentation via Firebase.
+## Goal and value
 
-**Tech Stack:**
-- **Static Site Engine**: Hugo (Documentation-centric theme)
-- **Citations**: Semantic Scholar API / IEEE / W3C / Official Docs
-- **Hosting**: Firebase (Classic + App Hosting)
+Turn workspace reasoning traces into complete engineering documentation for the public lab site, substantiated by recorded execution evidence and peer-reviewed citations. The value is publishable, defensible technical capital instead of unverifiable summaries.
 
----
+## Approach
 
-### Task 1: The "Citation-Seeker" Skill
+A high-fidelity publisher loop that links local agentic findings to external authoritative research and outputs structured documentation through Firebase.
 
-**Files:**
-- Create: `ai/skills/citation-seeker/SKILL.md`
-- Create: `ai/skills/citation-seeker/references/CITATION_STANDARDS.md`
+- Static site engine: Hugo (documentation-centric theme).
+- Citations: Semantic Scholar API, IEEE, W3C, official docs.
+- Hosting: Firebase.
 
-- [ ] **Step 1: Define Authoritative Citation Logic**
-Create a skill that forces agents to find a Tier 1 (Canonical) or peer-reviewed citation for every major architectural statement.
+## Ordered steps
 
-- [ ] **Step 2: Automate Research Hook**
-Write a Python script that uses `google_web_search` specifically targeting `.edu`, `.org`, and official documentation sites to retrieve citations.
+### Task 1: The citation-seeker skill
 
----
+Create `.ai/skills/citation-seeker/SKILL.md` and a citation-standards reference.
 
-### Task 2: The Evidence-Based Spec Generator
+- [x] Define authoritative citation logic that requires a Tier 1 (canonical) or peer-reviewed citation for every major architectural statement.
+- [x] Automate a research hook that targets `.edu`, `.org`, and official documentation sites.
 
-**Files:**
-- Create: `.ai/scripts/generate_spec.py`
-- Create: `.ai/templates/engineering-spec.md`
+### Task 2: The evidence-based spec generator
 
-- [ ] **Step 1: Implement Evidence Injection**
-The generator must extract the `evidence` field from our Truth Files and the raw CLI output from `steward.py` logs to "Prove" the documentation.
+Create `.ai/scripts/generate_spec.py` and `.ai/templates/engineering-spec.md`.
 
-- [ ] **Step 2: Build the Spec Template**
-Define a template that includes "Verification Trace," "Hardware Context," and "Peer-Reviewed References" sections.
+- [x] Implement evidence injection that extracts the `evidence` field from truth files and raw CLI output from steward logs.
+- [x] Build a spec template with "Verification Trace", "Hardware Context", and "Peer-Reviewed References" sections.
 
----
+### Task 3: Firebase documentation hub
 
-### Task 3: Firebase Documentation Hub (`garrettmanley.dev`)
+Create the dev-site architecture context and a root `firebase.json`.
 
-**Files:**
-- Create: `ai/context/infrastructure/dev-site-architecture.md`
-- Create: `firebase.json` (Root update)
+- [x] Initialize a documentation-centric Hugo project in `site/`.
+- [x] Wire the direct-to-Firebase pipeline: `generate_spec.py` to `hugo build` to `firebase deploy`.
 
-- [ ] **Step 1: Initialize Hugo for Documentation**
-Setup a documentation-centric Hugo project in a `site/` directory (ignored by work-repos).
+### Task 4: Agentic SDK packaging
 
-- [ ] **Step 2: Direct-to-Firebase Pipeline**
-Use the Firebase CLI to automate the push from `generate_spec.py` -> `hugo build` -> `firebase deploy`.
+Create `ai-workspace-manifest.json` and `.ai/scripts/package_sdk.py`.
 
----
+- [x] Standardize a versioned, machine-readable metadata schema for context and skill files.
 
-### Task 4: The "Agentic SDK" Packaging
+### Task 5: Launch audit (veracity check)
 
-**Files:**
-- Create: `ai-workspace-manifest.json`
-- Create: `.ai/scripts/package_sdk.py`
+- [x] Run a final audit where every finding carries a linked citation.
+- [x] Land the Phase 4 commit (handled centrally; this plan does not run git directly).
 
-- [ ] **Step 1: Standardize the Metadata Schema**
-Ensure all context and skill files follow a versioned, machine-readable schema for the SDK.
+## Retrospective
 
----
+Updates hb-doc.2.
 
-### Task 5: Launch Audit (The "Veracity Check")
-
-- [ ] **Step 1: Run Final Substantiated Audit**
-Perform an audit where every finding must have a linked citation. 
-
-- [ ] **Step 2: Final Workspace Repo Push**
-```bash
-git add .
-git commit -m "feat: complete phase 4 high-fidelity documentation architecture"
-```
+Outcome: implemented in 2026-03. The `citation-seeker` skill (`.ai/skills/citation-seeker/`), `.ai/scripts/generate_spec.py`, `.ai/scripts/package_sdk.py`, and `ai-workspace-manifest.json` all exist. The site deploys via Firebase. The original Task 5 step 2 embedded a raw `git add . && git commit`; commits are now handled centrally and scoped, so that step is recorded as completed rather than re-runnable here. Retained as a historical record.

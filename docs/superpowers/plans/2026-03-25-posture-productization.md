@@ -1,80 +1,57 @@
-# Phase 4: Posture & Productization Implementation Plan
+# Posture and Productization Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task.
+**Tracker:** hb-doc.2 · **Status:** Completed (historical, 2026-03) · **Phase:** 4
 
-**Goal:** Transform the workspace's internal "Agentic Traces" and ADRs into professional technical capital (blog posts and a portable SDK) to posture the user as a leader in Agentic Engineering.
+> For agentic workers: use `superpowers:subagent-driven-development` (preferred) or `superpowers:executing-plans` to run this plan task-by-task.
 
-**Architecture:** A "Content Extraction" layer that summarizes technical decision loops into human-readable case studies, combined with a "Packaging" layer that makes the .ai/ structure portable.
+## Goal and value
 
-**Tech Stack:**
-- **Static Site Engine**: Hugo/Jekyll (Standard for garrettmanley.com)
-- **Extraction**: Python (Agent-assisted)
-- **Formatting**: GitHub Flavored Markdown (Blog ready)
+Convert the workspace's agentic traces and ADRs into professional technical capital (case studies and a portable SDK) that positions the author as a leader in agentic engineering. The value is reusable, shippable proof of the workflow.
 
----
+## Approach
 
-### Task 1: The "Agentic Trace" Extractor
+A content-extraction layer that summarizes technical decision loops into human-readable case studies, plus a packaging layer that makes the `.ai/` structure portable.
 
-**Files:**
-- Create: `.ai/scripts/extract_case_study.py`
-- Modify: `.ai/adr/001-workspace-foundation.md`
+- Static site engine: Hugo (standard for the personal site).
+- Extraction: Python (agent-assisted).
+- Formatting: GitHub-flavored Markdown.
 
-- [ ] **Step 1: Implement "Trace" Metadata**
-Update the ADR template to include a `trace_id`—a machine-readable link to the specific session where the decision was made.
+## Ordered steps
 
-- [ ] **Step 2: Build the Extractor Script**
-Write a Python script that reads an ADR and its corresponding Morning Briefing to generate a "Vibe vs. Veracity" case study.
-*Example Content*: "The Agent identified drift in X, used Tool Y to verify, and implemented Fix Z at zero metered cost."
+### Task 1: The agentic-trace extractor
 
----
+Create `.ai/scripts/extract_case_study.py`; modify `.ai/adr/001-workspace-foundation.md`.
 
-### Task 2: Hugo/Jekyll Blog Integration
+- [x] Add `trace_id` metadata to the ADR template, linking each decision to its originating session.
+- [x] Build an extractor that reads an ADR and its morning briefing to generate a "vibe vs. veracity" case study.
 
-**Files:**
-- Create: `docs/superpowers/blog/YYYY-MM-DD-workspace-launch.md`
-- Create: `.ai/templates/blog-post-template.md`
+### Task 2: Blog integration
 
-- [ ] **Step 1: Create Blog Export Skill**
-A new skill `ai/skills/blog-generator` that tells agents how to write technical content in "Garrett's Voice" (Direct, Technical, Authoritative).
+Create a launch blog post and `.ai/templates/blog-post-template.md`.
 
-- [ ] **Step 2: Automate Frontmatter Mapping**
-Ensure the export script maps `.ai/` metadata (source_tier, last_verified) into Hugo/Jekyll tags for SEO and authority.
+- [x] Create a blog-export skill that writes technical content in Garrett's voice (direct, technical, authoritative).
+- [x] Map `.ai/` metadata (`source_tier`, `last_verified`) into Hugo frontmatter for SEO and authority.
 
----
+### Task 3: The agentic-SDK manifest
 
-### Task 3: The "Agentic SDK" Manifest
+Create `ai-workspace-manifest.json` and `.ai/scripts/bootstrap_project.ps1`.
 
-**Files:**
-- Create: `ai-workspace-manifest.json`
-- Create: `.ai/scripts/bootstrap_project.ps1`
+- [x] Define a JSON manifest listing the global skills and context files a best-in-class workspace needs.
+- [x] Build a project injector that drops the hierarchical agentic infrastructure into any local directory.
 
-- [ ] **Step 1: Define the Workspace Blueprint**
-Create a JSON manifest that lists all required global skills and context files for a "Best-in-Class" workspace.
+### Task 4: KPI and value vetting
 
-- [ ] **Step 2: Build the "Project Injector"**
-A PowerShell script that allows you to point to any local directory and "Drop" the hierarchical agentic infrastructure into it instantly.
+Create `.ai/context/maintenance/kpi-tracking.md`.
 
----
+- [x] Define 2026 success metrics: cost savings (local vs. metered tokens), knowledge density (Tier 1 facts per project), and zero-drift compliance (days since last unhandled drift).
 
-### Task 4: KPI & Value Vetting (The Dogfooding Dashboard)
+### Task 5: Global self-audit
 
-**Files:**
-- Create: `.ai/context/maintenance/kpi-tracking.md`
+- [x] Run the full steward-to-blog loop and produce a status-report post.
+- [x] Land the Phase 4 completion commit (handled centrally; this plan does not run git directly).
 
-- [ ] **Step 1: Define 2026 Success Metrics**
-*Metric 1*: **Cost Savings** (Number of local reasoning tokens vs. metered equivalent).
-*Metric 2*: **Knowledge Density** (Number of Tier 1 verified facts per project).
-*Metric 3*: **Zero-Drift Compliance** (Days since last unhandled technical drift).
+## Retrospective
 
----
+Updates hb-doc.2.
 
-### Task 5: Final Global Self-Audit
-
-- [ ] **Step 1: Run Full "Steward to Blog" Loop**
-Task the Steward with auditing the workspace, then task the Blog-Generator with writing a "Status Report" post about it.
-
-- [ ] **Step 2: Final Workspace Repo Push**
-```bash
-git add .
-git commit -m "feat: complete phase 4 productization and launch readiness"
-```
+Outcome: implemented in 2026-03. `.ai/scripts/extract_case_study.py`, `.ai/scripts/package_sdk.py`, `.ai/scripts/bootstrap_project.ps1`, and `ai-workspace-manifest.json` all exist. The manifest name is "The Architecture of Hybrid Context Synthesis", consistent with the rebranding. The original git-commit step is recorded as completed; commits are handled centrally. Retained as a historical record.

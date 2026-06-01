@@ -11,7 +11,7 @@
 
 ## 3. Finality & Verification
 - **Pre-commit Audit:** Before declaring a task complete, run `_scripts/pre_commit_audit.ps1` to catch trivial syntax and placeholder errors.
-- **Mandatory Verification:** All implementation tasks must conclude with a verification step (e.g. running a test, build, or `verify_workspace.ps1`). A task is only complete when its behavioral correctness is verified.
+- **Mandatory Verification:** All implementation tasks must conclude with a verification step (e.g. running a test, build, or `_scripts/verify_workspace.ps1`). A task is only complete when its behavioral correctness is verified.
 - **Continuous Optimization:** Findings from the `.gemini/experiments.yaml` registry should be reviewed weekly to update these core protocols.
 
 ## 4. Corporate Repository Isolation

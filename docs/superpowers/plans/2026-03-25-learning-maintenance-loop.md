@@ -1,80 +1,59 @@
-# Phase 3: Learning & Maintenance Loop Implementation Plan
+# Learning and Maintenance Loop Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task.
+**Tracker:** hb-doc.2 · **Status:** Completed (historical, 2026-03) · **Phase:** 3
 
-**Goal:** Establish a non-interactive, scheduled service (The Nightly Steward) that performs workspace audits, drift checks, and model research to ensure the "Living Truth-Base" remains accurate and leading-edge.
+> For agentic workers: use `superpowers:subagent-driven-development` (preferred) or `superpowers:executing-plans` to run this plan task-by-task.
 
-**Architecture:** A PowerShell-driven orchestration loop that triggers the Local Orchestration Layer (Phase 2) to perform multi-round tasks and outputs results to a "Morning Briefing" document.
+## Goal and value
 
-**Tech Stack:**
-- **Orchestration**: PowerShell 7
-- **Reasoning**: Qwen-Orchestrator (Tooling) + DeepSeek-R1 (Reasoning)
-- **Reporting**: Markdown (Morning Briefing)
-- **Scheduling**: Windows Task Scheduler
+Establish a non-interactive, scheduled service (the Nightly Steward) that audits the workspace, checks for drift, and researches new models, keeping the living truth-base accurate and current. The value is automated freshness instead of manual re-verification.
 
----
+## Approach
 
-### Task 1: The Morning Briefing Foundation
+A PowerShell orchestration loop that triggers the local orchestration layer (Phase 2) for multi-round tasks and writes results to a morning briefing.
 
-**Files:**
-- Create: `.ai/templates/morning-briefing.md`
-- Create: `.ai/context/maintenance/audit-history.md`
+- Orchestration: PowerShell 7.
+- Reasoning: Qwen (tooling) and DeepSeek-R1 (reasoning).
+- Reporting: Markdown morning briefing.
+- Scheduling: Windows Task Scheduler.
 
-- [ ] **Step 1: Create the Briefing Template**
-Define the structure for reporting verified changes, identified drift, and pending decisions.
+## Ordered steps
 
-- [ ] **Step 2: Initialize Audit History**
-Create a machine-readable log to track the performance and pass-rate of nightly tasks.
+### Task 1: Morning briefing foundation
 
----
+Create `.ai/templates/morning-briefing.md` and an audit-history log.
 
-### Task 2: The Nightly Steward (Core Script)
+- [x] Create the briefing template for verified changes, identified drift, and pending decisions.
+- [x] Initialize a machine-readable audit-history log tracking nightly pass rates.
 
-**Files:**
-- Create: `.ai/scripts/steward.ps1`
+### Task 2: The Nightly Steward core script
 
-- [ ] **Step 1: Implement "Drift Check" Logic**
-Write a loop that reads every `.ai/context/*.md`, extracts the `verification_cmd`, and executes it.
+Create `.ai/scripts/steward.ps1`.
 
-- [ ] **Step 2: Implement "Consensus Capture"**
-If a command fails, the script must flag the drift and add it to the Morning Briefing instead of failing the entire run.
+- [x] Implement drift-check logic that reads each `.ai/context/*.md`, extracts its `verification_cmd`, and runs it.
+- [x] Implement consensus capture: on command failure, flag the drift into the briefing instead of failing the whole run.
+- [x] Integrate with the local gateway for tasks requiring tool-calling.
 
-- [ ] **Step 3: Integrate with Local Gateway**
-Ensure the steward uses the Port 8000 bridge for any tasks requiring tool-calling.
+### Task 3: Horizon-scanning routine
 
----
+Modify `.ai/skills/horizon-scanning/SKILL.md`; create `.ai/scripts/scan_horizon.py`.
 
-### Task 3: Horizon Scanning Routine
+- [x] Automate research for new 2026 models and MCP servers.
+- [x] Propose an ADR 002 update when a superior model tier is found.
 
-**Files:**
-- Modify: `.ai/skills/horizon-scanning/SKILL.md`
-- Create: `.ai/scripts/scan-horizon.py`
+### Task 4: Knowledge CI safety hook
 
-- [ ] **Step 1: Automate Research**
-Create a Python script that uses `google_web_search` to find new 2026 models and MCP servers.
+Create a pre-commit hook for the workspace repo.
 
-- [ ] **Step 2: Update Model Tiers**
-If a "Superior Tier" is found, the steward proposes an update to ADR 002.
+- [x] Implement a truth-validator hook that blocks commits when `.ai/` context was not updated in the same session.
 
----
+### Task 5: Loop verification
 
-### Task 4: CI/CD for Knowledge (The Safety Hook)
+- [x] Run a manual steward audit and verify the generated morning briefing.
+- [x] Land the Phase 3 completion commit (handled centrally; this plan does not run git directly).
 
-**Files:**
-- Create: `.git/hooks/pre-commit` (Simulated for Workspace Repo)
+## Retrospective
 
-- [ ] **Step 1: Implement Truth-Validator Hook**
-A script that prevents committing code if the `.ai/` context has not been updated within the same session.
+Updates hb-doc.2.
 
----
-
-### Task 5: Final Loop Verification
-
-- [ ] **Step 1: Run Manual Steward Audit**
-Execute the full steward script and verify the generated Morning Briefing.
-
-- [ ] **Step 2: Commit Phase 3 Completion**
-```bash
-git add .
-git commit -m "feat: complete phase 3 learning and maintenance loop"
-```
+Outcome: implemented in 2026-03. `.ai/scripts/steward.ps1` and `.ai/scripts/scan_horizon.py` exist; the `horizon-scanning` skill is live at `.ai/skills/horizon-scanning/`. A morning briefing was produced (`docs/superpowers/maintenance/2026-03-25-briefing.md`), and that first run surfaced a real drift signal (a `docker --version` verification command failing because Docker is not installed on this host) — the consensus-capture behavior worked as designed. The original git-commit step is recorded as completed; commits are handled centrally. Retained as a historical record.

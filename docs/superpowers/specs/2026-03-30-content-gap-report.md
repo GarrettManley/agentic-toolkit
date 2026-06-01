@@ -1,36 +1,40 @@
 # Content Gap Report: Persona-Driven Content Review
-**Date:** 2026-03-30
-**Audit Scope:** ADRs, Experiments 001-005, Toolkit Skills Documentation
 
-## 1. Terminology Conflicts
-- **Conflict:** 'Hybrid Intelligence' vs. 'Hybrid Context Synthesis'.
-- **Finding:** 
-    - **ADR 001** and **Experiment 001** predominantly use the term **'Hybrid Intelligence'** (Local Audit + Cloud Synthesis).
-    - The overall site architecture (defined in `hugo.toml`) and public-facing headings use **'Hybrid Context Synthesis'**.
-- **Recommendation:** Standardize on 'Hybrid Context Synthesis' across all documentation to ensure architectural consistency, or explicitly define the relationship between the two terms.
+**Owner:** Garrett Manley · **Date:** 2026-03-30 · **Status:** Historical (findings as of 2026-03-30) · **Tracker:** hb-doc.2
 
-## 2. IMRAD Section Sparsity
-- **Finding:** While Experiments 001-005 follow a scientific structure, several sections (especially 'Methodology' and 'Discussion') are sparsely populated.
-- **Details:**
-    - **Experiment 001:** Methodology contains "TBD" for the system prompt.
-    - **Experiment 005:** Results section relies heavily on a short summary without detailed trial data.
-- **Recommendation:** Expand Methodology sections with specific system prompts and configuration details. Ensure 'Discussion' sections address broader architectural implications beyond immediate success metrics.
+This report audits workspace content — ADRs, experiments 001 to 005, and toolkit skill documentation — and records the gaps found at the time. It is a point-in-time review, not a design.
 
-## 3. Toolkit Documentation Audit
-- **Scope:** `site/content/docs/toolkit/skills/*.md` (truth-seeker, horizon-scanning, local-orchestrator, citation-seeker).
-- **Findings:**
-    - Documentation is structurally consistent and provides clear directives.
-    - **Gap:** There is a lack of "Evidence" links in the `citation-seeker` and `truth-seeker` skills, despite the skills themselves mandating such links.
-    - **Gap:** Compatibility requirements (e.g., specific models like DeepSeek-R1) are mentioned but not verified against the current active infrastructure defined in ADR 001.
+## Audit scope
 
-## 4. Experiment 005 Audit
-- **Experiment:** Local Pre-commit Linting vs. CI Validation.
-- **Finding:** The abstract and results are strong, but the 'Methodology' section lacks the specific linting scripts or configuration used during the 10 trials.
+ADRs, experiments 001 to 005, and toolkit skills documentation (`truth-seeker`, `citation-seeker`, `horizon-scanning`, `local-orchestrator`).
 
-## 5. Summary of Gaps
+## Findings
+
+### Terminology conflict
+
+The terms "Hybrid Intelligence" and "Hybrid Context Synthesis" were used interchangeably. ADR 001 and Experiment 001 mostly used "Hybrid Intelligence" (local audit plus cloud synthesis), while the site architecture (`hugo.toml`) and public headings used "Hybrid Context Synthesis."
+
+**Recommendation:** standardize on "Hybrid Context Synthesis" across all documentation, or explicitly define how the two terms relate.
+
+### IMRAD section sparsity
+
+Experiments 001 to 005 follow a scientific structure, but several Methodology and Discussion sections were thin. Experiment 001 left its system prompt unfilled (an unresolved placeholder); Experiment 005 relied on a short results summary without detailed trial data.
+
+**Recommendation:** expand Methodology with concrete system prompts and configuration, and make Discussion address architectural implications beyond immediate success metrics.
+
+### Toolkit documentation
+
+Documentation was structurally consistent and gave clear directives, with two gaps: the `citation-seeker` and `truth-seeker` skills lacked the "Evidence" links the skills themselves mandate, and stated compatibility requirements (for example a DeepSeek-R1 dependency) were not verified against the active infrastructure recorded in ADR 001.
+
+### Experiment 005
+
+For the "local pre-commit linting versus CI validation" experiment, the abstract and results were strong, but Methodology omitted the specific linting scripts and configuration used across the ten trials.
+
+## Summary of gaps
+
 | Category | Severity | Description |
 | :--- | :--- | :--- |
-| Terminology | Medium | Inconsistent use of 'Hybrid Intelligence' vs 'Hybrid Context Synthesis'. |
-| Completeness | High | 'Methodology' sections in experiments contain TBDs or lack technical detail. |
-| Traceability | Medium | Mandatory 'Evidence' links missing from truth-seeking skill documentation. |
-| Sync | Low | Infrastructure in ADR 001 lists NVIDIA RTX 4060, while skills mention DeepSeek-R1 without explicit local verification status. |
+| Terminology | Medium | Inconsistent use of "Hybrid Intelligence" versus "Hybrid Context Synthesis". |
+| Completeness | High | Methodology sections are incomplete or lack technical detail. |
+| Traceability | Medium | Mandatory "Evidence" links missing from truth-seeking skill documentation. |
+| Sync | Low | ADR 001 lists an RTX 4060; skills cite a DeepSeek-R1 dependency without recorded local verification status. |

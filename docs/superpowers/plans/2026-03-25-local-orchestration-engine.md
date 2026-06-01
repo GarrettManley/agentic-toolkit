@@ -1,8 +1,10 @@
-# Local Orchestration Engine Implementation Plan
+# Local Orchestration Engine Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+**Tracker:** hb-doc.2 · **Status:** Completed (historical, 2026-03) · **Phase:** 2
 
-**Goal:** Offload reasoning, task decomposition, and high-volume searches to local hardware (RTX 4060) to minimize metered token usage and improve privacy.
+> For agentic workers: use `superpowers:subagent-driven-development` (preferred) or `superpowers:executing-plans` to run this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+
+**Goal and value:** Offload reasoning, task decomposition, and high-volume searches to local hardware (RTX 4060) to cut metered token usage and improve privacy. The value is running the bulk of routine agentic work at zero marginal cost.
 
 **Architecture:** A "Cloud Architect / Local Builder" model. The primary agent (Gemini/Claude) acts as the Architect, identifying complex sub-tasks and handing them off to a local DeepSeek-R1 (8B) instance via the Model Context Protocol (MCP).
 
@@ -97,8 +99,11 @@ Define exactly how the primary agent should parse the `<thought>` block returned
 Task the local agent with finding all `.csproj` files across the workspace using the bridge.
 Expected: Full list returned with < 5 seconds of latency.
 
-- [ ] **Step 2: Commit Phase 2 Completion**
-```bash
-git add .
-git commit -m "feat: complete phase 2 local orchestration setup"
-```
+- [ ] **Step 2: Land Phase 2 completion**
+Record the milestone; commits are handled centrally and this plan does not run git directly.
+
+## Retrospective
+
+Updates hb-doc.2.
+
+Outcome: implemented in 2026-03. ADR `002-local-orchestration.md` exists and the `local-orchestrator` skill is live at `.ai/skills/local-orchestrator/`. The local tier (DeepSeek-R1 8B for reasoning, `everything-search-mcp` for indexing) still matches the current hardware strategy. A `.ai/scripts/fast_orchestrator.py` also exists alongside the MCP-bridge approach. The original git-commit step is recorded as completed; commits are handled centrally. Retained as a historical record.

@@ -1,68 +1,89 @@
-# Workspace Standardization: The Agentic Operating System
+# Workspace Standardization Design
 
-**Date:** 2026-03-27  
-**Status:** PROPOSED  
-**Goal:** Standardize workspace structure and process for seamless, rigorous use across Gemini, Claude, and Ollama, adhering to "Agentic Design Patterns" best practices.
+**Owner:** Garrett Manley · **Date:** 2026-03-27 · **Status:** Superseded (historical) · **Tracker:** hb-doc.2
 
-## 1. Overview
-This design implements a "Contractor" model for AI agents. It transforms the workspace from a passive file collection into an active "Agentic OS" where assistants follow a standardized lifecycle of **Brief -> Spec -> Execution -> Verification**.
+This design proposed standardizing the workspace structure and lifecycle so any agent — Gemini, Claude, or Ollama — follows the same rigorous process. It is retained as a historical record; the directory layout below describes the *intended* design, which the implemented workspace only partially adopted (see Revision history).
 
-## 2. Directory Architecture
-The `.ai` directory serves as the "Kernel" of the workspace.
+## Overview
+
+The design implements a "contractor" model for AI agents. It treats the workspace as an active agentic operating system in which assistants follow a standard lifecycle: brief, spec, execution, verification.
+
+## Scope
+
+- **In scope:** the `.ai/` knowledge kernel, root agent-config overlays, the task lifecycle, and steward automation.
+- **Out of scope:** corporate and external repositories, which are isolated and read-only.
+
+## System overview
+
+The `.ai/` directory serves as the kernel of the workspace. The tree below is the originally proposed layout.
 
 ```text
 C:\Users\Garre\Workspace\
-├── GEMINI.md (Shim)
-├── CLAUDE.md (Shim)
-├── AGENTS.md (Shim)
+├── GEMINI.md (agent-config overlay)
 ├── .ai/
-│   ├── core/
-│   │   ├── bootstrap.md (Mandatory first read: Constitution)
-│   │   ├── projects.md (Monorepo Index & Dependency Map)
-│   │   └── standards/ (Language & Infrastructure rules)
-│   ├── agents/
-│   │   ├── scaffolder.md (Agent Card: Producer)
-│   │   ├── critic.md (Agent Card: Senior Reviewer)
-│   │   └── test-engineer.md (Agent Card: Quality Guard)
-│   ├── prompts/ (Version-controlled shared snippet library)
-│   ├── task_context/ (Staging Area for active sessions)
-│   └── logs/
-│       └── trajectories/ (Reasoning traces for evaluation)
-└── docs/superpowers/specs/ (Permanent home for signed-off designs)
+│   ├── adr/ (architectural decision records)
+│   ├── context/ (standards, maintenance logs, orchestration status)
+│   ├── agents/ (model-tier definitions)
+│   ├── skills/ (truth-seeker, citation-seeker, horizon-scanning, local-orchestrator)
+│   ├── scripts/ (steward.ps1, generate_spec.py, refine_content.py, ...)
+│   ├── templates/ (spec, briefing, blog templates)
+│   └── logs/ (reasoning traces for evaluation)
+└── docs/superpowers/specs/ (permanent home for signed-off designs)
 ```
 
-## 3. Core Protocols
+## Design details
 
-### 3.1. The Bootstrap Protocol
-All assistants are redirected via root-level "shims" to `.ai/core/bootstrap.md`.
-*   **Tiered Context Loading:** Agents read a 1-page summary first. They only load specific standards (e.g., Firebase, Python) when the task scope requires it to save tokens.
-*   **Monorepo Orientation:** Agents refer to `.ai/core/projects.md` to understand directory boundaries and avoid "hallucinating" paths.
+### Bootstrap protocol
 
-### 3.2. The "Fast-Track" Protocol (Layman Synthesis)
-*   **Low-Complexity Tasks:** Minor edits (typos, single-line changes) bypass the `task_context` staging area.
-*   **High-Complexity Tasks:** Any task involving architectural changes or multiple files requires a `01_BRIEF.md` in `.ai/task_context/`.
+Assistants are oriented through a root-level agent-config overlay into the `.ai/` standards.
 
-## 4. Role Personas (Agent Cards)
-Roles are assumed via specific system instructions stored in `.ai/agents/`.
-*   **The Scaffolder (Producer):** Implements features against a spec.
-*   **The Critic (Senior Principal):** Meticulously reviews work for "hallucinations" and standard compliance.
-*   **The Quality Guard:** Implements TDD and automated verification.
+- **Tiered context loading:** agents read a short summary first and load specific standards (for example Firebase or Python) only when the task requires them, saving tokens.
+- **Repository orientation:** agents consult the workspace project index to understand directory boundaries and avoid hallucinating paths.
 
-## 5. Task Lifecycle (The Contractor Model)
-1.  **Briefing:** Human/Steward creates `.ai/task_context/01_BRIEF.md`.
-2.  **Design:** Agent creates `.ai/task_context/02_SPEC.md`. **GATE:** Human Approval.
-3.  **Plan:** Agent creates an implementation plan.
-4.  **Act:** Agent executes in iterative "Plan -> Act -> Validate" cycles.
-5.  **Critique:** A "Critic" persona reviews the trajectory and diff.
-6.  **Archival:** Steward moves the Spec to `docs/` and clears the staging area.
+### Fast-track protocol
 
-## 6. Stewardship & Automation
-The `toolkit/steward.py` script is enhanced to act as the "OS Manager":
-*   **Session Locking:** Creates a `.lock` file in `task_context/` to prevent model conflicts.
-*   **Trajectory Pruning:** Rotates logs to keep the repo clean.
-*   **Context Assembly:** Automatically compiles the "Briefing Package" for the model.
+- **Low-complexity tasks:** typo fixes and single-line changes bypass the staging area.
+- **High-complexity tasks:** architectural or multi-file changes require a brief in the task-context staging area before work begins.
 
-## 7. Success Criteria
-*   **Consistency:** Every model (regardless of UI) follows the same core security and coding mandates.
-*   **Traceability:** Every major change is backed by a Spec and a Trajectory Log.
-*   **Efficiency:** Context is strictly scoped to the active task, reducing token waste and "drift."
+### Role personas
+
+Roles are assumed through system instructions stored under `.ai/`.
+
+- **Scaffolder (producer):** implements features against a spec.
+- **Critic (senior reviewer):** reviews work for hallucinations and standards compliance.
+- **Quality guard:** drives TDD and automated verification.
+
+### Task lifecycle (the contractor model)
+
+1. **Briefing:** the human or steward creates a task brief.
+2. **Design:** the agent drafts a spec. Gate: human approval.
+3. **Plan:** the agent writes an implementation plan.
+4. **Act:** the agent executes in iterative plan, act, validate cycles.
+5. **Critique:** a critic persona reviews the trajectory and diff.
+6. **Archival:** the steward moves the spec to `docs/` and clears the staging area.
+
+### Stewardship and automation
+
+The steward script (`.ai/scripts/steward.ps1` / `steward.py`) acts as the operating-system manager.
+
+- **Session locking:** prevents concurrent model conflicts on the same task.
+- **Trajectory pruning:** rotates logs to keep the repo clean.
+- **Context assembly:** compiles the briefing package for the model.
+
+## Dependencies
+
+- Ollama with local reasoning and tooling models.
+- The `.ai/` skills and ADR set.
+- PowerShell 7 and Python (`uv`) for steward automation.
+
+## References
+
+- ADR `002-local-orchestration.md`.
+- `docs/superpowers/plans/2026-03-25-local-orchestration-engine.md`.
+
+## Revision history
+
+| Date | Change |
+| :--- | :--- |
+| 2026-03-27 | Original proposal (status: proposed). |
+| 2026-06-01 | Marked superseded. Reconciled to as-built reality: the steward lives at `.ai/scripts/steward.py` (not `toolkit/`); the `.ai/` tree uses `adr/`, `context/`, `agents/`, `skills/`, `scripts/`, `templates/`, `logs/` rather than a `core/` subtree with per-agent `.md` cards; the root carries a single `GEMINI.md` overlay rather than three shims. |

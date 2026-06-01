@@ -1,47 +1,45 @@
-# Phase 5: Cognitive Balancing & Qualitative Excellence
+# Cognitive Balancing and Qualitative Excellence Plan
 
-> **Goal:** Eliminate "Agent-Cluster Vibe" by rebalancing tasks between Cloud and Local tiers, ensuring high-fidelity prose and authoritative synthesis.
+**Tracker:** hb-doc.2 · **Status:** Completed (historical, 2026-03) · **Phase:** 5
 
-## 1. The Intelligence Tiering Protocol (ITP)
-We will refactor our orchestration scripts to follow a strict delegation matrix:
+## Goal and value
 
-| Task Category | Tier | Primary Model |
+Remove the "agent-cluster" texture from generated content by rebalancing tasks across cloud and local tiers, producing high-fidelity prose and authoritative synthesis. The value is content that reads as a single senior-architect voice rather than stitched-together model output.
+
+## Approach
+
+Adopt a strict delegation matrix and replace the infinite local refinement loop with a single cloud-synthesis pass.
+
+## Ordered steps
+
+### Task 1: Intelligence tiering protocol
+
+Refactor the orchestration scripts to follow a fixed delegation matrix.
+
+| Task category | Tier | Primary model |
 | :--- | :--- | :--- |
-| **Strategy & Planning** | Cloud (Reasoning) | Gemini 2.0 Pro |
-| **Prose & Public Content** | Cloud (Creative) | Gemini 2.0 Pro |
-| **Research Synthesis** | Cloud (Knowledge) | Gemini 2.0 Flash |
-| **Tool Execution/Shell** | Local (Tooling) | Qwen 2.5 Coder 7B |
-| **Static Code Audit** | Local (Verification) | DeepSeek-R1 8B |
+| Strategy and planning | Cloud (reasoning) | Gemini 2.0 Pro |
+| Prose and public content | Cloud (creative) | Gemini 2.0 Pro |
+| Research synthesis | Cloud (knowledge) | Gemini 2.0 Flash |
+| Tool execution and shell | Local (tooling) | Qwen 2.5 Coder 7B |
+| Static code audit | Local (verification) | DeepSeek-R1 8B |
 
----
+### Task 2: Qualitative refinement loop
 
-## 2. Qualitative Refinement Loop
-We will replace the "Infinite Local Loop" with a "Cloud-Synthesis" pass.
+- [x] Refactor `refine_content.py` to use a cloud model for final synthesis, merging persona critiques into one cohesive voice and preventing "the model said" meta-talk.
+- [x] Implement `score_voice.py` to grade content on authority, cohesion, and directness (avoiding agent-isms such as "in conclusion" or "it is important to note").
 
-- [ ] **Task 5.1: Refactor `refine_content.py`**
-  - Use **Gemini 2.0 Pro** for the final content synthesis.
-  - Command: "Synthesize these 8 persona critiques into a single, cohesive human voice (Garrett Manley)."
-  - Constraint: Prevent "The model said..." or "The auditor found..." meta-talk.
+### Task 3: High-fidelity content re-launch
 
-- [ ] **Task 5.2: Qualitative Analysis Framework**
-  - Implement a `score_voice.py` script using Gemini to grade content on:
-    - **Authority**: Does it sound like a Senior Architect?
-    - **Cohesion**: Does it flow naturally without repetition?
-    - **Directness**: Does it avoid "Agent-isms" (e.g., "In conclusion," "It is important to note").
+- [x] Rewrite the homepage prose using cloud reasoning.
+- [x] Consolidate fragmented ADR critiques into authoritative technical specifications.
 
----
+### Task 4: Cost-performance monitoring
 
-## 3. High-Fidelity Content Re-Launch
-We will re-author the current site content to kill the "cluster vibe."
+- [x] Track the cloud-to-local ratio alongside the token-cost-efficiency rate, and define the sweet spot where quality is maximized while cost stays under roughly one dollar per session.
 
-- [ ] **Step 1: Homepage Rewrite**
-  - Re-synthesize the "Architect's Laboratory" prose using Cloud reasoning.
-- [ ] **Step 2: ADR Consolidation**
-  - Merge fragmented ADR critiques into authoritative technical specifications.
+## Retrospective
 
----
+Updates hb-doc.2.
 
-## 4. Cost-Performance Monitoring
-- [ ] **Task 5.3: Update Telemetry**
-  - Track **"Cloud-to-Local Ratio"** alongside T-CER.
-  - Define the "Sweet Spot" where quality is maximized while costs remain <$1.00 per session.
+Outcome: implemented in 2026-03. `.ai/scripts/refine_content.py` and `.ai/scripts/score_voice.py` both exist. The model names in the tiering matrix reflect the cloud tier as configured at the time and are recorded as historical; the local tier (Qwen 2.5 Coder, DeepSeek-R1 8B) still matches the current hardware strategy. Retained as a historical record.
