@@ -23,6 +23,12 @@ if ($LASTEXITCODE -eq 0 -and $changed) {
 
 Write-Host "Initializing Local CI/CD Pipeline..." -ForegroundColor Cyan
 
+# Force Python UTF-8 mode for all child processes. The toolkit/spec generators
+# print emoji status lines; Windows' default cp1252 stdout raises UnicodeEncodeError
+# on them, which previously left publish_toolkit.py / generate_spec.py partially run
+# (the toolkit dir got wiped but not fully regenerated). UTF-8 mode makes them robust.
+$env:PYTHONUTF8 = '1'
+
 # 1. Sync Toolkit (Skills & Scripts)
 Write-Host "Syncing Open Source Toolkit..." -ForegroundColor Gray
 uv run .ai/scripts/publish_toolkit.py
