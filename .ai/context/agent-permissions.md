@@ -14,7 +14,7 @@ This standard defines the "Verified-Trust" model for agents in this workspace.
 
 ## 1. File System Operations
 - **Creation/Editing**: Permitted for all workspace configuration files (`.ai/`, `docs/`).
-- **Strict Read-Only**: The `malachite/` and `architecture/` repositories are **Authoritative Work Sources**. Agents are **FORBIDDEN** from writing to, deleting from, or modifying these directories.
+- **Strict Read-Only**: The corporate work repositories are **Authoritative Work Sources**. Agents are **FORBIDDEN** from writing to, deleting from, or modifying these directories.
 - **Proposal Model**: If an agent identifies a fix or improvement in a work repo, it must document the finding in `.ai/context/` and present a plan for the user to execute manually.
 
 ## 2. Version Control (Git)

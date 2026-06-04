@@ -15,7 +15,7 @@ We will implement a **Local Compute Sandbox** using the following protocol:
 
 ## Rationale
 - **Cost Efficiency**: Zero metered tokens for the "Write-Run-Debug" loop.
-- **Safety**: Containers enforce our "Read-Only" boundaries for the `malachite/` and `architecture/` repos.
+- **Safety**: Containers enforce our "Read-Only" boundaries for the corporate work repos.
 - **Rigor**: Local models (like DeepSeek-R1) are specifically tuned for iterative coding and debugging.
 
 ## Verification (The Proof)

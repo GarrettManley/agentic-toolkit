@@ -30,4 +30,4 @@ To prevent collisions, the following port hierarchy is enforced in this workspac
 To minimize metered token usage, all script execution follows the **"Local Builder"** pattern:
 - **Sandbox Requirement**: All agent-generated scripts MUST execute within a containerized MCP sandbox.
 - **Prohibited Tools**: The primary cloud agent should avoid using `run_shell_command` for complex automation, preferring to delegate the goal to the Local Orchestrator.
-- **Tool Mapping**: The sandbox must have read-only mounts to work repositories (`/malachite`) and read-write access to `.ai/context`.
+- **Tool Mapping**: The sandbox must have read-only mounts to the corporate work repositories and read-write access to `.ai/context`.

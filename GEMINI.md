@@ -15,5 +15,5 @@
 - **Continuous Optimization:** Findings from the `.gemini/experiments.yaml` registry should be reviewed weekly to update these core protocols.
 
 ## 4. Corporate Repository Isolation
-- **Strict Isolation:** NEVER touch, scan, or read the `/malachite/` or `/Duracell/` repositories or any associated corporate folders unless explicitly directed for a specific task in that context.
+- **Strict Isolation:** NEVER touch, scan, or read the corporate work repositories or any associated corporate folders unless explicitly directed for a specific task in that context.
 - **Privacy First:** Ensure all published work (e.g., the lab website) is purged of internal project names or repository identifiers.

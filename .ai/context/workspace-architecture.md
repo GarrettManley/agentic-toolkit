@@ -14,7 +14,7 @@ This workspace follows a hierarchical agentic design with strict data boundaries
 
 ## 1. Directory Tiers
 - **Tier A: Workspace Config (`/.ai/`, `docs/`)**: Writable by agents. Contains ADRs, Skills, and Context.
-- **Tier B: Work Repos (`/malachite/`, `/architecture/`)**: **READ-ONLY**. These are external "work files" used for authoritative context but never modified by agentic tasks.
+- **Tier B: Work Repos (corporate, isolated)**: **READ-ONLY**. These are external "work files" used for authoritative context but never modified by agentic tasks.
 - **Tier C: Local Context (`[project]/.ai/`)**: Writable by agents. Contains project-specific overrides.
 
 ## The Proof Protocol
