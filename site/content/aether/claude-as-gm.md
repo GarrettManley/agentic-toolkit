@@ -5,7 +5,7 @@ weight: 90
 
 
 This guide catalogs the four prompt shapes a manual-mode operator
-encounters in spec 041 (#108), each with the marker that signals
+encounters in spec 041, each with the marker that signals
 the shape, the system-instruction excerpt that gates operator
 behavior, and an example response drawn from the 2026-05-08 Shape
 A live validation. Use this when you (Claude or a human) are
@@ -222,7 +222,7 @@ with this identifier, your prose verbatim, and a UTC timestamp.
 The audit log is retained 90 days minimum as SOC2 evidence;
 treat your prose as on the record.
 
-Two field-naming conventions to keep straight (#126):
+Two field-naming conventions to keep straight:
 
 - **Response file** (what you write) — snake_case: `prose`,
   `operator_id`, optional `metadata`. This is the operator-facing

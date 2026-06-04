@@ -9,11 +9,11 @@ This guide is for the **player** — the person at a keyboard, connecting to a r
 Aether engine and playing a session. It is not for the **engine operator** who runs
 `npm start`, or the **GM** running the game (see [`gm-manual.md`](/aether/gm-manual/)). The CLI
 is presentation-only: it transmits your typed commands and renders the events the engine
-streams back. Reference: spec 043 (#138).
+streams back. Reference: spec 043.
 
 > **Local play today.** The CLI connects to a **locally-running** engine over the loopback
 > bypass — no sign-in. Connecting from another machine (install + Google sign-in) is being
-> rebuilt (#138, #139); the `login` command below is a placeholder until it ships.
+> rebuilt; the `login` command below is a placeholder until it ships.
 
 ## 2. Concepts
 

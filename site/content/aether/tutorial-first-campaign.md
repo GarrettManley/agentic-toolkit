@@ -7,7 +7,7 @@ This tutorial walks you from a fresh clone to your first turn in about 15 minute
 the end you will have a running engine, a new character, and your first narrative
 exchange with the Dungeon Master.
 
-> **Local play today.** The transport is being rebuilt (spec 043, #138): the old SSH +
+> **Local play today.** The transport is being rebuilt (spec 043): the old SSH +
 > Google-sign-in flow is retired. This tutorial covers **local** play via the
 > `aether-cli` over the loopback bypass. **Remote multiplayer** is coming — see
 > [Player onboarding](/aether/player-onboarding/#remote-multiplayer-coming).
@@ -25,7 +25,7 @@ exchange with the Dungeon Master.
 ## Step 1: Clone and install
 
 ```bash
-git clone git@github.com:GarrettManley/aether-engine.git
+git clone <your-aether-engine-remote>
 cd aether-engine
 npm install
 ```
@@ -115,7 +115,7 @@ you will see:
 ```
 
 > Connecting from **another machine** (with Google sign-in) is being rebuilt as part of
-> transport v2 (#138, #139); until it ships, play is local.
+> transport v2; until it ships, play is local.
 
 ---
 

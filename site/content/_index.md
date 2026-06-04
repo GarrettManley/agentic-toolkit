@@ -1,41 +1,52 @@
 ---
 title: "The Architecture of Hybrid Context Synthesis"
-layout: "docs"
+layout: hextra-home
 ---
 
-This repository serves as the authoritative source for the **Architecture of Hybrid Context Synthesis**. We transition from heuristic prompt engineering to scalable, cost-optimized agentic orchestration across multi-project environments.
+{{< hextra/hero-badge link="https://github.com/GarrettManley/agentic-toolkit" >}}
+  Open-source &middot; local-first
+{{< /hextra/hero-badge >}}
 
-## Infrastructure for Truth
-Architectural decisions within this workspace are not subjective; they are proven. Every change is substantiated by:
+<div class="hx:mt-6 hx:mb-4">
+{{< hextra/hero-headline >}}
+  The Architecture of<br class="hx:sm:block hx:hidden" /> Hybrid Context Synthesis
+{{< /hextra/hero-headline >}}
+</div>
 
-1.  **Automated Discovery**: Continuous drift identification via the **Agentic Steward**.
-2.  **Empirical Proof**: Verification through PowerShell 7 and Python 3.14 tool execution.
-3.  **Scientific Grounding**: Alignment with **Pass^k Reliability** and **Economic Convergence** models.
-4.  **Isolated Autonomy**: Self-correcting maintenance loops running on local RTX 4060 hardware.
+<div class="hx:mb-8">
+{{< hextra/hero-subtitle >}}
+  A working lab for scalable, cost-optimized agentic orchestration &mdash; every claim proven on local RTX&nbsp;4060 hardware, not slideware.
+{{< /hextra/hero-subtitle >}}
+</div>
+
+<div class="hx:mb-10 hx:flex hx:gap-4 hx:flex-wrap">
+{{< hextra/hero-button text="Read the architecture" link="/docs/" >}}
+{{< hextra/hero-button text="Play the Aether Engine" link="/aether/" style="background:transparent;color:inherit;box-shadow:inset 0 0 0 1px currentColor" >}}
+</div>
+
+{{< cards >}}
+  {{< card link="/docs/" title="Documentation" icon="book-open" subtitle="Architecture decisions, engineering specs, and the empirical experiment log behind every claim." >}}
+  {{< card link="/aether/" title="Aether Engine" icon="cube" subtitle="A tabletop-RPG framework — LLM narrative over a deterministic Rust rules core. Player & GM guides." >}}
+  {{< card link="/docs/toolkit/" title="Open-Source Toolkit" icon="terminal" subtitle="The skills and orchestration scripts that run this workspace — published for reuse." >}}
+{{< /cards >}}
+
+<div class="hx:mt-20"></div>
+
+## Built on proof, not vibes
+
+Architectural decisions here aren't subjective — they're substantiated by automated drift
+discovery, empirical PowerShell 7 / Python 3.14 verification, and alignment with **Pass^k
+reliability** and **economic-convergence** models. The chart tracks real outcomes across every
+validated experiment.
 
 {{< workspace-pulse >}}
 
-## Industry Benchmarks (2026)
-Performance is tracked against the Reliability Gap and Hierarchical Model Allocation (HMA) frameworks:
-
-*   **Pass^k Consistency**: **0.98** (Targeting enterprise-grade reasoning stability).
-*   **Cost-per-Successful-Fix (CPS)**: **$0.005** (Achieved via local-first offloading).
-*   **Convergence Rate**: **$O(1/K)$** (Optimized via Theory-of-Mind logic).
-
-## Workspace Assets
-
-### Technical Specifications
-Formal ADRs and engineering specifications.
-*   [001: Foundations](/docs/001-workspace-foundation)
-*   [002: Local Orchestration](/docs/002-local-orchestration)
-*   [003: Script Autonomy](/docs/003-local-script-autonomy)
-
-### Open Source Toolkit
-Active skills and orchestration scripts published for review and community reuse.
-*   [GitHub Repository](https://github.com/GarrettManley/agentic-toolkit)
-*   [Skill Registry](/docs/toolkit/skills)
-*   [Core Scripts](/docs/toolkit/scripts)
+{{< cards cols="3" >}}
+  {{< card title="Pass^k Reliability" icon="shield-check" subtitle="96.5% — 222 of 230 trials passed across 5 experiments." >}}
+  {{< card title="Cost / Successful Fix" icon="lightning-bolt" subtitle="$0.001 — aggregate cost per success, local-first." >}}
+  {{< card title="Convergence" icon="chip" subtitle="~2.6 steps — mean iterations to a verified fix." >}}
+{{< /cards >}}
 
 ---
-*Authored by Garrett Manley. Verified on 2026-03-26.*
 
+Authored by **Garrett Manley**. Every page here is part of an actively maintained, self-correcting workspace.

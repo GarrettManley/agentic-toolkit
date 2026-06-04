@@ -8,9 +8,9 @@ This manual covers everything a GM or operator needs to run a
 campaign: gaining GM privileges, injecting narrative, triggering
 distillation, managing combat, and reading overseer telemetry.
 
-> **Local play today.** The transport is being rebuilt (spec 043, #138): the old SSH
+> **Local play today.** The transport is being rebuilt (spec 043): the old SSH
 > flow is retired. Connect with the `aether-cli` over the loopback bypass (below);
-> remote sign-in is coming (#138/#139).
+> remote sign-in is coming.
 
 ---
 

@@ -7,7 +7,7 @@ Welcome. This tutorial walks you through connecting to a locally-running Aether
 Engine with the `aether-cli` and seeing your first game prompt. By the end you'll
 have the engine running, connected as your character, and typed your first action.
 
-> **Local play today.** Aether's transport is being rebuilt (spec 043, #138). The
+> **Local play today.** Aether's transport is being rebuilt (spec 043). The
 > old "SSH into a public server + Google sign-in" flow has been retired. What works
 > now is **local play** — the engine and the CLI on the same machine, over the
 > loopback bypass. **Remote multiplayer** (sign-in from another machine) is coming;
@@ -81,8 +81,8 @@ Press **Ctrl-D** to quit.
 ## Remote multiplayer (coming)
 
 Playing from **another machine**—with Google sign-in and an installed
-`@garrettmanley/aether-cli`—is being rebuilt as part of transport v2 (#138) and the
-remote sign-in handoff (#139). Until it ships, play is **local** (same machine as the
+`@garrettmanley/aether-cli`—is being rebuilt as part of transport v2 and the
+remote sign-in handoff. Until it ships, play is **local** (same machine as the
 engine). When remote lands, this section will document the sign-in and connection
 flow (and how a character is claimed by a Google account).
 

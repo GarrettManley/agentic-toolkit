@@ -6,9 +6,9 @@ weight: 60
 Problems connecting to a **locally-running** engine with the `aether-cli`, and what to do
 about each.
 
-> **Local play today.** The transport is being rebuilt (spec 043, #138): the old SSH +
+> **Local play today.** The transport is being rebuilt (spec 043): the old SSH +
 > Google-sign-in flow is retired. Remote sign-in and its error cases are being rebuilt
-> (#138/#139) — see [Remote sign-in (coming)](#remote-sign-in-coming). Everything else
+> — see [Remote sign-in (coming)](#remote-sign-in-coming). Everything else
 > here is for local play.
 
 ## "Connection refused" / the CLI can't reach the gateway
@@ -74,7 +74,7 @@ config problem, fix the config first—each attempt counts.
 Connecting from **another machine** uses a Google OIDC sign-in. That flow—and its error
 cases (the "app isn't verified" warning, link-token expiry, CSRF on return from Google,
 character-ownership 403s, token-exchange failures)—is being rebuilt as part of transport
-v2 (#138) and the remote sign-in handoff (#139). This section will be restored when
+v2 and the remote sign-in handoff. This section will be restored when
 remote play ships.
 
 ## Related docs

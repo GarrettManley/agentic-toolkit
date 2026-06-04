@@ -7,7 +7,6 @@ unsafe = true # Required for some Hextra features
 
 [params]
 description = "A formal inquiry into scalable, cost-optimized agentic orchestration across multi-project environments."
-github_repo = "https://github.com/Garre/Workspace"
 
 # Top navbar. Without this, the site has no global navigation — you can only
 # reach content via inline homepage links or a section's own sidebar.
@@ -26,3 +25,10 @@ name = "Search"
 weight = 3
 [menu.main.params]
 type = "search"
+
+[[menu.main]]
+name = "GitHub"
+weight = 4
+url = "https://github.com/GarrettManley/agentic-toolkit"
+[menu.main.params]
+icon = "github"

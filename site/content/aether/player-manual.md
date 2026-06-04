@@ -7,7 +7,7 @@ This manual covers everything you need to play a campaign with the `aether-cli`:
 connecting, creating your character, taking actions, interpreting dice results, and
 troubleshooting common problems.
 
-> **Local play today.** The transport is being rebuilt (spec 043, #138): the old SSH +
+> **Local play today.** The transport is being rebuilt (spec 043): the old SSH +
 > Google-sign-in flow is retired. What works now is **local** play via the `aether-cli`
 > over the loopback bypass. **Remote multiplayer** is coming — see
 > [Player onboarding](/aether/player-onboarding/#remote-multiplayer-coming).

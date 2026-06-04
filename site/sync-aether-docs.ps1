@@ -52,8 +52,28 @@ foreach ($base in $docs.Keys) {
     }
     # Pass 2: private-repo links -> plain text (would 404 publicly + leak the private repo).
     $body = $body -replace '\[([^\]]+)\]\(https?://github\.com/GarrettManley/aether-engine[^)]*\)', '$1'
+    # Pass 2b: redact the PRIVATE repo coordinate in ANY form -- bare https/SSH URLs in code
+    # fences (e.g. `git clone git@github.com:GarrettManley/aether-engine.git`) that the
+    # markdown-link passes cannot see. The owner/slug coordinate must never reach published output.
+    $body = $body -replace 'git@github\.com:GarrettManley/aether-engine(\.git)?', '<your-aether-engine-remote>'
+    $body = $body -replace 'https?://github\.com/GarrettManley/aether-engine(\.git)?', '<your-aether-engine-remote>'
+    # Pass 2c: an internal engineering doc whose link TEXT is itself a repo path leaks structure
+    # (e.g. `docs/engineering/plans/...md`). Drop the whole reference; titled engineering links
+    # keep their human title via Pass 3 below.
+    $body = [regex]::Replace($body, '\[`[^\]]*?(?:docs/)?engineering/[^\]]*?`\]\([^)]*\)', 'internal design notes')
     # Pass 3: remaining internal/relative .md/.json links -> plain text (not published).
     $body = $body -replace '\[([^\]]+)\]\((?!https?://|/aether/)[^)]*\.(?:md|json)(?:#[^)]*)?\)', '$1'
+    # Pass 4: drop private-tracker issue numbers that appear as parenthetical asides -- no public
+    # utility and they disclose internal tracker structure. Inline prose refs are left intact to
+    # avoid mangling sentences ("(#138)", "(#138, #139)", "(spec 043, #138)" are handled).
+    $body = $body -replace '\s*\(#\d+(?:[,/]\s*#\d+)*\)', ''
+    $body = $body -replace '\((spec [^),]+?)(?:,\s*(?:issue\s+)?#\d+(?:[,/]\s*#\d+)*)\)', '($1)'
+
+    # Fail-closed: never publish the private repo coordinate. If any pass above missed it, abort
+    # the whole sync rather than silently leak (the previous design failed OPEN on bare URLs).
+    if ($body -match 'github\.com[:/]GarrettManley/aether-engine') {
+        throw "ABORT: private repo coordinate 'GarrettManley/aether-engine' survived redaction in '$base' -- fix the source or the stripper before re-running."
+    }
 
     $meta = $docs[$base]
     $fm = "---`ntitle: `"$($meta.Title)`"`nweight: $($meta.Weight)`n---`n`n"

@@ -178,7 +178,7 @@ character.
 
 - [GM onboarding manual](/aether/gm-onboarding-manual/) — for the GM
   operator who composes Pass-2 prose in manual mode.
-- `docs/engineering/plans/2026-05-08-108-shape-c-findings.md`
+- internal design notes
   — the live-play session that exposed the gap and motivated #121.
 - `universe/characters/gurga.json`
   — the worked example referenced throughout this guide.

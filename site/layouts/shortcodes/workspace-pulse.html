@@ -28,7 +28,9 @@
         {{ $jsonFile := .Resources.GetMatch "data.json" }}
         {{ if $jsonFile }}
           {{ $json := $jsonFile.Content | transform.Unmarshal }}
-          {{ $data = $data | append (dict "id" $json.id "pass_k" $json.baseline_pass_k "cps" $json.baseline_cps) }}
+          {{/* Plot ACHIEVED outcomes (successes/trials, cost/success) — NOT baseline_* — so the
+               chart matches its "real outcomes" label and the per-experiment metrics shortcode. */}}
+          {{ $data = $data | append (dict "id" $json.id "pass_k" (div $json.successes $json.trials) "cps" (div $json.cost_usd $json.successes)) }}
         {{ end }}
       {{ end }}
     {{ end }}
@@ -139,7 +141,7 @@
               drawOnChartArea: false,
             },
             ticks: {
-              callback: value => '$' + value.toFixed(2)
+              callback: value => '$' + value.toFixed(3)
             }
           }
         }

@@ -6,7 +6,7 @@ weight: 70
 
 This guide is for the **GM operator**—a human or agent (typically
 Claude over a Monitor stream) who writes Pass-2 prose for the
-Aether Engine while it runs in manual GM mode (spec 041, issue #108).
+Aether Engine while it runs in manual GM mode (spec 041).
 For the **engine operator** who runs the server itself, see
 manual-gm-operations.md.
 
@@ -126,8 +126,7 @@ Then write prose that:
   open. (See issue #105 for the rationale.)
 - **Stays under 200 words.** Hard cap. Long prose breaks pacing
   and inflates the prompt cache for the next cycle.
-- **Names entities consistently.** No parenthetical aliases
-  (#103). If the prompt says `Kira`, write `Kira`, not
+- **Names entities consistently.** No parenthetical aliases. If the prompt says `Kira`, write `Kira`, not
   `Kira (the rogue)`.
 
 If a prompt asks for something the rules forbid (a bare number,
@@ -252,5 +251,5 @@ your contribution. The cycle is done.
 - [GM and operator manual](/aether/gm-manual/)
 - [Player manual](/aether/player-manual/)
 - [Player onboarding](/aether/player-onboarding/)
-- [Character creation](/aether/character-creation/) — required narrative-identity fields for PC JSON files (#121).
+- [Character creation](/aether/character-creation/) — required narrative-identity fields for PC JSON files.
 

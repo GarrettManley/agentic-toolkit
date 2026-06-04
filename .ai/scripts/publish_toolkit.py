@@ -54,9 +54,13 @@ draft: false
             print(f"📦 Published Toolkit Asset: {rel_path}")
 
 if __name__ == "__main__":
-    # Clean old toolkit docs
-    if os.path.exists(TOOLKIT_OUTPUT):
-        shutil.rmtree(TOOLKIT_OUTPUT)
-    
+    # Clean ONLY the regenerated subdirs. The toolkit root holds hand-authored content
+    # (e.g. _index.md, the landing hub) that must survive deploys -- a full rmtree of
+    # TOOLKIT_OUTPUT silently 404'd that landing page on the live site.
+    for sub in ("skills", "scripts"):
+        sub_path = os.path.join(TOOLKIT_OUTPUT, sub)
+        if os.path.exists(sub_path):
+            shutil.rmtree(sub_path)
+
     publish_assets(SKILLS_DIR, "skills", "Agent Skill")
     publish_assets(SCRIPTS_DIR, "scripts", "Core Script")
