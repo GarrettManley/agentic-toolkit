@@ -13,6 +13,13 @@
 !sec-research/
 !publish.ps1
 
+# Retrospectives: track completed retros only; pending/ markers stay per-machine.
+# Three-line idiom: re-include the dir, re-ignore its contents, whitelist done/
+# (a bare `!retrospectives/done/` can't escape the `/*` parent exclusion).
+!retrospectives/
+retrospectives/*
+!retrospectives/done/
+
 # sec-research/ exclusions (runtime artifacts, raw evidence, used tokens)
 sec-research/runtime/
 sec-research/findings/**/evidence/raw/
