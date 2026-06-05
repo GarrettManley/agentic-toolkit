@@ -1,6 +1,6 @@
 ---
 title: "Agent Skill: citation-seeker / SKILL.md"
-date: 2026-05-31
+date: 2026-06-04
 draft: false
 ---
 
