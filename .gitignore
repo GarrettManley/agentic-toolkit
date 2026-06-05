@@ -31,3 +31,8 @@ sec-research/submissions/ledger.jsonl
 site/public/
 site/.hugo_build.lock
 site/hugo.toml.bak
+
+# Vendored Hugo theme — a raw upstream `git clone` (own .git, not a submodule);
+# treated as a local dependency, not tracked. To make reproducible, convert to a
+# submodule instead.
+site/themes/
