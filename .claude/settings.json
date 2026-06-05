@@ -1,0 +1,25 @@
+{
+  "$comment": "Workspace-root project settings. Loads when Claude is launched at C:/Users/Garre/Workspace. The verify gate hook enforces GEMINI.md §3 at commit time; the permissions pre-approve the mandated verify scripts so they don't prompt. Forward slashes in the hook path are intentional (backslash-then-alpha is mangled by shell parsing; Python accepts mixed separators on Windows).",
+  "permissions": {
+    "allow": [
+      "Bash(pwsh -NoProfile -File _scripts/pre_commit_audit.ps1)",
+      "Bash(pwsh -NoProfile -File _scripts/verify_workspace.ps1)",
+      "PowerShell(pwsh -NoProfile -File _scripts/pre_commit_audit.ps1)",
+      "PowerShell(pwsh -NoProfile -File _scripts/verify_workspace.ps1)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"${CLAUDE_PROJECT_DIR}/.claude/hooks/check_verify_before_commit.py\"",
+            "timeout": 30
+          }
+        ]
+      }
+    ]
+  }
+}

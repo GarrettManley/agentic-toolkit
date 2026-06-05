@@ -4,6 +4,9 @@
 # Allow-list for Workspace Configuration
 !.gitignore
 !.ai/
+!.claude/
+!CLAUDE.md
+!_scripts/
 !docs/
 !README.md
 !site/
