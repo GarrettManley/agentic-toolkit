@@ -1,6 +1,6 @@
 ---
 title: "Agent Skill: local-orchestrator / references / HANDOFF_GUIDE.md"
-date: 2026-06-04
+date: 2026-06-09
 draft: false
 ---
 
