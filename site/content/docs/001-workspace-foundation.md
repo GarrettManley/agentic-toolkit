@@ -1,13 +1,13 @@
 ---
 title: "ADR 001: Architecture of Hybrid Context Synthesis"
-date: 2026-06-10
+date: 2026-06-11
 draft: false
 weight: 001
 ---
 
 # Engineering Specification: ADR 001: Architecture of Hybrid Context Synthesis
 
-**Standard:** ISO/IEC 25059:2026 | **Trace ID:** trace-20260610-001  
+**Standard:** ISO/IEC 25059:2026 | **Trace ID:** trace-20260611-001  
 **Consistency (Pass^k):** 98% | **Cost-per-Success:** $0.005 | **Convergence:** 3.2 steps
 
 ---
