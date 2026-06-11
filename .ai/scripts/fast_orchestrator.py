@@ -4,10 +4,11 @@ import subprocess
 import os
 import re
 from datetime import datetime
+from pathlib import Path
 
 # Direct Configuration
 MODEL = "qwen-orchestrator"
-WORKSPACE_ROOT = r"C:\Users\Garre\Workspace"
+WORKSPACE_ROOT = str(Path(__file__).resolve().parents[2])
 
 # Persistent State
 state = {"cwd": WORKSPACE_ROOT}

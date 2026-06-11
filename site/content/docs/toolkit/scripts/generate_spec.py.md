@@ -1,6 +1,6 @@
 ---
 title: "Core Script: generate_spec.py"
-date: 2026-06-10
+date: 2026-06-11
 draft: false
 ---
 
@@ -11,9 +11,10 @@ import os
 import re
 import json
 from datetime import datetime
+from pathlib import Path
 
 # Configuration
-WORKSPACE_ROOT = r"C:\Users\Garre\Workspace"
+WORKSPACE_ROOT = str(Path(__file__).resolve().parents[2])
 ADR_DIR = os.path.join(WORKSPACE_ROOT, ".ai", "adr")
 CONTENT_DIR = os.path.join(WORKSPACE_ROOT, "site", "content", "docs")
 TEMPLATE_PATH = os.path.join(WORKSPACE_ROOT, ".ai", "templates", "engineering-spec.md")

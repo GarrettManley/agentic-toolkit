@@ -1,6 +1,6 @@
 ---
 title: "Core Script: fast_orchestrator.py"
-date: 2026-06-10
+date: 2026-06-11
 draft: false
 ---
 
@@ -13,10 +13,11 @@ import subprocess
 import os
 import re
 from datetime import datetime
+from pathlib import Path
 
 # Direct Configuration
 MODEL = "qwen-orchestrator"
-WORKSPACE_ROOT = r"C:\Users\Garre\Workspace"
+WORKSPACE_ROOT = str(Path(__file__).resolve().parents[2])
 
 # Persistent State
 state = {"cwd": WORKSPACE_ROOT}

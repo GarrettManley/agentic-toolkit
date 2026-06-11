@@ -1,8 +1,9 @@
 import os
 import json
 from datetime import datetime
+from pathlib import Path
 
-WORKSPACE_ROOT = r"C:\Users\Garre\Workspace"
+WORKSPACE_ROOT = str(Path(__file__).resolve().parents[2])
 ADR_PATH = os.path.join(WORKSPACE_ROOT, ".ai", "adr", "002-local-orchestration.md")
 
 # SOTA Models as of March 2026

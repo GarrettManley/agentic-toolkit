@@ -1,7 +1,7 @@
 # .ai/scripts/steward.ps1
 # Nightly Steward - Workspace Maintenance & Audit Script (v1.0)
 
-$workspaceRoot = "C:\Users\Garre\Workspace"
+$workspaceRoot = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
 $contextDir = "$workspaceRoot\.ai\context"
 $templatePath = "$workspaceRoot\.ai\templates\morning-briefing.md"
 $briefingPath = "$workspaceRoot\docs\superpowers\maintenance\$(Get-Date -Format 'yyyy-MM-dd')-briefing.md"

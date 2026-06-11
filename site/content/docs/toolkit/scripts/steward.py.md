@@ -1,6 +1,6 @@
 ---
 title: "Core Script: steward.py"
-date: 2026-06-10
+date: 2026-06-11
 draft: false
 ---
 
@@ -13,8 +13,9 @@ import subprocess
 import requests
 import json
 from datetime import datetime
+from pathlib import Path
 
-WORKSPACE_ROOT = r"C:\Users\Garre\Workspace"
+WORKSPACE_ROOT = str(Path(__file__).resolve().parents[2])
 CONTEXT_DIR = os.path.join(WORKSPACE_ROOT, ".ai", "context")
 TEMPLATE_PATH = os.path.join(WORKSPACE_ROOT, ".ai", "templates", "morning-briefing.md")
 BRIEFING_DIR = os.path.join(WORKSPACE_ROOT, "docs", "superpowers", "maintenance")

@@ -4,9 +4,10 @@ import json
 import re
 import concurrent.futures
 from datetime import datetime
+from pathlib import Path
 
 # Configuration
-WORKSPACE_ROOT = r"C:\Users\Garre\Workspace"
+WORKSPACE_ROOT = str(Path(__file__).resolve().parents[2])
 CONTENT_DIR = os.path.join(WORKSPACE_ROOT, "site", "content", "docs")
 PERSONA_MATRIX_PATH = os.path.join(WORKSPACE_ROOT, ".ai", "context", "maintenance", "refinement-personas.md")
 

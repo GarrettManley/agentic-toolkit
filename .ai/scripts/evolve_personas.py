@@ -2,9 +2,10 @@ import ollama
 import os
 import re
 from datetime import datetime
+from pathlib import Path
 
 # Configuration
-WORKSPACE_ROOT = r"C:\Users\Garre\Workspace"
+WORKSPACE_ROOT = str(Path(__file__).resolve().parents[2])
 PERSONA_MATRIX_PATH = os.path.join(WORKSPACE_ROOT, ".ai", "context", "maintenance", "refinement-personas.md")
 DETAIL_LOG_PATH = os.path.join(WORKSPACE_ROOT, ".ai", "logs", "refinement_details.log")
 

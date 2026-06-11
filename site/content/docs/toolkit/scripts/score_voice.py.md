@@ -1,6 +1,6 @@
 ---
 title: "Core Script: score_voice.py"
-date: 2026-06-10
+date: 2026-06-11
 draft: false
 ---
 
@@ -10,6 +10,7 @@ draft: false
 import os
 import json
 from datetime import datetime
+from pathlib import Path
 
 # NOTE: This script will be invoked by the main agent using the 'generalist' 
 # or direct cloud tool to avoid local model bias in qualitative scoring.
@@ -28,7 +29,7 @@ def get_vibe_score(content):
     pass # To be executed via the agent's cloud context
 
 def audit_site_vibe():
-    content_dir = r"C:\Users\Garre\Workspace\site\content\docs"
+    content_dir = str(Path(__file__).resolve().parents[2] / "site" / "content" / "docs")
     # Placeholder for the resulting report
     report = {
         "timestamp": datetime.now().isoformat(),

@@ -2,8 +2,9 @@ import os
 import re
 import json
 from datetime import datetime
+from pathlib import Path
 
-WORKSPACE_ROOT = r"C:\Users\Garre\Workspace"
+WORKSPACE_ROOT = str(Path(__file__).resolve().parents[2])
 ADR_DIR = os.path.join(WORKSPACE_ROOT, ".ai", "adr")
 PERFORMANCE_LOG = os.path.join(WORKSPACE_ROOT, ".ai", "context", "maintenance", "model-performance.md")
 

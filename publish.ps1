@@ -40,7 +40,7 @@ uv run .ai/scripts/generate_spec.py
 # 3. Hugo Build
 Write-Host "Building Site (Hugo)..." -ForegroundColor Gray
 cd site
-uvx hugo
+uvx hugo --cleanDestinationDir
 if ($LASTEXITCODE -ne 0) { Write-Error "Hugo build failed."; exit 1 }
 
 # 4. Firebase Deploy

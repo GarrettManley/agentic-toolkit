@@ -1,6 +1,6 @@
 ---
 title: "Core Script: scrub_emojis.py"
-date: 2026-06-10
+date: 2026-06-11
 draft: false
 ---
 
@@ -9,6 +9,7 @@ draft: false
 ```text
 import os
 import re
+from pathlib import Path
 
 # Comprehensive Emoji Regex
 EMOJI_PATTERN = re.compile(
@@ -23,7 +24,7 @@ EMOJI_PATTERN = re.compile(
 )
 
 # Configuration
-CONTENT_DIR = r"C:\Users\Garre\Workspace\site\content"
+CONTENT_DIR = str(Path(__file__).resolve().parents[2] / "site" / "content")
 
 def scrub_file(file_path):
     with open(file_path, "r", encoding="utf-8") as f:

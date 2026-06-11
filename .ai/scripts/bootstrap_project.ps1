@@ -7,7 +7,7 @@ param (
     [string]$TargetPath
 )
 
-$workspaceRoot = "C:\Users\Garre\Workspace"
+$workspaceRoot = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
 $templateSource = "$workspaceRoot\.ai\templates\project-init"
 $globalSkills = "$workspaceRoot\.ai\skills"
 

@@ -1,6 +1,6 @@
 ---
 title: "Core Script: package_sdk.py"
-date: 2026-06-10
+date: 2026-06-11
 draft: false
 ---
 
@@ -11,8 +11,9 @@ import os
 import json
 import shutil
 from datetime import datetime
+from pathlib import Path
 
-WORKSPACE_ROOT = r"C:\Users\Garre\Workspace"
+WORKSPACE_ROOT = str(Path(__file__).resolve().parents[2])
 MANIFEST_PATH = os.path.join(WORKSPACE_ROOT, "ai-workspace-manifest.json")
 PACKAGE_DIR = os.path.join(WORKSPACE_ROOT, "dist", "agentic-sdk")
 

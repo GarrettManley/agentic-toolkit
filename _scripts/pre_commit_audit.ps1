@@ -14,7 +14,7 @@
 #   node_modules, themes, public, dist, .git, *cache, .firebase  - vendored / generated / VCS
 #   Duracell*, malachite                                         - isolated corporate repos (NEVER scan - GEMINI.md §4)
 #   System.Control, Roleplaying                                  - nested independent repos with their own gates
-#   archetypes, .gemini, superpowers, .superpowers              - spec/plan/scaffold trees whose "TBD" markers are intentional
+#   archetypes, .gemini, superpowers, .superpowers, retrospectives - spec/plan/scaffold/retro trees whose "TBD" markers are intentional or quoted narrative
 
 $ErrorActionPreference = 'Stop'
 $root = (Resolve-Path "$PSScriptRoot\..").Path
@@ -22,7 +22,7 @@ $errorCount = 0
 
 # A path segment is pruned if it matches one of these names. Anchored on path
 # separators so it matches whole directory names, not substrings.
-$prunePattern = '[\\/](node_modules|themes|public|dist|\.git|\.ruff_cache|\.pytest_cache|\.firebase|\.superpowers|Duracell[^\\/]*|malachite|System\.Control|Roleplaying|archetypes|\.gemini|superpowers)([\\/]|$)'
+$prunePattern = '[\\/](node_modules|themes|public|dist|\.git|\.ruff_cache|\.pytest_cache|\.firebase|\.superpowers|Duracell[^\\/]*|malachite|System\.Control|Roleplaying|archetypes|\.gemini|superpowers|retrospectives)([\\/]|$)'
 
 function Get-AuditFiles {
     param([string]$Root, [string]$Prune, [string[]]$Extensions)
