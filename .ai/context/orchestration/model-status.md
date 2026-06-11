@@ -1,14 +1,19 @@
 ---
 topic: Local Model Baseline
-last_verified: 2026-03-25
+last_verified: 2026-06-09
 model: deepseek-r1-8b-agent (MFDoom distilled)
 optimized_ctx: 4096
 vram_offload: Full GPU (RTX 4060)
 inference_speed: 54.05 tokens/sec
-status: ✅ Verified & Active
+status: ⚠️ STALE — model no longer installed (verified via `ollama list` 2026-06-09)
 ---
 
 # Local Model Status
+
+> **STALE (2026-06-09):** `deepseek-r1-8b-agent` / `MFDoom/deepseek-r1-tool-calling:8b` is
+> no longer in `ollama list`. Current reasoning primary is `deepseek-r1:7b` — see canonical
+> `~/.claude/context/hardware-profile.md`. The benchmark below is retained as a historical
+> record only.
 
 This document records the verified performance of the local reasoning engine.
 

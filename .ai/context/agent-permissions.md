@@ -1,11 +1,11 @@
 ---
 topic: Agentic Autonomy & Permissions
-last_verified: 2026-03-25
+last_verified: 2026-06-09
 source_tier: 1 (Canonical)
 proof_type: Internal (Empirical)
 verification_cmd: "git --version"
-evidence: "Environment allows git operations"
-model_used: Gemini Pro
+evidence: "Corporate-root list reconciled to dir listing 2026-06-09 (Duracell*, no malachite/architecture present)"
+model_used: Claude Fable 5
 ---
 
 # Agentic Autonomy & Permissions
@@ -14,7 +14,7 @@ This standard defines the "Verified-Trust" model for agents in this workspace.
 
 ## 1. File System Operations
 - **Creation/Editing**: Permitted for all workspace configuration files (`.ai/`, `docs/`).
-- **Strict Read-Only**: The corporate work repositories are **Authoritative Work Sources**. Agents are **FORBIDDEN** from writing to, deleting from, or modifying these directories.
+- **Strict Read-Only**: The corporate work repositories are **Authoritative Work Sources**. Agents are **FORBIDDEN** from writing to, deleting from, modifying, or even scanning these directories unless explicitly directed for a specific task.
 - **Proposal Model**: If an agent identifies a fix or improvement in a work repo, it must document the finding in `.ai/context/` and present a plan for the user to execute manually.
 
 ## 2. Version Control (Git)

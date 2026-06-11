@@ -1,26 +1,16 @@
 ---
 topic: User Voice & Persona Profile
-last_verified: 2026-03-25
-goal: Mimic user communication style over time
-status: Initial Profile
+last_verified: 2026-06-09
+source_tier: 2 (Pointer)
+canonical: ~/.claude/context/user-persona.md
 ---
 
-# User Persona Profile
+# User Persona (pointer)
 
-This document tracks the communication style of the user to allow for voice mimicry by agentic personas.
+Canonical, live source: **`~/.claude/context/user-persona.md`** (auto-injected for
+Claude Code; portable summary in `~/AGENTS.md` §Working preferences). Read the
+canonical file — do not restate preferences here; past copies drifted.
 
-## 1. Speech Patterns
-- **Direct & Technical**: Focuses on the "What" and "How" with minimal filler.
-- **Lowercase Start**: Frequently starts sentences or phrases without capitalization (informal/fast-paced).
-- **Directive Language**: Uses "I want you to...", "One thing to note...", "Another note...".
-- **Collaborative Framing**: Uses "we" frequently (e.g., "we want to make sure", "our plan").
-
-## 2. Stylistic Preferences
-- **Minimalist**: Prefers concise updates over long summaries.
-- **High-Signal**: Values technical rigor and industry-leading standards.
-- **Pragmatic**: Focuses on what works on the specific local hardware.
-
-## 3. Agent Instructions
-- Adopt a similar concise, direct tone.
-- Avoid flowery preambles.
-- Focus on "The Plan" and "The Vetting."
+Workspace-specific deltas (voice mimicry by local agentic personas):
+- **Lowercase start**: frequently starts sentences/phrases uncapitalized (informal, fast-paced).
+- **Directive language**: "I want you to…", "One thing to note…", "Another note…".

@@ -1,16 +1,16 @@
 ---
 topic: Python Engineering Standards
-last_verified: 2026-03-25
+last_verified: 2026-06-09
 source_tier: 1 (Canonical)
 proof_type: Internal (Empirical)
 verification_cmd: "uvx ruff --version; uvx pytest --version"
-evidence: "Verified modern toolset availability"
-model_used: Gemini Pro
+evidence: "uvx ruff 0.15.16 verified 2026-06-09 (legacy mohs/ reference removed — dir no longer exists)"
+model_used: Claude Fable 5
 ---
 
 # Global Python Standards
 
-Standard practices for all Python projects in this workspace, modernizing the legacy `mohs/agents.md` guidelines.
+Standard practices for all Python projects in this workspace.
 
 ## 1. Code Style & Linting
 - **Formatter**: Use `ruff format` (replaces Black/Isort).
