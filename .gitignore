@@ -1,6 +1,10 @@
 # Ignore all top-level files/folders by default
 /*
 
+# Career/ is a nested private repo (github GarrettManley/career-ops): this parent
+# remote is PUBLIC, so career data must never be tracked here. The /* rule above
+# already excludes it — do NOT add a !Career/ allow-list entry (ADR-003 in that repo).
+
 # Allow-list for Workspace Configuration
 !.gitignore
 !.ai/
