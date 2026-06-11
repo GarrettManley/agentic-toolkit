@@ -1,6 +1,6 @@
 ---
 title: "Core Script: evolve_personas.py"
-date: 2026-06-09
+date: 2026-06-10
 draft: false
 ---
 

@@ -1,6 +1,6 @@
 ---
 title: "Core Script: generate_spec.py"
-date: 2026-06-09
+date: 2026-06-10
 draft: false
 ---
 
