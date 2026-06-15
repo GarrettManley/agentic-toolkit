@@ -1,6 +1,6 @@
 ---
 title: "Core Script: verify_sync.ps1"
-date: 2026-06-11
+date: 2026-06-12
 draft: false
 ---
 

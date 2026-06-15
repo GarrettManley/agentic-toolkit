@@ -1,10 +1,10 @@
 ---
-title: "Core Script: refine_content.py"
-date: 2026-06-11
+title: "Core Script: archive / refine_content.py"
+date: 2026-06-12
 draft: false
 ---
 
-# Core Script: refine_content.py
+# Core Script: archive / refine_content.py
 
 ```text
 import ollama

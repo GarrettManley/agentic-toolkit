@@ -1,10 +1,10 @@
 ---
-title: "Core Script: fast_orchestrator.py"
-date: 2026-06-11
+title: "Core Script: archive / fast_orchestrator.py"
+date: 2026-06-12
 draft: false
 ---
 
-# Core Script: fast_orchestrator.py
+# Core Script: archive / fast_orchestrator.py
 
 ```text
 import ollama

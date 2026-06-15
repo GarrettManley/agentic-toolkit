@@ -1,10 +1,10 @@
 ---
-title: "Core Script: evolve_personas.py"
-date: 2026-06-11
+title: "Core Script: archive / evolve_personas.py"
+date: 2026-06-12
 draft: false
 ---
 
-# Core Script: evolve_personas.py
+# Core Script: archive / evolve_personas.py
 
 ```text
 import ollama
