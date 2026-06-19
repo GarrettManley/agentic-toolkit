@@ -1,0 +1,17 @@
+{{- /* Wilson score 95% CI for a binomial proportion. In: dict successes/trials. Out: dict lower/upper/phat (fractions, clamped to [0,1]). z=1.96. Build-time only. Single top-level return — no nested return (breaks Hugo return-partial detection). */ -}}
+{{- $n := .successes | float -}}
+{{- $N := .trials | float -}}
+{{- $z := 1.96 -}}
+{{- $z2 := mul $z $z -}}
+{{- $phat := cond (gt $N 0.0) (div $n $N) 0.0 -}}
+{{- $lower := 0.0 -}}
+{{- $upper := 0.0 -}}
+{{- if gt $N 0.0 -}}
+  {{- $denom := add 1.0 (div $z2 $N) -}}
+  {{- $center := div (add $phat (div $z2 (mul 2.0 $N))) $denom -}}
+  {{- $var := add (div (mul $phat (sub 1.0 $phat)) $N) (div $z2 (mul 4.0 (mul $N $N))) -}}
+  {{- $half := div (mul $z (math.Sqrt $var)) $denom -}}
+  {{- $lower = math.Max 0.0 (sub $center $half) -}}
+  {{- $upper = math.Min 1.0 (add $center $half) -}}
+{{- end -}}
+{{- return (dict "lower" $lower "upper" $upper "phat" $phat) -}}

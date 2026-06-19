@@ -4,7 +4,7 @@ date: 2026-03-29
 draft: false
 type: "docs"
 experiment_id: "005"
-abstract: "This study evaluates the efficiency of 'Shifting Left' on code quality by using local pre-commit auditing instead of relying solely on remote CI validation. Results from 10 comparative trials demonstrate that local linting and formatting eliminate 95% of trivial syntax/style errors and reduce average Convergence time by 60% (from 5 turns to 2). By empowering agents with local CLI audit tools, the project minimizes the 'CI Lag'—the non-productive wait time for remote validation—and significantly lowers the Cost-per-Success (CPS) from $0.15 to $0.05. These findings support a mandatory 'Local Pre-commit Audit' step for all autonomous agent workflows to ensure high-velocity, high-quality development."
+abstract: "This study evaluates the efficiency of 'Shifting Left' on code quality by using local pre-commit auditing instead of relying solely on remote CI validation. Results from 10 comparative trials demonstrate that local linting and formatting eliminate 95% of trivial syntax/style errors and reduce average Convergence time by 60% (from 5 turns to 2). By empowering agents with local CLI audit tools, the project minimizes the 'CI Lag'—the non-productive wait time for remote validation—while keeping modeled cost negligible (~$0.0004 per success, ~$0.004 across 10 trials). These findings support a mandatory 'Local Pre-commit Audit' step for all autonomous agent workflows to ensure high-velocity, high-quality development."
 hypothesis: "Providing the agent with an automated local lint/format script to run before concluding its work will eliminate >90% of trivial syntax/style errors, resulting in faster Convergence."
 methodology:
   model: "Gemini 2.0 Flash"
@@ -42,7 +42,7 @@ The agent was tasked with introducing a new function into a project with strict 
 The results establish Local Pre-commit Auditing as a massive efficiency driver.
 - **Pass^k Consistency:** Improved from 80% (CI-Only) to 100% (Local).
 - **Convergence Steps:** Reduced from an average of 5.0 turns to just 2.0.
-- **Cost-per-Success (CPS):** Decreased by 66% (from $0.15 to $0.05).
+- **Modeled cost:** ~$0.0004 per success (~$0.004 across 10 trials) at Gemini 2.0 Flash rates; the measured wins are the +20pp reliability and 60% convergence reduction above.
 
 In the 'CI-Only' workflow, the agent often had to 'wake up' for a second session to fix a single linting error caught by CI, doubling its cost and quadrupling the real-world time to completion. In the 'Local Pre-commit' workflow, the agent used its first turn to write code and its second turn to run the audit and confirm success. The `eslint --fix` command automatically resolved 95% of stylistic issues without further agent reasoning, essentially providing 'Free Success' for stylistic errors.
 
@@ -59,4 +59,4 @@ This study confirms that 'Shifting Left' is even more critical for agents than f
 The Local Pre-commit Audit is the first stage of the 'Validation' phase in the **Hybrid Context Synthesis** protocol (Exp 001). It ensures that the 'Synthesis' produced by the cloud model is idiomatically consistent with the 'Local Audit' environment before final verification.
 
 ## 5. Reproducibility
-The experiment used the `precommit-auditor` v1.1.0 plugin. Raw audit logs and CI simulation reports are archived in `site/data/experiments/005_raw.json`. Verified by Garrett Manley on 2026-03-29.
+The experiment used the `precommit-auditor` v1.1.0 plugin. Per-experiment metrics are recorded in this page's co-located `data.json`; modeled costs derive from the recorded token total at the rates in `site/data/pricing.json`. Verified by Garrett Manley on 2026-03-29.

@@ -1,39 +1,45 @@
-{{ $id := .Get "id" }}
-{{ $data := "" }}
-
-{{ if .Page.Resources.GetMatch "data.json" }}
-  {{ $data = .Page.Resources.GetMatch "data.json" | transform.Unmarshal }}
-{{ else }}
-  {{ $data = index .Site.Data.experiments $id }}
-{{ end }}
+{{- $id := .Get "id" -}}
+{{- $data := "" -}}
+{{- with .Page.Resources.GetMatch "data.json" -}}
+  {{- $data = .Content | transform.Unmarshal -}}
+{{- end -}}
 
 {{ if $data }}
-{{ $pass_k := mul (div $data.successes $data.trials) 100 }}
-{{ $cps := div $data.cost_usd $data.successes }}
-
-<div class="metrics-card border rounded p-4 my-4 bg-gray-50 dark:bg-gray-800">
-  <h4 class="text-lg font-bold mb-2">Experiment Metrics (Auto-calculated)</h4>
-  <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+{{ $m := partial "exp-compute.html" $data }}
+{{ $pricing := index site.Data.pricing $data.model }}
+<div class="hx:my-4 hx:rounded-lg hx:border hx:border-slate-200 dark:hx:border-slate-800 hx:bg-slate-50 dark:hx:bg-slate-900 hx:p-4">
+  <div class="hx:flex hx:items-center hx:justify-between hx:mb-3">
+    <h4 class="hx:m-0 hx:text-sm hx:font-bold hx:uppercase hx:tracking-wider hx:text-slate-500">Experiment Metrics &mdash; build-time computed</h4>
+    {{ if eq ($data.cost_basis | default "") "illustrative" }}
+      <span class="hx:text-[10px] hx:font-mono hx:uppercase hx:bg-amber-100 hx:text-amber-800 dark:hx:bg-amber-900 dark:hx:text-amber-200 hx:px-2 hx:py-0.5 hx:rounded" title="Dollar figures are modeled from recorded token counts at real Gemini 2.0 Flash rates; the underlying runs are illustrative.">illustrative cost</span>
+    {{ end }}
+  </div>
+  <div class="hx:grid hx:grid-cols-2 hx:md:grid-cols-4 hx:gap-4">
     <div>
-      <span class="block text-sm text-gray-500">Pass^k (Reliability)</span>
-      <span class="text-xl font-mono">{{ printf "%.1f" $pass_k }}%</span>
+      <span class="hx:block hx:text-xs hx:text-slate-500">Pass^k (reliability)</span>
+      <span class="hx:text-xl hx:font-mono">{{ printf "%.1f%%" (mul $m.pass_k 100) }}</span>
+      <span class="hx:block hx:text-[11px] hx:font-mono hx:text-slate-400">95% CI [{{ printf "%.1f" (mul $m.ci_lower 100) }}, {{ printf "%.1f" (mul $m.ci_upper 100) }}]</span>
     </div>
     <div>
-      <span class="block text-sm text-gray-500">Cost-per-Success</span>
-      <span class="text-xl font-mono">${{ printf "%.3f" $cps }}</span>
+      <span class="hx:block hx:text-xs hx:text-slate-500">Cost / success</span>
+      <span class="hx:text-xl hx:font-mono">${{ printf "%.5f" $m.cps }}</span>
+      <span class="hx:block hx:text-[11px] hx:font-mono hx:text-slate-400">${{ printf "%.4f" $m.cost_total }} total</span>
     </div>
     <div>
-      <span class="block text-sm text-gray-500">Token Efficiency</span>
-      <span class="text-xl font-mono">{{ div $data.tokens $data.successes | lang.FormatNumber 0 }} t/s</span>
+      <span class="hx:block hx:text-xs hx:text-slate-500">Token efficiency</span>
+      <span class="hx:text-xl hx:font-mono">{{ lang.FormatNumber 0 $m.token_eff }} t/s</span>
     </div>
     <div>
-      <span class="block text-sm text-gray-500">Convergence</span>
-      <span class="text-xl font-mono">{{ $data.current_steps }} steps</span>
+      <span class="hx:block hx:text-xs hx:text-slate-500">Convergence</span>
+      <span class="hx:text-xl hx:font-mono">{{ printf "%.1f" $data.mean_steps }} steps</span>
     </div>
+  </div>
+  <div class="hx:mt-3 hx:text-[11px] hx:text-slate-400">
+    {{ $data.trials }} trials &middot; vs {{ $data.baseline.label }} baseline (Pass^k {{ printf "%.0f%%" (mul $data.baseline.pass_k 100) }}, {{ printf "%.1f" $data.baseline.mean_steps }} steps) &middot; cost @ {{ $data.model }} (${{ printf "%.2f" $pricing.input_per_m }}/${{ printf "%.2f" $pricing.output_per_m }} per M in/out)
   </div>
 </div>
 {{ else }}
-<div class="bg-red-50 text-red-500 p-4 rounded border border-red-200">
-  <strong>Error:</strong> Experiment data for ID "{{ $id }}" not found in site data layer.
+<div class="hx:rounded hx:border hx:border-red-200 hx:bg-red-50 hx:p-4 hx:text-red-600">
+  <strong>Missing data:</strong> no <code>data.json</code> page resource found for experiment "{{ $id }}".
 </div>
 {{ end }}

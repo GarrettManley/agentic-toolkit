@@ -1,12 +1,12 @@
 {
   "id": "003",
   "name": "Mandatory Verification",
+  "schema": "single-condition",
+  "model": "gemini-2.0-flash",
   "trials": 100,
   "successes": 98,
-  "tokens": 65000,
-  "cost_usd": 0.07,
-  "baseline_pass_k": 0.65,
-  "baseline_cps": 0.05,
-  "baseline_steps": 1.0,
-  "current_steps": 3.0
+  "tokens_total": 65000,
+  "cost_basis": "illustrative",
+  "baseline": { "label": "Single-Shot", "pass_k": 0.65, "mean_steps": 1.0 },
+  "mean_steps": 3.0
 }

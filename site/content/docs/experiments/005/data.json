@@ -1,12 +1,12 @@
 {
   "id": "005",
   "name": "Local Pre-commit Linting",
+  "schema": "single-condition",
+  "model": "gemini-2.0-flash",
   "trials": 10,
   "successes": 10,
-  "tokens": 25000,
-  "cost_usd": 0.05,
-  "baseline_pass_k": 0.80,
-  "baseline_cps": 0.15,
-  "baseline_steps": 5.0,
-  "current_steps": 2.0
+  "tokens_total": 25000,
+  "cost_basis": "illustrative",
+  "baseline": { "label": "CI-Only", "pass_k": 0.80, "mean_steps": 5.0 },
+  "mean_steps": 2.0
 }

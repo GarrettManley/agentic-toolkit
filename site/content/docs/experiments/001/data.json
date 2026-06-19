@@ -1,12 +1,12 @@
 {
   "id": "001",
   "name": "Hybrid Cognitive Balancing",
+  "schema": "single-condition",
+  "model": "gemini-2.0-flash",
   "trials": 100,
   "successes": 98,
-  "tokens": 145020,
-  "cost_usd": 0.052,
-  "baseline_pass_k": 0.20,
-  "baseline_cps": 0.00,
-  "baseline_steps": 8.2,
-  "current_steps": 3.2
+  "tokens_total": 145020,
+  "cost_basis": "illustrative",
+  "baseline": { "label": "Local-Only", "pass_k": 0.20, "mean_steps": 8.2 },
+  "mean_steps": 3.2
 }

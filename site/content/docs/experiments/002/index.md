@@ -4,7 +4,7 @@ date: 2026-03-29
 draft: false
 type: "docs"
 experiment_id: "002"
-abstract: "This study evaluates the impact of 'Token Budgeting'—the enforcement of architectural constraints on search and read tools—on the efficiency of codebase discovery in autonomous agents. In a 10-trial comparative analysis, we show that restricting file reads to targeted line ranges and capping grep search results leads to a 55% reduction in Cost-per-Success (CPS) while maintaining 100% Pass^k consistency. The research demonstrates that 'Unbounded Context' approaches often lead to redundant token consumption and increased reasoning latency. By implementing a 'Budgeted Discovery' protocol, agents can effectively navigate large workspaces using surgical context acquisition, establishing a scalable foundation for cost-effective agentic engineering."
+abstract: "This study evaluates the impact of 'Token Budgeting'—the enforcement of architectural constraints on search and read tools—on the efficiency of codebase discovery in autonomous agents. In a 10-trial comparative analysis, we show that restricting file reads to targeted line ranges and capping grep search results leads to a 55% reduction in token consumption (~9,500 to ~4,200 tokens per trial) while maintaining 100% Pass^k consistency. The research demonstrates that 'Unbounded Context' approaches often lead to redundant token consumption and increased reasoning latency. By implementing a 'Budgeted Discovery' protocol, agents can effectively navigate large workspaces using surgical context acquisition, establishing a scalable foundation for cost-effective agentic engineering."
 hypothesis: "Restricting file reads to targeted line ranges and capping grep results (Token Budgeting) will reduce Cost-per-Success (CPS) by >40% without negatively impacting the Pass^k consistency."
 methodology:
   model: "Gemini 2.0 Flash"
@@ -35,7 +35,7 @@ Each trial required the agent to find and modify a deeply nested configuration v
 {{< experiment-metrics id="002" >}}
 
 The results confirm that Token Budgeting is an essential architectural constraint.
-- **Cost-per-Success (CPS):** Reduced from a baseline of $0.10 to $0.045 (a 55% reduction).
+- **Modeled cost:** ~$0.0007 per success (~$0.0067 across 10 trials) at Gemini 2.0 Flash rates; the 55% efficiency gain is measured in tokens (below), not a separately-recorded dollar baseline.
 - **Pass^k Consistency:** Remained at 100% for both strategies.
 - **Token Consumption:** The Budgeted agent used an average of 4,200 tokens per trial, compared to ~9,500 for the Unbounded agent.
 
@@ -53,4 +53,4 @@ Token Budgeting shifts the cognitive load from 'Brute Force Reading' to 'Precise
 The findings here integrate directly with **Hybrid Context Synthesis** (Exp 001). The 'Local Audit' phase is most effective when it is Token-Budgeted, ensuring that the filtered context sent to the 'Cloud Synthesis' phase is pure, high-signal, and cost-optimized.
 
 ## 5. Reproducibility
-The experiment utilized the `context-limiter` v0.9.1 plugin. Trial data and raw token logs are available in `site/data/experiments/002_data.json`. Verified by Garrett Manley on 2026-03-29.
+The experiment utilized the `context-limiter` v0.9.1 plugin. Per-experiment metrics are recorded in this page's co-located `data.json`; modeled costs derive from the recorded token total at the rates in `site/data/pricing.json`. Verified by Garrett Manley on 2026-03-29.

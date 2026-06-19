@@ -38,7 +38,7 @@ The task involved updating a shared configuration object deeply nested within a 
 The empirical data highlights a stark trade-off between cost and reliability.
 - **Output Token Reduction:** The 'Surgical Replace' strategy achieved an 85% reduction in output tokens (15,000 vs. ~100,000 for full overwrites).
 - **Initial Success Rate:** Only 60% of 'Surgical Replace' attempts succeeded on the first turn (6 out of 10).
-- **Cost Efficiency:** Despite the higher turn count (Convergence 3.0), the CPS for surgical edits was $0.02, compared to $0.15 for full overwrites.
+- **Modeled cost:** ~$0.0009 per success (~$0.0053 across 10 trials) at Gemini 2.0 Flash rates. The measured efficiency win is the 85% output-token reduction above — though reliability drops to 60% (the surgical paradox).
 
 The primary cause of failure in 'Surgical Replace' was 'Line-Ending Mismatch' (CRLF vs. LF) and 'Whitespace Ambiguity'. Agents often failed to match the exact indentation of the target block, causing the tool to fail. However, in most cases, the agent used the error message from the failed `replace` call to adjust its search string and succeed in the subsequent turn.
 
@@ -57,4 +57,4 @@ The 'Surgical Paradox' states that while more precise tools are cheaper, they re
 The 'Surgical Replace' protocol is the preferred implementation method within the **Hybrid Context Synthesis** framework (Exp 001). By reducing the output volume of the cloud synthesizer, we minimize the latency and cost of high-level reasoning.
 
 ## 5. Reproducibility
-The experiment used the `surgical-toolkit` v1.0.0. Raw output logs and the 500-line mock file used for testing are archived in `site/data/experiments/004_raw.json`. Verified by Garrett Manley on 2026-03-29.
+The experiment used the `surgical-toolkit` v1.0.0. Per-experiment metrics are recorded in this page's co-located `data.json`; modeled costs derive from the recorded token total at the rates in `site/data/pricing.json`. Verified by Garrett Manley on 2026-03-29.

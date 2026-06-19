@@ -1,0 +1,19 @@
+{
+  "_comment": "Model token pricing used to compute experiment costs at build time. Rates are USD per 1,000,000 tokens. 'assumed_output_fraction' models the input/output token mix when an experiment recorded only a total token count; at a 50/50 split the gemini-2.0-flash blended rate would rise from $0.16/M to $0.25/M (a sensitivity worth noting on any cost claim).",
+  "gemini-2.0-flash": {
+    "input_per_m": 0.10,
+    "output_per_m": 0.40,
+    "assumed_output_fraction": 0.20,
+    "source": "https://ai.google.dev/gemini-api/docs/pricing",
+    "as_of": "2026-03",
+    "tier": "standard-paid-text"
+  },
+  "local-llama-server": {
+    "input_per_m": 0.0,
+    "output_per_m": 0.0,
+    "assumed_output_fraction": 0.20,
+    "source": "local GGUF inference on RTX 4060 via llama-server; marginal cost is electricity only, treated as $0/token",
+    "as_of": "2026-06",
+    "tier": "local"
+  }
+}

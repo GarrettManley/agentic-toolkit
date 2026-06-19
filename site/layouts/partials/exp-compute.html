@@ -1,0 +1,30 @@
+{{- /*
+  Canonical single-condition experiment metrics — the ONE place every surface
+  (card, dashboard table, pulse chart, homepage aggregate) computes from.
+  Input:  a single-condition data.json dict (must have: trials, successes,
+          tokens_total, model). Optional: output_fraction (per-experiment override).
+  Output: dict with pass_k, ci_lower, ci_upper (fractions), cost_total, cps,
+          token_eff, blended_rate.
+  Cost is derived from site.Data.pricing[model] at build time — no hand math.
+*/ -}}
+{{- $d := . -}}
+{{- $trials := $d.trials | float -}}
+{{- $succ := $d.successes | float -}}
+{{- $tokens := $d.tokens_total | float -}}
+{{- $passk := cond (gt $trials 0.0) (div $succ $trials) 0.0 -}}
+{{- $ci := partial "wilson.html" (dict "successes" $succ "trials" $trials) -}}
+{{- $pricing := index hugo.Data.pricing $d.model -}}
+{{- $of := $pricing.assumed_output_fraction -}}
+{{- if isset $d "output_fraction" -}}{{- $of = $d.output_fraction -}}{{- end -}}
+{{- $blended := add (mul $pricing.input_per_m (sub 1.0 $of)) (mul $pricing.output_per_m $of) -}}
+{{- $cost := div (mul $tokens $blended) 1000000.0 -}}
+{{- $cps := cond (gt $succ 0.0) (div $cost $succ) 0.0 -}}
+{{- $teff := cond (gt $succ 0.0) (div $tokens $succ) 0.0 -}}
+{{- return (dict
+      "pass_k" $passk
+      "ci_lower" $ci.lower
+      "ci_upper" $ci.upper
+      "cost_total" $cost
+      "cps" $cps
+      "token_eff" $teff
+      "blended_rate" $blended) -}}

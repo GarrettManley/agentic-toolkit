@@ -4,7 +4,7 @@ date: 2026-03-26
 draft: false
 type: "docs"
 experiment_id: "001"
-abstract: "This study investigates the impact of shifting from Local-Only authorship to Hybrid Context Synthesis (Local Audit + Cloud Synthesis) on agentic reasoning efficiency. Using a dual-layered cognitive architecture, we demonstrate that delegating high-level synthesis to cloud-scale models while maintaining local execution integrity significantly improves Pass^k consistency (98%) and reduces convergence steps (3.2). The research confirms that the overhead of cloud orchestration is offset by the drastic reduction in 'Agent-Cluster' noise and redundant local iterations, maintaining a competitive Cost-per-Success (CPS) of $0.052. These findings establish Hybrid Context Synthesis as the foundational architectural pattern for reliable autonomous software engineering."
+abstract: "This study investigates the impact of shifting from Local-Only authorship to Hybrid Context Synthesis (Local Audit + Cloud Synthesis) on agentic reasoning efficiency. Using a dual-layered cognitive architecture, we demonstrate that delegating high-level synthesis to cloud-scale models while maintaining local execution integrity significantly improves Pass^k consistency (98%) and reduces convergence steps (3.2). The research confirms that the overhead of cloud orchestration is offset by the drastic reduction in 'Agent-Cluster' noise and redundant local iterations, at negligible economic cost — the full 100-trial run is modeled at roughly $0.02 total (~$0.0002 per success) at Gemini 2.0 Flash rates. These findings establish Hybrid Context Synthesis as the foundational architectural pattern for reliable autonomous software engineering."
 hypothesis: "Shifting from Local-Only authorship to Hybrid Context Synthesis (Local Audit + Cloud Synthesis) will achieve >95% Pass^k consistency while maintaining a Cost-per-Success (CPS) of <$0.10."
 methodology:
   model: "Gemini 2.0 Flash (Synthesis), DeepSeek-R1 8B via Ollama (Local Audit)"
@@ -39,7 +39,7 @@ Convergence was measured as the number of turns required to reach a 'Verified Su
 The transition to **Hybrid Context Synthesis** represents a paradigm shift in agentic performance. The data reveals a 3x improvement in reasoning efficiency.
 - **Pass^k Consistency:** Increased from a baseline of 20% (Local-Only) to 98%.
 - **Convergence:** Average steps reduced from 8.2 to 3.2.
-- **Cost Efficiency:** While the baseline cost was effectively zero (local inference), the Hybrid CPS of $0.052 remains well below the $0.10 threshold for economically viable automation.
+- **Cost Efficiency:** The Local-Only baseline incurred no API cost (local inference). The Hybrid run is modeled at ~$0.0002 per success (~$0.02 for all 100 trials) at Gemini 2.0 Flash rates ($0.10 / $0.40 per 1M input / output tokens) — comfortably within the bounds of economically viable automation.
 
 The elimination of 'Agent-Cluster' noise was the most qualitative observation. In the Local-Only baseline, agents frequently entered infinite loops of `ls` and `cat` calls. Under Hybrid Context Synthesis, the superior reasoning of the cloud model identified the need for specific context early, leading to surgical, successful edits in the first or second implementation turn.
 
@@ -56,4 +56,4 @@ The results confirm the 'Cognitive Offloading' hypothesis: delegating the 'What'
 Research will focus on 'Dynamic Thresholding'—automatically deciding when a task is simple enough for purely local execution vs. when to escalate to Hybrid Context Synthesis. Additionally, improving the 'Context Compression' algorithms in the Audit phase could further reduce CPS.
 
 ## 5. Reproducibility
-The experiment was conducted using the `superpowers-toolkit` v1.2.0. All trial data, including the raw logs of the 100 trials, is archived in the `site/data/experiments/001_raw.json` file. Verification was completed by Garrett Manley on 2026-03-26.
+The experiment was conducted using the `superpowers-toolkit` v1.2.0. Per-experiment metrics are recorded in this page's co-located `data.json`; dollar costs are computed at build time from the recorded token total at the rates in `site/data/pricing.json` (Gemini 2.0 Flash, $0.10 / $0.40 per 1M input / output tokens). Verification was completed by Garrett Manley on 2026-03-26.

@@ -1,12 +1,13 @@
 {
   "id": "004",
   "name": "Surgical Replace",
+  "schema": "single-condition",
+  "model": "gemini-2.0-flash",
   "trials": 10,
   "successes": 6,
-  "tokens": 15000,
-  "cost_usd": 0.02,
-  "baseline_pass_k": 1.00,
-  "baseline_cps": 0.15,
-  "baseline_steps": 1.0,
-  "current_steps": 3.0
+  "tokens_total": 15000,
+  "output_fraction": 0.85,
+  "cost_basis": "illustrative",
+  "baseline": { "label": "Full Overwrite", "pass_k": 1.00, "mean_steps": 1.0 },
+  "mean_steps": 3.0
 }

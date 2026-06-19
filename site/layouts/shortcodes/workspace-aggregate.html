@@ -1,0 +1,42 @@
+{{- /*
+  Build-time aggregate of all single-condition experiments. Replaces the
+  hand-authored homepage stat cards so the numbers can never drift from the
+  data.json files. Filters on the schema discriminator so multi-model
+  experiments (e.g. Exp 006) don't poison the single-condition sums.
+*/ -}}
+{{ $trials := 0.0 }}{{ $succ := 0.0 }}{{ $cost := 0.0 }}{{ $steps := slice }}
+{{ range (where site.RegularPages "Section" "docs") }}
+  {{ if in .RelPermalink "/experiments/" }}
+    {{ with .Resources.GetMatch "data.json" }}
+      {{ $json := .Content | transform.Unmarshal }}
+      {{ if eq ($json.schema | default "single-condition") "single-condition" }}
+        {{ $m := partial "exp-compute.html" $json }}
+        {{ $trials = add $trials ($json.trials | float) }}
+        {{ $succ = add $succ ($json.successes | float) }}
+        {{ $cost = add $cost $m.cost_total }}
+        {{ $steps = $steps | append ($json.mean_steps | float) }}
+      {{ end }}
+    {{ end }}
+  {{ end }}
+{{ end }}
+{{ $passk := cond (gt $trials 0.0) (mul (div $succ $trials) 100.0) 0.0 }}
+{{ $cps := cond (gt $succ 0.0) (div $cost $succ) 0.0 }}
+{{ $conv := cond (gt (len $steps) 0) (div (math.Sum $steps) (len $steps)) 0.0 }}
+
+<div class="hx:grid hx:grid-cols-1 hx:sm:grid-cols-3 hx:gap-4 hx:my-6">
+  <div class="hx:rounded-xl hx:border hx:border-slate-200 dark:hx:border-slate-800 hx:bg-white dark:hx:bg-black hx:p-5">
+    <div class="hx:text-xs hx:font-semibold hx:uppercase hx:tracking-wider hx:text-slate-500">Pass^k Reliability</div>
+    <div class="hx:mt-1 hx:text-2xl hx:font-mono hx:font-bold">{{ printf "%.1f%%" $passk }}</div>
+    <div class="hx:text-xs hx:text-slate-500">{{ int $succ }} of {{ int $trials }} trials across all experiments</div>
+  </div>
+  <div class="hx:rounded-xl hx:border hx:border-slate-200 dark:hx:border-slate-800 hx:bg-white dark:hx:bg-black hx:p-5">
+    <div class="hx:text-xs hx:font-semibold hx:uppercase hx:tracking-wider hx:text-slate-500">Cost / Successful Fix</div>
+    <div class="hx:mt-1 hx:text-2xl hx:font-mono hx:font-bold">${{ printf "%.5f" $cps }}</div>
+    <div class="hx:text-xs hx:text-slate-500">${{ printf "%.4f" $cost }} total &middot; modeled at real Gemini 2.0 Flash rates</div>
+  </div>
+  <div class="hx:rounded-xl hx:border hx:border-slate-200 dark:hx:border-slate-800 hx:bg-white dark:hx:bg-black hx:p-5">
+    <div class="hx:text-xs hx:font-semibold hx:uppercase hx:tracking-wider hx:text-slate-500">Convergence</div>
+    <div class="hx:mt-1 hx:text-2xl hx:font-mono hx:font-bold">~{{ printf "%.1f" $conv }} steps</div>
+    <div class="hx:text-xs hx:text-slate-500">mean iterations to a verified fix</div>
+  </div>
+</div>

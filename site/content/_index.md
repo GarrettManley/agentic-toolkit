@@ -41,11 +41,7 @@ validated experiment.
 
 {{< workspace-pulse >}}
 
-{{< cards cols="3" >}}
-  {{< card title="Pass^k Reliability" icon="shield-check" subtitle="96.5% — 222 of 230 trials passed across 5 experiments." >}}
-  {{< card title="Cost / Successful Fix" icon="lightning-bolt" subtitle="$0.001 — aggregate cost per success, local-first." >}}
-  {{< card title="Convergence" icon="chip" subtitle="~2.6 steps — mean iterations to a verified fix." >}}
-{{< /cards >}}
+{{< workspace-aggregate >}}
 
 ---
 

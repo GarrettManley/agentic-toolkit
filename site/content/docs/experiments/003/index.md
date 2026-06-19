@@ -4,7 +4,7 @@ date: 2026-03-29
 draft: false
 type: "docs"
 experiment_id: "003"
-abstract: "This study explores the impact of a mandatory, tool-enforced verification step on the reliability of autonomous software engineering agents. Using 100 trials, we compared a 'Single-Shot' generation strategy with a 'Mandatory Verification' protocol. Results demonstrate that forcing the agent to execute a local validation command (e.g., a linter, test, or build script) increases Pass^k consistency from 65% to 98%. Although this protocol increases the turn count (Convergence) from 1 to 3 steps and slightly raises the average Cost-per-Success (CPS) to $0.07, the 33% gain in reliability is a foundational requirement for production-grade agentic authorship. These findings support the adoption of 'Local Verification' as a non-negotiable step in the agentic development lifecycle."
+abstract: "This study explores the impact of a mandatory, tool-enforced verification step on the reliability of autonomous software engineering agents. Using 100 trials, we compared a 'Single-Shot' generation strategy with a 'Mandatory Verification' protocol. Results demonstrate that forcing the agent to execute a local validation command (e.g., a linter, test, or build script) increases Pass^k consistency from 65% to 98%. Although this protocol increases the turn count (Convergence) from 1 to 3 steps at a modeled cost of roughly $0.0001 per success (~$0.01 across 100 trials), the 33% gain in reliability is a foundational requirement for production-grade agentic authorship. These findings support the adoption of 'Local Verification' as a non-negotiable step in the agentic development lifecycle."
 hypothesis: "Requiring the agent to successfully execute a verification command (e.g., running a script or test) before marking a task complete will increase Pass^k consistency by >30%."
 methodology:
   model: "Gemini 2.0 Flash"
@@ -39,9 +39,9 @@ Each trial involved a cross-file refactor in a multi-file Node.js project. For i
 The empirical data establishes Mandatory Verification as the single most critical factor in achieving high-reliability (Pass^k) performance.
 - **Pass^k Consistency:** Improved from 65% in the Single-Shot baseline to 98%.
 - **Convergence Steps:** Increased from 1.0 (by definition) to 3.0.
-- **Cost-per-Success (CPS):** Rose slightly from $0.05 to $0.07.
+- **Modeled cost:** ~$0.0001 per success (~$0.01 across 100 trials) at Gemini 2.0 Flash rates.
 
-The 25% cost increase is negligible compared to the 33% absolute gain in reliability. In the Single-Shot trials, failures were typically caused by small syntax errors (e.g., missing imports) or incorrect relative paths. In the Mandatory Verification trials, the agent encountered these same errors but used the shell output to self-correct in its second or third turn, reaching a 98% success rate.
+The marginal token cost of the extra verification turns is negligible compared to the 33-point absolute gain in reliability. In the Single-Shot trials, failures were typically caused by small syntax errors (e.g., missing imports) or incorrect relative paths. In the Mandatory Verification trials, the agent encountered these same errors but used the shell output to self-correct in its second or third turn, reaching a 98% success rate.
 
 ## 4. Discussion & Limitations
 ### 4.1 The Self-Healing Loop
@@ -56,4 +56,4 @@ Mandatory Verification transforms the agent from a 'Writer' into a 'Tester-Refin
 The Mandatory Verification step is the final 'Validation' phase in the **Hybrid Context Synthesis** protocol (Exp 001). It ensures that the high-level synthesis is correctly applied to the local filesystem, closing the loop between cloud reasoning and local execution.
 
 ## 5. Reproducibility
-All 100 trials were logged using the `superpowers-verify` v0.5.2 tool. Raw logs and verification scripts are available in `site/data/experiments/003_raw.json`. Verified by Garrett Manley on 2026-03-29.
+All 100 trials were logged using the `superpowers-verify` v0.5.2 tool. Per-experiment metrics are recorded in this page's co-located `data.json`; modeled costs derive from the recorded token total at the rates in `site/data/pricing.json`. Verified by Garrett Manley on 2026-03-29.
