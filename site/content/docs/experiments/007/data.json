@@ -1,0 +1,17 @@
+{
+  "id": "007",
+  "name": "Aether Intent Classifier: Grammar-Constrained vs Prompt-Injection JSON",
+  "schema": "single-condition",
+  "domain": "classification",
+  "model": "gemma-4-E4B",
+  "trials": 240,
+  "successes": 240,
+  "tokens_total": 86400,
+  "cost_basis": "local",
+  "baseline": { "label": "prompt-injection JSON", "pass_k": 0.896, "mean_steps": 1.0 },
+  "mean_steps": 1.0,
+  "mcnemar_p": 0.001,
+  "mcnemar_b": 25,
+  "mcnemar_c": 0,
+  "mcnemar_n": 240
+}

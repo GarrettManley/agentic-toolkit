@@ -1,0 +1,31 @@
+{
+  "seed": 42,
+  "n_cases": 60,
+  "bands": {
+    "easy_N4": 20,
+    "med_N5": 20,
+    "hard_N6": 20
+  },
+  "node_counts": {
+    "easy_N4": 4,
+    "med_N5": 5,
+    "hard_N6": 6
+  },
+  "edge_probs": {
+    "easy_N4": 0.35,
+    "med_N5": 0.45,
+    "hard_N6": 0.55
+  },
+  "deadline_met_count": 28,
+  "deadline_unmet_count": 32,
+  "boundary_cases": [
+    "c01",
+    "c05",
+    "c29",
+    "c35",
+    "c42",
+    "c48"
+  ],
+  "llama_server_build": "9596",
+  "generated_by": "gen_cases.py"
+}

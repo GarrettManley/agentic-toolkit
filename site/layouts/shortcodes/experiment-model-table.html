@@ -1,0 +1,56 @@
+{{- /* Multi-model leaderboard for Exp 006 (schema: multi-model). Reads the page's
+       co-located data.json; recomputes Pass^k CI via the canonical wilson.html partial
+       so the math matches the single-condition experiments. */ -}}
+{{ $data := "" }}
+{{ with .Page.Resources.GetMatch "data.json" }}{{ $data = .Content | transform.Unmarshal }}{{ end }}
+{{ if and $data (eq ($data.schema | default "") "multi-model") }}
+<div class="hx:mt-8 hx:border hx:border-slate-200 dark:hx:border-slate-800 hx:rounded-lg hx:overflow-hidden hx:shadow-sm">
+  <div class="hx:bg-slate-50 dark:hx:bg-slate-900 hx:px-4 hx:py-3 hx:border-b hx:border-slate-200 dark:hx:border-slate-800 hx:flex hx:items-center hx:justify-between">
+    <h2 class="hx:m-0 hx:text-sm hx:font-bold hx:tracking-widest hx:uppercase hx:text-slate-500">Per-Model Leaderboard &mdash; {{ $data.n_cases }} cases, seed {{ $data.seed }}</h2>
+    <span class="hx:text-[10px] hx:font-mono hx:bg-primary-100 hx:text-primary-800 dark:hx:bg-primary-900 dark:hx:text-primary-200 hx:px-2 hx:py-0.5 hx:rounded hx:uppercase">llama-server {{ $data.llama_server_build }}</span>
+  </div>
+  <div class="hx:overflow-x-auto">
+    <table class="hx:w-full hx:border-collapse hx:text-left hx:text-sm">
+      <thead>
+        <tr class="hx:bg-white dark:hx:bg-black hx:border-b hx:border-slate-100 dark:hx:border-slate-900">
+          <th class="hx:px-4 hx:py-3 hx:font-semibold hx:border-r hx:border-slate-50 dark:hx:border-slate-900">Model</th>
+          <th class="hx:px-4 hx:py-3 hx:font-semibold">Pass^k (95% CI)</th>
+          <th class="hx:px-3 hx:py-3 hx:font-semibold hx:text-center" title="Easy band: 4-node DAGs">N=4</th>
+          <th class="hx:px-3 hx:py-3 hx:font-semibold hx:text-center" title="Medium band: 5-node DAGs">N=5</th>
+          <th class="hx:px-3 hx:py-3 hx:font-semibold hx:text-center" title="Hard band: 6-node DAGs">N=6</th>
+          <th class="hx:px-3 hx:py-3 hx:font-semibold hx:text-center" title="Exact per-task finish_times map — the hardest sub-task">finish_times</th>
+          <th class="hx:px-3 hx:py-3 hx:font-semibold hx:text-right" title="Decode throughput on the RTX 4060">tok/s</th>
+          <th class="hx:px-3 hx:py-3 hx:font-semibold hx:text-right" title="Completion tokens per successful case">tok/✓</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{ range sort $data.models "pass_k" "desc" }}
+          {{ if eq .pass_k nil }}
+            <tr class="hx:border-b hx:border-slate-100 dark:hx:border-slate-900">
+              <td class="hx:px-4 hx:py-3 hx:font-mono hx:border-r hx:border-slate-50 dark:hx:border-slate-900">{{ .model }}</td>
+              <td class="hx:px-4 hx:py-3 hx:text-amber-600 hx:italic" colspan="7">{{ .note }}</td>
+            </tr>
+          {{ else }}
+            {{ $ci := partial "wilson.html" (dict "successes" .successes "trials" .trials) }}
+            <tr class="hx:border-b hx:border-slate-100 dark:hx:border-slate-900 hover:hx:bg-slate-50 dark:hover:hx:bg-slate-900/50">
+              <td class="hx:px-4 hx:py-3 hx:border-r hx:border-slate-50 dark:hx:border-slate-900"><span class="hx:font-mono hx:font-medium">{{ .model }}</span> <span class="hx:text-[10px] hx:text-slate-400">{{ .quant }}</span></td>
+              <td class="hx:px-4 hx:py-3 hx:font-mono">{{ printf "%.1f%%" (mul .pass_k 100) }} <span class="hx:text-[10px] hx:text-slate-400">[{{ printf "%.0f" (mul $ci.lower 100) }}&ndash;{{ printf "%.0f" (mul $ci.upper 100) }}]</span></td>
+              <td class="hx:px-3 hx:py-3 hx:text-center hx:font-mono">{{ printf "%.0f%%" (mul (.band_pass_rates.easy_N4 | default 0.0) 100) }}</td>
+              <td class="hx:px-3 hx:py-3 hx:text-center hx:font-mono">{{ printf "%.0f%%" (mul (.band_pass_rates.med_N5 | default 0.0) 100) }}</td>
+              <td class="hx:px-3 hx:py-3 hx:text-center hx:font-mono">{{ printf "%.0f%%" (mul (.band_pass_rates.hard_N6 | default 0.0) 100) }}</td>
+              <td class="hx:px-3 hx:py-3 hx:text-center hx:font-mono hx:text-slate-500">{{ printf "%.0f%%" (mul (.component_rates.finish_times | default 0.0) 100) }}</td>
+              <td class="hx:px-3 hx:py-3 hx:text-right hx:font-mono">{{ printf "%.1f" .tps }}</td>
+              <td class="hx:px-3 hx:py-3 hx:text-right hx:font-mono hx:text-slate-500">{{ printf "%.0f" .tokens_per_success }}</td>
+            </tr>
+          {{ end }}
+        {{ end }}
+      </tbody>
+    </table>
+  </div>
+  <div class="hx:px-4 hx:py-2 hx:text-[11px] hx:text-slate-400 hx:bg-slate-50 dark:hx:bg-slate-900 hx:border-t hx:border-slate-100 dark:hx:border-slate-900">
+    Pass = all 4 of {deadline_met, critical_path_length, finish_times, topo_order} correct. <code>finish_times</code> (exact per-task earliest-finish map) is the hardest sub-task and the spread driver. CI = Wilson 95%, computed at build time from successes/{{ $data.n_cases }}.
+  </div>
+</div>
+{{ else }}
+<div class="hx:rounded hx:border hx:border-red-200 hx:bg-red-50 hx:p-4 hx:text-red-600"><strong>Missing data:</strong> no multi-model <code>data.json</code> for this experiment.</div>
+{{ end }}

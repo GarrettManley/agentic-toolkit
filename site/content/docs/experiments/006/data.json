@@ -1,0 +1,139 @@
+{
+  "id": "006",
+  "schema": "multi-model",
+  "name": "Grammar-Constrained Dependency Scheduling",
+  "task": "Given a small DAG of tasks with integer durations and a deadline, emit grammar-constrained JSON (reasoning-first, then topo_order + per-task finish_times + critical_path_length + deadline_met); graded by a deterministic 4/4 oracle against precomputed earliest-finish-time gold.",
+  "harness": "llama-server",
+  "seed": 42,
+  "n_cases": 60,
+  "temperature": 0,
+  "max_tokens": 1536,
+  "llama_server_build": "9596",
+  "models": [
+    {
+      "model": "deepseek-r1-7b",
+      "quant": "Q4_K_M",
+      "trials": 60,
+      "successes": 25,
+      "tokens_total": 77818,
+      "mean_steps": 1.0,
+      "tps": 33.5,
+      "pass_k": 0.4167,
+      "wilson_ci_low": 0.3006,
+      "wilson_ci_high": 0.5427,
+      "tokens_per_success": 3112.7,
+      "reasoning_mean_chars": 317.9,
+      "component_rates": {
+        "deadline_met": 0.5,
+        "critical_path_length": 0.45,
+        "finish_times": 0.4333,
+        "topo_order": 0.5
+      },
+      "band_pass_rates": {
+        "easy_N4": 0.6,
+        "med_N5": 0.55,
+        "hard_N6": 0.1
+      }
+    },
+    {
+      "model": "qwen2.5-coder-7b",
+      "quant": "Q4_K_M",
+      "trials": 60,
+      "successes": 20,
+      "tokens_total": 11541,
+      "mean_steps": 1.0,
+      "tps": 32.5,
+      "pass_k": 0.3333,
+      "wilson_ci_low": 0.2273,
+      "wilson_ci_high": 0.4594,
+      "tokens_per_success": 577.0,
+      "reasoning_mean_chars": 267.9,
+      "component_rates": {
+        "deadline_met": 0.8,
+        "critical_path_length": 0.5167,
+        "finish_times": 0.3333,
+        "topo_order": 0.4333
+      },
+      "band_pass_rates": {
+        "easy_N4": 0.6,
+        "med_N5": 0.25,
+        "hard_N6": 0.15
+      }
+    },
+    {
+      "model": "llama3.1-8b",
+      "quant": "Q4_K_M",
+      "trials": 60,
+      "successes": 13,
+      "tokens_total": 12784,
+      "mean_steps": 1.0,
+      "tps": 35.4,
+      "pass_k": 0.2167,
+      "wilson_ci_low": 0.1312,
+      "wilson_ci_high": 0.3362,
+      "tokens_per_success": 983.4,
+      "reasoning_mean_chars": 340.9,
+      "component_rates": {
+        "deadline_met": 0.6667,
+        "critical_path_length": 0.4167,
+        "finish_times": 0.25,
+        "topo_order": 0.4833
+      },
+      "band_pass_rates": {
+        "easy_N4": 0.2,
+        "med_N5": 0.4,
+        "hard_N6": 0.05
+      }
+    },
+    {
+      "model": "gemma-4-E4B",
+      "quant": "Q4_K_M",
+      "trials": 60,
+      "successes": 58,
+      "tokens_total": 60625,
+      "mean_steps": 1.0,
+      "tps": 52.0,
+      "pass_k": 0.9667,
+      "wilson_ci_low": 0.8864,
+      "wilson_ci_high": 0.9908,
+      "tokens_per_success": 1045.3,
+      "reasoning_mean_chars": 461.7,
+      "component_rates": {
+        "deadline_met": 0.9667,
+        "critical_path_length": 0.9667,
+        "finish_times": 0.9667,
+        "topo_order": 0.9667
+      },
+      "band_pass_rates": {
+        "easy_N4": 1.0,
+        "med_N5": 1.0,
+        "hard_N6": 0.9
+      }
+    },
+    {
+      "model": "phi4-mini",
+      "quant": "Q4_K_M",
+      "trials": 60,
+      "successes": 15,
+      "tokens_total": 11921,
+      "mean_steps": 1.0,
+      "tps": 65.8,
+      "pass_k": 0.25,
+      "wilson_ci_low": 0.1578,
+      "wilson_ci_high": 0.3723,
+      "tokens_per_success": 794.7,
+      "reasoning_mean_chars": 326.6,
+      "component_rates": {
+        "deadline_met": 0.8,
+        "critical_path_length": 0.5167,
+        "finish_times": 0.35,
+        "topo_order": 0.65
+      },
+      "band_pass_rates": {
+        "easy_N4": 0.3,
+        "med_N5": 0.3,
+        "hard_N6": 0.15
+      }
+    }
+  ]
+}

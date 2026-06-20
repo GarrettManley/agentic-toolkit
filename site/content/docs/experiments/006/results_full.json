@@ -1,0 +1,171 @@
+{
+  "meta": {
+    "seed": 42,
+    "n_cases": 60,
+    "bands": {
+      "easy_N4": 20,
+      "med_N5": 20,
+      "hard_N6": 20
+    },
+    "node_counts": {
+      "easy_N4": 4,
+      "med_N5": 5,
+      "hard_N6": 6
+    },
+    "edge_probs": {
+      "easy_N4": 0.35,
+      "med_N5": 0.45,
+      "hard_N6": 0.55
+    },
+    "deadline_met_count": 28,
+    "deadline_unmet_count": 32,
+    "boundary_cases": [
+      "c01",
+      "c05",
+      "c29",
+      "c35",
+      "c42",
+      "c48"
+    ],
+    "llama_server_build": "9596",
+    "generated_by": "gen_cases.py"
+  },
+  "max_tokens": 1536,
+  "models": [
+    {
+      "slug": "deepseek-r1-7b",
+      "load_failed": false,
+      "load_s": 6.5,
+      "trials": 60,
+      "successes": 25,
+      "pass_k": 0.4167,
+      "wilson_ci_low": 0.3006,
+      "wilson_ci_high": 0.5427,
+      "tokens_total": 77818,
+      "tokens_per_success": 3112.7,
+      "tps": 33.5,
+      "reasoning_mean_chars": 317.9,
+      "schema_fail_count": 29,
+      "component_rates": {
+        "deadline_met": 0.5,
+        "critical_path_length": 0.45,
+        "finish_times": 0.4333,
+        "topo_order": 0.5
+      },
+      "band_pass_rates": {
+        "easy_N4": 0.6,
+        "med_N5": 0.55,
+        "hard_N6": 0.1
+      },
+      "elapsed_s": 2336.5
+    },
+    {
+      "slug": "qwen2.5-coder-7b",
+      "load_failed": false,
+      "load_s": 6.5,
+      "trials": 60,
+      "successes": 20,
+      "pass_k": 0.3333,
+      "wilson_ci_low": 0.2273,
+      "wilson_ci_high": 0.4594,
+      "tokens_total": 11541,
+      "tokens_per_success": 577.0,
+      "tps": 32.5,
+      "reasoning_mean_chars": 267.9,
+      "schema_fail_count": 0,
+      "component_rates": {
+        "deadline_met": 0.8,
+        "critical_path_length": 0.5167,
+        "finish_times": 0.3333,
+        "topo_order": 0.4333
+      },
+      "band_pass_rates": {
+        "easy_N4": 0.6,
+        "med_N5": 0.25,
+        "hard_N6": 0.15
+      },
+      "elapsed_s": 365.5
+    },
+    {
+      "slug": "llama3.1-8b",
+      "load_failed": false,
+      "load_s": 6.5,
+      "trials": 60,
+      "successes": 13,
+      "pass_k": 0.2167,
+      "wilson_ci_low": 0.1312,
+      "wilson_ci_high": 0.3362,
+      "tokens_total": 12784,
+      "tokens_per_success": 983.4,
+      "tps": 35.4,
+      "reasoning_mean_chars": 340.9,
+      "schema_fail_count": 10,
+      "component_rates": {
+        "deadline_met": 0.6667,
+        "critical_path_length": 0.4167,
+        "finish_times": 0.25,
+        "topo_order": 0.4833
+      },
+      "band_pass_rates": {
+        "easy_N4": 0.2,
+        "med_N5": 0.4,
+        "hard_N6": 0.05
+      },
+      "elapsed_s": 2401.3
+    },
+    {
+      "slug": "gemma-4-E4B",
+      "load_failed": false,
+      "load_s": 8.5,
+      "trials": 60,
+      "successes": 58,
+      "pass_k": 0.9667,
+      "wilson_ci_low": 0.8864,
+      "wilson_ci_high": 0.9908,
+      "tokens_total": 60625,
+      "tokens_per_success": 1045.3,
+      "tps": 52.0,
+      "reasoning_mean_chars": 461.7,
+      "schema_fail_count": 2,
+      "component_rates": {
+        "deadline_met": 0.9667,
+        "critical_path_length": 0.9667,
+        "finish_times": 0.9667,
+        "topo_order": 0.9667
+      },
+      "band_pass_rates": {
+        "easy_N4": 1.0,
+        "med_N5": 1.0,
+        "hard_N6": 0.9
+      },
+      "elapsed_s": 1189.9
+    },
+    {
+      "slug": "phi4-mini",
+      "load_failed": false,
+      "load_s": 4.5,
+      "trials": 60,
+      "successes": 15,
+      "pass_k": 0.25,
+      "wilson_ci_low": 0.1578,
+      "wilson_ci_high": 0.3723,
+      "tokens_total": 11921,
+      "tokens_per_success": 794.7,
+      "tps": 65.8,
+      "reasoning_mean_chars": 326.6,
+      "schema_fail_count": 0,
+      "component_rates": {
+        "deadline_met": 0.8,
+        "critical_path_length": 0.5167,
+        "finish_times": 0.35,
+        "topo_order": 0.65
+      },
+      "band_pass_rates": {
+        "easy_N4": 0.3,
+        "med_N5": 0.3,
+        "hard_N6": 0.15
+      },
+      "elapsed_s": 188.6
+    }
+  ]
+}

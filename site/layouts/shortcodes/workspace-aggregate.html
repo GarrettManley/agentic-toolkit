@@ -9,7 +9,7 @@
   {{ if in .RelPermalink "/experiments/" }}
     {{ with .Resources.GetMatch "data.json" }}
       {{ $json := .Content | transform.Unmarshal }}
-      {{ if eq ($json.schema | default "single-condition") "single-condition" }}
+      {{ if and (eq ($json.schema | default "single-condition") "single-condition") (ne ($json.domain | default "") "classification") }}
         {{ $m := partial "exp-compute.html" $json }}
         {{ $trials = add $trials ($json.trials | float) }}
         {{ $succ = add $succ ($json.successes | float) }}

@@ -1,0 +1,662 @@
+{
+  "c00": {
+    "finish_times": {
+      "A": 5,
+      "B": 6,
+      "C": 10,
+      "D": 10
+    },
+    "critical_path_length": 10,
+    "deadline_met": false
+  },
+  "c01": {
+    "finish_times": {
+      "A": 4,
+      "C": 7,
+      "D": 2,
+      "B": 7
+    },
+    "critical_path_length": 7,
+    "deadline_met": true
+  },
+  "c02": {
+    "finish_times": {
+      "A": 5,
+      "B": 8,
+      "C": 2,
+      "D": 13
+    },
+    "critical_path_length": 13,
+    "deadline_met": false
+  },
+  "c03": {
+    "finish_times": {
+      "A": 7,
+      "C": 2,
+      "B": 7,
+      "D": 7
+    },
+    "critical_path_length": 7,
+    "deadline_met": true
+  },
+  "c04": {
+    "finish_times": {
+      "B": 3,
+      "C": 4,
+      "D": 8,
+      "A": 12
+    },
+    "critical_path_length": 12,
+    "deadline_met": false
+  },
+  "c05": {
+    "finish_times": {
+      "A": 4,
+      "B": 5,
+      "C": 4,
+      "D": 6
+    },
+    "critical_path_length": 6,
+    "deadline_met": true
+  },
+  "c06": {
+    "finish_times": {
+      "B": 8,
+      "C": 11,
+      "D": 10,
+      "A": 14
+    },
+    "critical_path_length": 14,
+    "deadline_met": false
+  },
+  "c07": {
+    "finish_times": {
+      "B": 5,
+      "C": 8,
+      "D": 7,
+      "A": 15
+    },
+    "critical_path_length": 15,
+    "deadline_met": false
+  },
+  "c08": {
+    "finish_times": {
+      "B": 2,
+      "C": 5,
+      "A": 12,
+      "D": 8
+    },
+    "critical_path_length": 12,
+    "deadline_met": true
+  },
+  "c09": {
+    "finish_times": {
+      "A": 2,
+      "B": 8,
+      "D": 8,
+      "C": 15
+    },
+    "critical_path_length": 15,
+    "deadline_met": false
+  },
+  "c10": {
+    "finish_times": {
+      "A": 6,
+      "D": 6,
+      "B": 12,
+      "C": 10
+    },
+    "critical_path_length": 12,
+    "deadline_met": false
+  },
+  "c11": {
+    "finish_times": {
+      "A": 7,
+      "C": 12,
+      "B": 17,
+      "D": 19
+    },
+    "critical_path_length": 19,
+    "deadline_met": true
+  },
+  "c12": {
+    "finish_times": {
+      "A": 6,
+      "B": 13,
+      "D": 6,
+      "C": 8
+    },
+    "critical_path_length": 13,
+    "deadline_met": false
+  },
+  "c13": {
+    "finish_times": {
+      "C": 2,
+      "B": 9,
+      "D": 7,
+      "A": 9
+    },
+    "critical_path_length": 9,
+    "deadline_met": true
+  },
+  "c14": {
+    "finish_times": {
+      "B": 7,
+      "A": 15,
+      "C": 5,
+      "D": 13
+    },
+    "critical_path_length": 15,
+    "deadline_met": false
+  },
+  "c15": {
+    "finish_times": {
+      "A": 6,
+      "B": 4,
+      "C": 8,
+      "D": 14
+    },
+    "critical_path_length": 14,
+    "deadline_met": true
+  },
+  "c16": {
+    "finish_times": {
+      "A": 4,
+      "C": 5,
+      "B": 13,
+      "D": 7
+    },
+    "critical_path_length": 13,
+    "deadline_met": false
+  },
+  "c17": {
+    "finish_times": {
+      "A": 3,
+      "B": 9,
+      "D": 6,
+      "C": 11
+    },
+    "critical_path_length": 11,
+    "deadline_met": false
+  },
+  "c18": {
+    "finish_times": {
+      "A": 6,
+      "B": 2,
+      "D": 8,
+      "C": 16
+    },
+    "critical_path_length": 16,
+    "deadline_met": false
+  },
+  "c19": {
+    "finish_times": {
+      "B": 5,
+      "A": 7,
+      "C": 2,
+      "D": 3
+    },
+    "critical_path_length": 7,
+    "deadline_met": true
+  },
+  "c20": {
+    "finish_times": {
+      "C": 6,
+      "D": 13,
+      "A": 15,
+      "B": 15,
+      "E": 20
+    },
+    "critical_path_length": 20,
+    "deadline_met": true
+  },
+  "c21": {
+    "finish_times": {
+      "A": 2,
+      "B": 6,
+      "C": 7,
+      "D": 3,
+      "E": 5
+    },
+    "critical_path_length": 7,
+    "deadline_met": false
+  },
+  "c22": {
+    "finish_times": {
+      "C": 5,
+      "A": 8,
+      "B": 14,
+      "E": 8,
+      "D": 20
+    },
+    "critical_path_length": 20,
+    "deadline_met": true
+  },
+  "c23": {
+    "finish_times": {
+      "D": 6,
+      "E": 4,
+      "A": 10,
+      "B": 16,
+      "C": 12
+    },
+    "critical_path_length": 16,
+    "deadline_met": false
+  },
+  "c24": {
+    "finish_times": {
+      "A": 5,
+      "B": 2,
+      "C": 6,
+      "D": 8,
+      "E": 10
+    },
+    "critical_path_length": 10,
+    "deadline_met": false
+  },
+  "c25": {
+    "finish_times": {
+      "B": 2,
+      "C": 3,
+      "A": 10,
+      "D": 6,
+      "E": 4
+    },
+    "critical_path_length": 10,
+    "deadline_met": false
+  },
+  "c26": {
+    "finish_times": {
+      "A": 2,
+      "B": 7,
+      "D": 10,
+      "E": 8,
+      "C": 15
+    },
+    "critical_path_length": 15,
+    "deadline_met": true
+  },
+  "c27": {
+    "finish_times": {
+      "D": 5,
+      "B": 9,
+      "A": 11,
+      "C": 7,
+      "E": 10
+    },
+    "critical_path_length": 11,
+    "deadline_met": true
+  },
+  "c28": {
+    "finish_times": {
+      "A": 4,
+      "D": 6,
+      "B": 14,
+      "C": 9,
+      "E": 8
+    },
+    "critical_path_length": 14,
+    "deadline_met": false
+  },
+  "c29": {
+    "finish_times": {
+      "D": 5,
+      "A": 9,
+      "E": 4,
+      "B": 7,
+      "C": 10
+    },
+    "critical_path_length": 10,
+    "deadline_met": true
+  },
+  "c30": {
+    "finish_times": {
+      "C": 4,
+      "D": 2,
+      "A": 10,
+      "B": 8,
+      "E": 6
+    },
+    "critical_path_length": 10,
+    "deadline_met": true
+  },
+  "c31": {
+    "finish_times": {
+      "A": 7,
+      "B": 4,
+      "E": 3,
+      "C": 11,
+      "D": 15
+    },
+    "critical_path_length": 15,
+    "deadline_met": false
+  },
+  "c32": {
+    "finish_times": {
+      "A": 4,
+      "E": 6,
+      "B": 8,
+      "C": 8,
+      "D": 15
+    },
+    "critical_path_length": 15,
+    "deadline_met": false
+  },
+  "c33": {
+    "finish_times": {
+      "B": 5,
+      "C": 8,
+      "D": 15,
+      "A": 20,
+      "E": 11
+    },
+    "critical_path_length": 20,
+    "deadline_met": false
+  },
+  "c34": {
+    "finish_times": {
+      "B": 7,
+      "D": 2,
+      "E": 6,
+      "A": 13,
+      "C": 16
+    },
+    "critical_path_length": 16,
+    "deadline_met": false
+  },
+  "c35": {
+    "finish_times": {
+      "B": 6,
+      "C": 5,
+      "D": 6,
+      "A": 11,
+      "E": 8
+    },
+    "critical_path_length": 11,
+    "deadline_met": true
+  },
+  "c36": {
+    "finish_times": {
+      "A": 2,
+      "B": 5,
+      "C": 12,
+      "D": 13,
+      "E": 6
+    },
+    "critical_path_length": 13,
+    "deadline_met": true
+  },
+  "c37": {
+    "finish_times": {
+      "E": 5,
+      "D": 7,
+      "B": 13,
+      "A": 18,
+      "C": 11
+    },
+    "critical_path_length": 18,
+    "deadline_met": true
+  },
+  "c38": {
+    "finish_times": {
+      "C": 5,
+      "B": 8,
+      "E": 4,
+      "A": 7,
+      "D": 9
+    },
+    "critical_path_length": 9,
+    "deadline_met": true
+  },
+  "c39": {
+    "finish_times": {
+      "A": 8,
+      "C": 7,
+      "E": 2,
+      "D": 4,
+      "B": 7
+    },
+    "critical_path_length": 8,
+    "deadline_met": true
+  },
+  "c40": {
+    "finish_times": {
+      "D": 7,
+      "B": 11,
+      "A": 15,
+      "C": 19,
+      "E": 22,
+      "F": 16
+    },
+    "critical_path_length": 22,
+    "deadline_met": false
+  },
+  "c41": {
+    "finish_times": {
+      "C": 7,
+      "E": 3,
+      "B": 5,
+      "F": 2,
+      "A": 10,
+      "D": 10
+    },
+    "critical_path_length": 10,
+    "deadline_met": true
+  },
+  "c42": {
+    "finish_times": {
+      "B": 3,
+      "A": 10,
+      "C": 4,
+      "F": 18,
+      "D": 22,
+      "E": 21
+    },
+    "critical_path_length": 22,
+    "deadline_met": true
+  },
+  "c43": {
+    "finish_times": {
+      "A": 2,
+      "F": 5,
+      "B": 10,
+      "C": 15,
+      "D": 10,
+      "E": 16
+    },
+    "critical_path_length": 16,
+    "deadline_met": false
+  },
+  "c44": {
+    "finish_times": {
+      "A": 6,
+      "C": 9,
+      "B": 11,
+      "D": 17,
+      "E": 9,
+      "F": 13
+    },
+    "critical_path_length": 17,
+    "deadline_met": false
+  },
+  "c45": {
+    "finish_times": {
+      "B": 3,
+      "C": 4,
+      "D": 9,
+      "A": 13,
+      "E": 19,
+      "F": 12
+    },
+    "critical_path_length": 19,
+    "deadline_met": false
+  },
+  "c46": {
+    "finish_times": {
+      "E": 4,
+      "F": 5,
+      "D": 11,
+      "C": 18,
+      "B": 21,
+      "A": 27
+    },
+    "critical_path_length": 27,
+    "deadline_met": false
+  },
+  "c47": {
+    "finish_times": {
+      "E": 4,
+      "F": 10,
+      "C": 17,
+      "D": 12,
+      "A": 16,
+      "B": 17
+    },
+    "critical_path_length": 17,
+    "deadline_met": true
+  },
+  "c48": {
+    "finish_times": {
+      "A": 4,
+      "D": 7,
+      "B": 11,
+      "E": 13,
+      "C": 19,
+      "F": 17
+    },
+    "critical_path_length": 19,
+    "deadline_met": true
+  },
+  "c49": {
+    "finish_times": {
+      "A": 3,
+      "B": 6,
+      "C": 2,
+      "D": 10,
+      "E": 9,
+      "F": 16
+    },
+    "critical_path_length": 16,
+    "deadline_met": false
+  },
+  "c50": {
+    "finish_times": {
+      "B": 8,
+      "A": 12,
+      "C": 10,
+      "D": 4,
+      "E": 8,
+      "F": 13
+    },
+    "critical_path_length": 13,
+    "deadline_met": false
+  },
+  "c51": {
+    "finish_times": {
+      "A": 7,
+      "D": 6,
+      "C": 8,
+      "E": 11,
+      "B": 19,
+      "F": 14
+    },
+    "critical_path_length": 19,
+    "deadline_met": false
+  },
+  "c52": {
+    "finish_times": {
+      "C": 2,
+      "D": 10,
+      "B": 14,
+      "E": 2,
+      "F": 13,
+      "A": 18
+    },
+    "critical_path_length": 18,
+    "deadline_met": false
+  },
+  "c53": {
+    "finish_times": {
+      "C": 4,
+      "E": 7,
+      "D": 10,
+      "A": 12,
+      "B": 15,
+      "F": 7
+    },
+    "critical_path_length": 15,
+    "deadline_met": true
+  },
+  "c54": {
+    "finish_times": {
+      "D": 8,
+      "F": 7,
+      "B": 12,
+      "A": 14,
+      "C": 18,
+      "E": 16
+    },
+    "critical_path_length": 18,
+    "deadline_met": true
+  },
+  "c55": {
+    "finish_times": {
+      "B": 6,
+      "E": 3,
+      "A": 10,
+      "D": 14,
+      "C": 20,
+      "F": 8
+    },
+    "critical_path_length": 20,
+    "deadline_met": true
+  },
+  "c56": {
+    "finish_times": {
+      "E": 4,
+      "C": 9,
+      "B": 11,
+      "A": 13,
+      "D": 17,
+      "F": 13
+    },
+    "critical_path_length": 17,
+    "deadline_met": false
+  },
+  "c57": {
+    "finish_times": {
+      "E": 3,
+      "F": 5,
+      "A": 9,
+      "C": 15,
+      "D": 13,
+      "B": 20
+    },
+    "critical_path_length": 20,
+    "deadline_met": true
+  },
+  "c58": {
+    "finish_times": {
+      "A": 5,
+      "D": 7,
+      "F": 11,
+      "B": 18,
+      "C": 19,
+      "E": 19
+    },
+    "critical_path_length": 19,
+    "deadline_met": false
+  },
+  "c59": {
+    "finish_times": {
+      "D": 5,
+      "A": 10,
+      "B": 12,
+      "F": 8,
+      "C": 14,
+      "E": 11
+    },
+    "critical_path_length": 14,
+    "deadline_met": true
+  }
+}

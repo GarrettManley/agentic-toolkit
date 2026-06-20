@@ -19,7 +19,7 @@
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="/js/chart.min.js"></script>
 <script>
   document.addEventListener('DOMContentLoaded', function() {
     {{ $data := slice }}
@@ -29,7 +29,7 @@
           {{ $json := .Content | transform.Unmarshal }}
           {{/* Only single-condition experiments belong on the longitudinal line;
                multi-model studies (Exp 006+) have their own per-model charts. */}}
-          {{ if eq ($json.schema | default "single-condition") "single-condition" }}
+          {{ if and (eq ($json.schema | default "single-condition") "single-condition") (ne ($json.domain | default "") "classification") }}
             {{ $m := partial "exp-compute.html" $json }}
             {{ $data = $data | append (dict "id" $json.id "pass_k" $m.pass_k "cps" $m.cps) }}
           {{ end }}

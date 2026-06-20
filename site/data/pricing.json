@@ -15,5 +15,13 @@
     "source": "local GGUF inference on RTX 4060 via llama-server; marginal cost is electricity only, treated as $0/token",
     "as_of": "2026-06",
     "tier": "local"
+  },
+  "gemma-4-E4B": {
+    "input_per_m": 0.0,
+    "output_per_m": 0.0,
+    "assumed_output_fraction": 0.20,
+    "source": "local GGUF inference (gemma-4-E4B, Q4_K_M) on RTX 4060 via llama-server; no per-token API cost",
+    "as_of": "2026-06",
+    "tier": "local"
   }
 }

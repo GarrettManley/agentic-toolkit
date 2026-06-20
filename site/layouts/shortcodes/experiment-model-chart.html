@@ -1,0 +1,49 @@
+{{- /* Exp 006 difficulty-gradient chart: grouped Pass^k bars per model across the
+       three difficulty bands (N=4/5/6). Reads the page's multi-model data.json. */ -}}
+{{ $data := "" }}
+{{ with .Page.Resources.GetMatch "data.json" }}{{ $data = .Content | transform.Unmarshal }}{{ end }}
+{{ if and $data (eq ($data.schema | default "") "multi-model") }}
+{{ $rows := slice }}
+{{ range sort $data.models "pass_k" "desc" }}
+  {{ if ne .pass_k nil }}
+    {{ $rows = $rows | append (dict "model" .model "easy" (.band_pass_rates.easy_N4 | default 0.0) "med" (.band_pass_rates.med_N5 | default 0.0) "hard" (.band_pass_rates.hard_N6 | default 0.0)) }}
+  {{ end }}
+{{ end }}
+<div class="hx:mt-8 hx:mb-6 hx:p-6 hx:bg-white dark:hx:bg-black hx:border hx:border-slate-200 dark:hx:border-slate-800 hx:rounded-xl hx:shadow-sm">
+  <div class="hx:mb-4">
+    <h3 class="hx:text-lg hx:font-bold hx:text-slate-900 dark:hx:text-slate-100">Pass^k by difficulty band</h3>
+    <p class="hx:text-xs hx:text-slate-500 hx:mt-1">Each model's success rate on 4-, 5-, and 6-node dependency graphs. The inter-model gap widens as the graphs grow &mdash; the benchmark's spread comes from multi-hop <code>finish_times</code> tracking.</p>
+  </div>
+  <div class="hx:relative hx:h-72 hx:w-full"><canvas id="modelBandChart"></canvas></div>
+</div>
+<script src="/js/chart.min.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const rows = {{ $rows | jsonify | safeJS }};
+    const ctx = document.getElementById('modelBandChart').getContext('2d');
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: rows.map(r => r.model),
+        datasets: [
+          { label: 'N=4 (easy)', data: rows.map(r => r.easy * 100), backgroundColor: '#86efac' },
+          { label: 'N=5 (medium)', data: rows.map(r => r.med * 100), backgroundColor: '#3b82f6' },
+          { label: 'N=6 (hard)', data: rows.map(r => r.hard * 100), backgroundColor: '#1e3a8a' },
+        ],
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { position: 'top', labels: { font: { size: 11 }, boxWidth: 12 } },
+          tooltip: { callbacks: { label: c => `${c.dataset.label}: ${c.parsed.y.toFixed(0)}%` } },
+        },
+        scales: {
+          x: { grid: { display: false }, ticks: { font: { size: 11 } } },
+          y: { min: 0, max: 100, title: { display: true, text: 'Pass^k (%)', font: { size: 10, weight: 'bold' } }, ticks: { callback: v => v + '%' } },
+        },
+      },
+    });
+  });
+</script>
+{{ end }}
