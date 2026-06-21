@@ -32,6 +32,10 @@ sec-research/submissions/tokens/
 sec-research/__pycache__/
 sec-research/**/__pycache__/
 sec-research/**/*.pyc
+
+# Python bytecode caches under .claude/ (e.g. hook-router test runs)
+.claude/**/__pycache__/
+.claude/**/*.pyc
 # Append-only audit ledger: churns on every nightly run; not source of truth to track
 sec-research/submissions/ledger.jsonl
 
