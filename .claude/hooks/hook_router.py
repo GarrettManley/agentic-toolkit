@@ -19,6 +19,10 @@ if str(_HERE) not in sys.path:
 
 import hook_router_lib as lib  # noqa: E402
 
+# ROOT must be the launch (Workspace) root. Prefer CLAUDE_PROJECT_DIR (the canonical
+# project dir Claude Code sets at launch); fall back to the __file__-derived Workspace
+# dir when unset (tests, manual runs). It must NOT point at a child dir — discovery
+# would then scan the wrong tree.
 ROOT = Path(os.environ["CLAUDE_PROJECT_DIR"]) if os.environ.get("CLAUDE_PROJECT_DIR") else _HERE.parent.parent
 CONFIG_PATH = _HERE / "hook-router.config.json"
 

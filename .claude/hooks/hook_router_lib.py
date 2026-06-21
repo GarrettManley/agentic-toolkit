@@ -103,7 +103,10 @@ def run_child_hook(argv: list[str], child_dir: Path, stdin_bytes: bytes,
 
 def aggregate(event_name: str, results: list[tuple[int, str, str]]) -> tuple[int, str, str]:
     """First child exit-2 blocks (forward its stderr). Otherwise exit 0; concatenate all
-    child stdout (e.g. UserPromptSubmit injected context) and non-empty stderr (diagnostics)."""
+    child stdout (e.g. UserPromptSubmit injected context) and non-empty stderr (diagnostics).
+
+    `event_name` is reserved for future per-event aggregation semantics (v1 treats every
+    event identically); it is intentionally unused, not dead-by-accident."""
     for rc, _out, err in results:
         if rc == 2:
             return 2, "", err

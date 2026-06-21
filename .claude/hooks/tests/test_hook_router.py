@@ -175,3 +175,16 @@ def test_route_event_unparseable_is_fail_open(fake_root):
     root, _ = fake_root
     rc, out, err = lib.route_event(b"not json", root, lib.load_config(root / "x.json"))
     assert rc == 0 and out == "" and err == ""
+
+
+def test_route_event_crash_child_surfaces_stderr_rc0(fake_root):
+    """A child that crashes (exit 1) is non-blocking, but its stderr must be surfaced,
+    never silently swallowed (spec §6 'never swallow a crash')."""
+    import hook_router_lib as lib
+    root, mk = fake_root
+    cmd = f"{Path(sys.executable).as_posix()} {(STUBS / 'crash_hook.py').as_posix()}"
+    mk("sec-research", {"PreToolUse": [{"matcher": ".*", "hooks": [{"command": cmd}]}]})
+    event = json.dumps({"hook_event_name": "PreToolUse", "tool_name": "Edit"}).encode()
+    rc, out, err = lib.route_event(event, root, lib.load_config(root / "x.json"))
+    assert rc == 0                  # exit 1 (crash) is not exit 2 -> non-blocking
+    assert "stub crashed" in err    # surfaced, not swallowed
