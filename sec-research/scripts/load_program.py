@@ -21,7 +21,7 @@ sys.path.insert(0, str(HOOKS_DIR))
 
 from lib.paths import PROGRAMS_DIR  # noqa: E402
 from lib.schema_validate import validate_program  # noqa: E402
-from lib.scope_match import invalidate_scope_cache  # noqa: E402
+from lib.scope_io import write_scope  # noqa: E402
 
 
 SCAFFOLD_TEMPLATE = """\
@@ -117,15 +117,7 @@ def main() -> int:
         return 1
 
     slug = args.slug or data["program_slug"]
-    program_dir = PROGRAMS_DIR / slug
-    program_dir.mkdir(parents=True, exist_ok=True)
-    (program_dir / "disclosed").mkdir(exist_ok=True)
-    scope_path = program_dir / "scope.yaml"
-
-    with scope_path.open("w", encoding="utf-8") as f:
-        yaml.safe_dump(data, f, sort_keys=False, default_flow_style=False)
-
-    invalidate_scope_cache()
+    scope_path = write_scope(slug, data, force=True)  # --from-file is explicit human intent; overwrite ok
     print(f"Program loaded: {slug}")
     print(f"  Venue: {data['venue']}")
     print(f"  In-scope: {len(data.get('in_scope', []))} entries")

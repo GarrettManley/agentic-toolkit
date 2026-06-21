@@ -14,9 +14,11 @@ from pathlib import Path
 
 import pytest
 
-# Add hooks/ to sys.path
+# Add hooks/ and scripts/ to sys.path
 WORKSPACE_ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(WORKSPACE_ROOT / "hooks"))
+for _p in (WORKSPACE_ROOT / "hooks", WORKSPACE_ROOT / "scripts"):
+    if str(_p) not in sys.path:
+        sys.path.insert(0, str(_p))
 
 
 @pytest.fixture(scope="session")
@@ -58,3 +60,20 @@ def clean_overrides(workspace_root):
                 if p.is_file():
                     p.unlink()
     yield
+
+
+@pytest.fixture
+def tmp_programs(tmp_path, monkeypatch):
+    """Redirect PROGRAMS_DIR to an isolated tmp dir for scope read/write tests.
+
+    Two-target monkeypatch: scope_match imported PROGRAMS_DIR by name at load,
+    so both modules must be patched, then the lru_cache cleared.
+    """
+    from lib import paths, scope_match
+    test_dir = tmp_path / "programs"
+    test_dir.mkdir()
+    monkeypatch.setattr(paths, "PROGRAMS_DIR", test_dir)
+    monkeypatch.setattr(scope_match, "PROGRAMS_DIR", test_dir)
+    scope_match.invalidate_scope_cache()
+    yield test_dir
+    scope_match.invalidate_scope_cache()
