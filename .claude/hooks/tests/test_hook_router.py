@@ -1,24 +1,32 @@
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 ROUTER = Path(__file__).resolve().parents[1] / "hook_router.py"  # .claude/hooks/hook_router.py
-
-
-def test_cli_passes_through_with_no_projects(tmp_path):
-	"""Running the router from a root with no federated projects exits 0 and writes nothing fatal."""
-	event = json.dumps({"hook_event_name": "PreToolUse", "tool_name": "Read"})
-	proc = subprocess.run([sys.executable, str(ROUTER)], input=event.encode(),
-	                      capture_output=True, cwd=str(tmp_path),
-	                      env={"CLAUDE_PROJECT_DIR": str(tmp_path), **_min_env()})
-	assert proc.returncode == 0
+STUBS = Path(__file__).resolve().parent / "stubs"
 
 
 def _min_env():
-	import os
-	return {"PATH": os.environ.get("PATH", ""), "SYSTEMROOT": os.environ.get("SYSTEMROOT", "")}
+    """Minimal env for spawning python as a subprocess on Windows (PATH + SYSTEMROOT for DLLs)."""
+    return {"PATH": os.environ.get("PATH", ""), "SYSTEMROOT": os.environ.get("SYSTEMROOT", "")}
 
+
+# --- entry script (CLI) -------------------------------------------------------
+
+def test_cli_passes_through_with_no_projects(tmp_path):
+    """Running the router from a root with no federated projects exits 0 and writes nothing fatal."""
+    event = json.dumps({"hook_event_name": "PreToolUse", "tool_name": "Read"})
+    proc = subprocess.run([sys.executable, str(ROUTER)], input=event.encode(),
+                          capture_output=True, cwd=str(tmp_path),
+                          env={"CLAUDE_PROJECT_DIR": str(tmp_path), **_min_env()})
+    assert proc.returncode == 0
+
+
+# --- discovery + config -------------------------------------------------------
 
 def test_discover_finds_child_with_settings(fake_root):
     import hook_router_lib as lib
@@ -65,8 +73,7 @@ def test_load_config_defaults_when_missing(tmp_path):
     assert cfg == {"enabled": True, "ignore": [], "timeout_seconds": 15}
 
 
-import pytest
-
+# --- matcher + command resolution ---------------------------------------------
 
 @pytest.mark.parametrize("matcher,tool,expected", [
     (None, "Edit", True),
@@ -91,11 +98,7 @@ def test_resolve_command_substitutes_project_dir(tmp_path):
     assert argv == ["python", f"{child.as_posix()}/hooks/pretooluse.py"]
 
 
-import sys
-from pathlib import Path
-
-STUBS = Path(__file__).resolve().parent / "stubs"
-
+# --- child invocation ---------------------------------------------------------
 
 def test_run_child_replays_stdin_and_sets_env(tmp_path):
     import hook_router_lib as lib
@@ -123,9 +126,7 @@ def test_run_child_spawn_failure_is_fail_open(tmp_path):
     assert err                                        # but diagnostic surfaced
 
 
-# ---------------------------------------------------------------------------
-# Task 3: aggregate + route_event
-# ---------------------------------------------------------------------------
+# --- aggregate + route_event --------------------------------------------------
 
 def test_aggregate_block_wins():
     import hook_router_lib as lib
