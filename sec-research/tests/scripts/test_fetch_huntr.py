@@ -36,6 +36,9 @@ def test_huntr_probes_manifest_when_page_silent(tmp_programs):
     res = huntr.fetch("acme-org/acme-pkg",
                       from_fixture=FX / "repo_no_ecosystem.html",
                       manifest_fixture=FX / "contents_npm.json")
+    assert res.ok
+    ok, errors = validate_program(res.data)
+    assert ok, errors
     pkg = next(e for e in res.data["in_scope"] if e["asset_type"] == "package")
     assert pkg["ecosystem"] == "npm"  # inferred from package.json in contents listing
 
@@ -63,3 +66,4 @@ def test_huntr_bad_identifier(tmp_programs):
     from fetchers import huntr
     res = huntr.fetch("no-slash", from_fixture=FX / "repo_acme-org_acme-pkg.html")
     assert res.ok is False
+    assert any("identifier" in w.lower() for w in res.warnings)
