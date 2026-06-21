@@ -102,3 +102,57 @@ def test_run_child_spawn_failure_is_fail_open(tmp_path):
     rc, out, err = lib.run_child_hook(["definitely-not-a-real-binary-xyz"], child, b"{}", 15)
     assert rc == 0                                    # fail-open on spawn failure
     assert err                                        # but diagnostic surfaced
+
+
+# ---------------------------------------------------------------------------
+# Task 3: aggregate + route_event
+# ---------------------------------------------------------------------------
+
+def test_aggregate_block_wins():
+    import hook_router_lib as lib
+    rc, out, err = lib.aggregate("PreToolUse", [(0, "a", ""), (2, "", "blocked!"), (0, "b", "")])
+    assert rc == 2 and err == "blocked!" and out == ""
+
+
+def test_aggregate_concats_when_no_block():
+    import hook_router_lib as lib
+    rc, out, err = lib.aggregate("UserPromptSubmit", [(0, "ctx1", ""), (0, "ctx2", "warn")])
+    assert rc == 0 and out == "ctx1ctx2" and "warn" in err
+
+
+def test_route_event_blocks_on_child_exit2(fake_root):
+    import hook_router_lib as lib
+    root, mk = fake_root
+    cmd = f"{sys.executable} {STUBS / 'block_hook.py'}"
+    mk("sec-research", {"PreToolUse": [{"matcher": ".*", "hooks": [{"command": cmd}]}]})
+    event = json.dumps({"hook_event_name": "PreToolUse", "tool_name": "Edit"}).encode()
+    rc, out, err = lib.route_event(event, root, lib.load_config(root / "x.json"))
+    assert rc == 2 and "stub block" in err
+
+
+def test_route_event_passes_when_matcher_excludes(fake_root):
+    import hook_router_lib as lib
+    root, mk = fake_root
+    cmd = f"{sys.executable} {STUBS / 'block_hook.py'}"
+    mk("sec-research", {"PreToolUse": [{"matcher": "Bash", "hooks": [{"command": cmd}]}]})
+    event = json.dumps({"hook_event_name": "PreToolUse", "tool_name": "Edit"}).encode()
+    rc, out, err = lib.route_event(event, root, lib.load_config(root / "x.json"))
+    assert rc == 0  # blocker's matcher (Bash) didn't match tool_name Edit -> never invoked
+
+
+def test_route_event_userpromptsubmit_concats_stdout(fake_root):
+    import hook_router_lib as lib
+    root, mk = fake_root
+    cmd = f"{sys.executable} {STUBS / 'echo_hook.py'}"
+    mk("a", {"UserPromptSubmit": [{"hooks": [{"command": cmd}]}]})
+    mk("b", {"UserPromptSubmit": [{"hooks": [{"command": cmd}]}]})
+    event = json.dumps({"hook_event_name": "UserPromptSubmit"}).encode()
+    rc, out, err = lib.route_event(event, root, lib.load_config(root / "x.json"))
+    assert rc == 0 and out.count("echo:") == 2
+
+
+def test_route_event_unparseable_is_fail_open(fake_root):
+    import hook_router_lib as lib
+    root, _ = fake_root
+    rc, out, err = lib.route_event(b"not json", root, lib.load_config(root / "x.json"))
+    assert rc == 0

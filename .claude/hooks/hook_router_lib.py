@@ -73,9 +73,9 @@ def matcher_matches(matcher: str | None, tool_name: str) -> bool:
 
 def resolve_command(command: str, child_dir: Path) -> list[str]:
     """Substitute ${CLAUDE_PROJECT_DIR} -> child dir (forward slashes) and split to argv.
-    posix=True is correct here because commands use forward slashes by convention."""
+    posix=False is required on Windows so backslashes in paths are not consumed as escapes."""
     substituted = command.replace("${CLAUDE_PROJECT_DIR}", Path(child_dir).as_posix())
-    return shlex.split(substituted, posix=True)
+    return shlex.split(substituted, posix=(os.name != "nt"))
 
 
 def run_child_hook(argv: list[str], child_dir: Path, stdin_bytes: bytes,
@@ -96,3 +96,41 @@ def run_child_hook(argv: list[str], child_dir: Path, stdin_bytes: bytes,
     return (proc.returncode,
             proc.stdout.decode("utf-8", "replace"),
             proc.stderr.decode("utf-8", "replace"))
+
+
+def aggregate(event_name: str, results: list[tuple[int, str, str]]) -> tuple[int, str, str]:
+    """First child exit-2 blocks (forward its stderr). Otherwise exit 0; concatenate all
+    child stdout (e.g. UserPromptSubmit injected context) and non-empty stderr (diagnostics)."""
+    for rc, _out, err in results:
+        if rc == 2:
+            return 2, "", err
+    out = "".join(r[1] for r in results)
+    err = "".join(r[2] for r in results if r[2])
+    return 0, out, err
+
+
+def route_event(stdin_bytes: bytes, root: Path, config: dict) -> tuple[int, str, str]:
+    """Parse the event, fan out to matching child hooks, short-circuit on first block."""
+    try:
+        event = json.loads(stdin_bytes.decode("utf-8")) if stdin_bytes.strip() else {}
+    except (ValueError, UnicodeDecodeError):
+        return 0, "", ""  # can't parse -> fail open
+    event_name = event.get("hook_event_name", "")
+    tool_name = event.get("tool_name", "")
+    timeout = config.get("timeout_seconds", 15)
+
+    results: list[tuple[int, str, str]] = []
+    for proj in discover_projects(root, config):
+        for entry in (proj.settings.get("hooks", {}).get(event_name) or []):
+            if not matcher_matches(entry.get("matcher"), tool_name):
+                continue
+            for h in (entry.get("hooks") or []):
+                command = h.get("command")
+                if not command:
+                    continue
+                argv = resolve_command(command, proj.dir)
+                rc, out, err = run_child_hook(argv, proj.dir, stdin_bytes, timeout)
+                results.append((rc, out, err))
+                if rc == 2:
+                    return 2, "", err  # short-circuit: a block is terminal
+    return aggregate(event_name, results)
