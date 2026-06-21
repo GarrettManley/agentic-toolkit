@@ -51,6 +51,7 @@ def test_write_draft_does_not_invalidate_cache_or_create_scope_yaml(tmp_programs
         {"asset_type": "package", "identifier": "ghost"}]})
     assert p.name == "scope.draft.yaml"
     assert not (p.parent / "scope.yaml").exists()
+    assert not (p.parent / "disclosed").exists()
     ok, _ = scope_match.is_in_scope("package", "ghost")
     assert ok is False  # draft is invisible to the scope matcher
 

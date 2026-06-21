@@ -7,7 +7,7 @@ WS_ROOT = Path(__file__).resolve().parent.parent.parent  # sec-research/
 
 
 def test_from_file_writes_scope_and_disclosed_not_notes(tmp_path, monkeypatch):
-    from lib import paths, scope_match, scope_io
+    from lib import paths, scope_match
     progs = tmp_path / "programs"; progs.mkdir()
     monkeypatch.setattr(paths, "PROGRAMS_DIR", progs)
     monkeypatch.setattr(scope_match, "PROGRAMS_DIR", progs)
