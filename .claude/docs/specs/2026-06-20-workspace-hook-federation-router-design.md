@@ -1,7 +1,7 @@
 # Workspace Hook Federation Router — Design
 
 **Date:** 2026-06-20
-**Status:** Design (approved direction; pending spec review → implementation plan)
+**Status:** Implemented (Tasks 0–5 complete; 25/25 unit tests green; live federation verified 2026-06-20)
 **Scope:** `C:\Users\Garre\Workspace` (the cross-project hub). Claude-Code-specific infra.
 
 > ⚠️ **Do not publish.** This document names corporate repositories (`Duracell*`, `malachite`)
@@ -93,7 +93,7 @@ spawns on every tool call under the chosen broad `.*` matcher.
 - Scan **depth-1** children of `${CLAUDE_PROJECT_DIR}`; a child qualifies if `<child>/.claude/settings.json` exists.
 - **Hard-coded safety excludes (non-overridable constants in code):** any dir matching `Duracell*`, or named `malachite`. The router does not stat, read, or invoke anything beneath these.
 - **User excludes:** `config.ignore` (dir names or globs).
-- **Caching:** compute a `signature` = sorted list of `(child_name, mtime_of_its_settings.json)`. Cache the resolved project list keyed by signature; on each event, cheaply re-stat depth-1 children and rebuild only when the signature changes. (Cache miss/error ⇒ live scan; never fatal.)
+- **Caching:** compute a `signature` = sorted list of `(child_name, mtime_of_its_settings.json)`. Cache the resolved project list keyed by signature; on each event, cheaply re-stat depth-1 children and rebuild only when the signature changes. (Cache miss/error ⇒ live scan; never fatal.) **Implementation note:** the discovery cache (`.claude/.hook-router-cache.json`) was intentionally omitted from the Task 0–4 implementation — live scan on every event is fast enough for depth-1 at this scale and removes cache-invalidation edge cases. The cache can be added as a follow-up (hb-ry9) if per-call latency becomes measurable.
 
 ## 6. Event Routing & Exit-Code Fidelity
 

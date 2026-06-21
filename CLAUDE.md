@@ -12,6 +12,10 @@ portable layer doesn't carry.
 > it; the equivalents here are `Edit`/`Write`/`Grep`. The substantive rules already
 > reach you via `~/AGENTS.md`.
 
+## Hook federation router (Workspace root)
+
+- `PreToolUse|PostToolUse|Stop|UserPromptSubmit` → `.claude/hooks/hook_router.py` (federation router): auto-discovers nested projects' own `.claude/settings.json` (depth-1; `Duracell*`/`malachite` hard-excluded) and replays their hooks from this root, so e.g. `sec-research/`'s governance hooks fire without relaunching Claude inside the subdir. Config: `.claude/hooks/hook-router.config.json` (`enabled` kill-switch, `ignore` list, `timeout_seconds`). Fail-open on router faults; a child's exit-2 still blocks. See `.claude/docs/specs/2026-06-20-workspace-hook-federation-router-design.md`.
+
 ## sec-research/ — hooks only fire when launched from inside it
 
 `sec-research/` enforces **17 hard-block rules** (scope-bounding, evidence
@@ -19,11 +23,11 @@ discipline, secret-scan, submission gate) via `sec-research/.claude/settings.jso
 whose hook paths resolve through `${CLAUDE_PROJECT_DIR}`. That variable only points
 at `sec-research/` when **Claude is launched from inside that directory**.
 
-**Opening Claude at the Workspace root and editing files under `sec-research/` runs
-NONE of those hooks — silently.** For any recon / evidence / findings work, start a
-session with `claude` from inside `sec-research/`, and read `sec-research/CLAUDE.md`
-(the canonical orientation doc + hook map). Don't do `sec-research/` work from a
-root-launched session.
+**With the federation router active (registered above), `sec-research/`'s hooks now
+also fire from a Workspace-root session.** For deep recon / evidence / findings work,
+launching from inside `sec-research/` is still recommended (native load; no router
+overhead). Read `sec-research/CLAUDE.md` (the canonical orientation doc + hook map)
+before sec-research work in either context.
 
 ## On-demand context (`.ai/` truth-base)
 
