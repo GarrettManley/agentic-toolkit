@@ -37,3 +37,18 @@ def test_ibb_token_denied_falls_back_to_draft(tmp_programs):
     assert res.data is not None  # scaffold skeleton for manual completion
     assert any("reputation" in w.lower() or "manual" in w.lower() or "denied" in w.lower()
                for w in res.warnings)
+    ok, errors = validate_program(res.data)
+    assert ok, f"draft skeleton is schema-invalid: {errors}"
+
+
+def test_ibb_no_credential_falls_back_to_draft(tmp_programs, monkeypatch):
+    from fetchers import ibb
+    monkeypatch.setattr(ibb, "get_credential", lambda _: None)
+    res = ibb.fetch("django")
+    assert res.draft is True
+    assert res.data is not None
+    assert len(res.warnings) > 0 and any(
+        "credential" in w.lower() or "no hackerone" in w.lower() for w in res.warnings
+    )
+    ok, errors = validate_program(res.data)
+    assert ok, f"draft skeleton is schema-invalid: {errors}"
