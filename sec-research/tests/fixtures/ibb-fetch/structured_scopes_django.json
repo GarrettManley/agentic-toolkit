@@ -1,0 +1,5 @@
+{"meta":{"program_handle":"ibb-python","embargo_period_days":90,"ai_assistance_allowed":true,"ai_disclosure_required":true},
+ "data":[
+  {"id":"1","attributes":{"asset_identifier":"django","asset_type":"OTHER","eligible_for_bounty":true,"eligible_for_submission":true}},
+  {"id":"2","attributes":{"asset_identifier":"vdp-only-asset","asset_type":"OTHER","eligible_for_bounty":false,"eligible_for_submission":true}}
+ ]}
