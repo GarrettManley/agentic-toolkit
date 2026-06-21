@@ -1,4 +1,23 @@
 import json
+import subprocess
+import sys
+from pathlib import Path
+
+ROUTER = Path(__file__).resolve().parents[1] / "hook_router.py"  # .claude/hooks/hook_router.py
+
+
+def test_cli_passes_through_with_no_projects(tmp_path):
+	"""Running the router from a root with no federated projects exits 0 and writes nothing fatal."""
+	event = json.dumps({"hook_event_name": "PreToolUse", "tool_name": "Read"})
+	proc = subprocess.run([sys.executable, str(ROUTER)], input=event.encode(),
+	                      capture_output=True, cwd=str(tmp_path),
+	                      env={"CLAUDE_PROJECT_DIR": str(tmp_path), **_min_env()})
+	assert proc.returncode == 0
+
+
+def _min_env():
+	import os
+	return {"PATH": os.environ.get("PATH", ""), "SYSTEMROOT": os.environ.get("SYSTEMROOT", "")}
 
 
 def test_discover_finds_child_with_settings(fake_root):
