@@ -19,6 +19,9 @@ This file is auto-loaded by Claude Code when a session starts inside this direct
 python scripts/init_workspace.py --verify
 
 # Load a program scope (REQUIRED before any recon — unblocks PT-1)
+# Stage 2: automated fetch from venue API (writes scope.yaml or scope.draft.yaml)
+python scripts/fetch_program.py --venue <huntr|ghsa|ibb-h1> --identifier <id>
+# Stage 1 fallback: manual YAML ingest or scaffold
 python scripts/load_program.py --venue ghsa --identifier <repo-slug>
 
 # Pre-submission flow (sign_approval requires interactive human typing)
@@ -115,4 +118,4 @@ Git is still nested under the parent's `.git`, so `git rev-parse --show-toplevel
 
 ## Stage 1 vs Stages 2-7
 
-Currently Stage 1 of 7 (foundation/governance). Recon (Stage 3), hypothesis generation (Stage 4), and venue-specific submission integrations beyond GHSA + manual-form (Stage 7) are NOT yet implemented — `nightly.py` and `investigate.py` are pipeline skeletons that exercise hooks against fixture data. Don't claim a finding can be auto-discovered yet; the framework is ready, the discovery logic is not.
+Stage 2 scope-fetching (`scripts/fetch_program.py`, `scripts/fetchers/{huntr,ghsa,ibb}.py`) is implemented. Recon (Stage 3), hypothesis generation (Stage 4), and venue-specific submission integrations beyond GHSA + manual-form (Stage 7) are NOT yet implemented — `nightly.py` and `investigate.py` are pipeline skeletons that exercise hooks against fixture data. Don't claim a finding can be auto-discovered yet; the framework is ready, the discovery logic is not.

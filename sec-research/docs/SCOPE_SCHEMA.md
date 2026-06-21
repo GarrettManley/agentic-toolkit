@@ -94,8 +94,16 @@ submission:
 
 ## How scopes get loaded
 
-- **Stage 2** will provide automated scope fetchers that produce these YAML files
-- **Stage 1** loads scopes manually via `scripts/load_program.py --venue <v> --identifier <id>` or by hand-writing the YAML
+- **Stage 2** automated fetchers: `scripts/fetch_program.py --venue <huntr|ghsa|ibb-h1> --identifier <id>` dispatches to the appropriate venue fetcher, validates the result, and writes `scope.yaml` (or `scope.draft.yaml` on draft/invalid). It is the ONLY filesystem writer for fetched scopes.
+- **Stage 1** manual ingest: `scripts/load_program.py --from-file path/to/scope.yaml` or `scripts/load_program.py --scaffold --venue <v> --slug <slug>` for hand-editing.
+
+### `fetch_program.py` safety properties
+
+- A schema-invalid result **never** reaches `scope.yaml` — it is written to `scope.draft.yaml` for manual inspection, and the CLI exits 1.
+- A `draft=True` result from the fetcher (e.g. IBB reputation-gated) writes `scope.draft.yaml` and exits 1.
+- A failed fetch (`ok=False`) writes **nothing** and exits 1.
+- A `ScopeViolation` from a fetcher propagates to the CLI and writes nothing (policy already logged the audit entry).
+- Without `--force`, an existing `scope.yaml` is refused — the original is untouched.
 
 ## Validation
 
