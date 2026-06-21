@@ -4,8 +4,10 @@ from __future__ import annotations
 
 import fnmatch
 import json
+import os
 import re
 import shlex
+import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -74,3 +76,23 @@ def resolve_command(command: str, child_dir: Path) -> list[str]:
     posix=True is correct here because commands use forward slashes by convention."""
     substituted = command.replace("${CLAUDE_PROJECT_DIR}", Path(child_dir).as_posix())
     return shlex.split(substituted, posix=True)
+
+
+def run_child_hook(argv: list[str], child_dir: Path, stdin_bytes: bytes,
+                   timeout: float) -> tuple[int, str, str]:
+    """Invoke one child hook with the replayed event on stdin. Returns (rc, stdout, stderr).
+    Spawn failure / timeout is fail-open (rc 0) with a diagnostic on stderr — a router-side
+    fault must not block the user's action; only a child's deliberate exit-2 blocks."""
+    env = {**os.environ, "CLAUDE_PROJECT_DIR": str(child_dir)}
+    try:
+        proc = subprocess.run(argv, input=stdin_bytes, capture_output=True,
+                              env=env, cwd=str(child_dir), timeout=timeout)
+    except FileNotFoundError as e:
+        return 0, "", f"[hook_router] child not runnable {argv!r}: {e}\n"
+    except subprocess.TimeoutExpired:
+        return 0, "", f"[hook_router] child timed out ({timeout}s): {argv!r}\n"
+    except OSError as e:
+        return 0, "", f"[hook_router] child spawn error {argv!r}: {e}\n"
+    return (proc.returncode,
+            proc.stdout.decode("utf-8", "replace"),
+            proc.stderr.decode("utf-8", "replace"))

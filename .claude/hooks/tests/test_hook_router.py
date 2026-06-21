@@ -70,3 +70,35 @@ def test_resolve_command_substitutes_project_dir(tmp_path):
     child = tmp_path / "sec-research"
     argv = lib.resolve_command("python ${CLAUDE_PROJECT_DIR}/hooks/pretooluse.py", child)
     assert argv == ["python", f"{child.as_posix()}/hooks/pretooluse.py"]
+
+
+import sys
+from pathlib import Path
+
+STUBS = Path(__file__).resolve().parent / "stubs"
+
+
+def test_run_child_replays_stdin_and_sets_env(tmp_path):
+    import hook_router_lib as lib
+    child = tmp_path / "proj"; child.mkdir()
+    argv = [sys.executable, str(STUBS / "echo_hook.py")]
+    rc, out, err = lib.run_child_hook(argv, child, b'{"hook_event_name":"PreToolUse"}', 15)
+    assert rc == 0
+    assert "echo:len=32" in out                      # exact bytes were replayed to stdin
+    assert f"cpd={child}" in out                      # CLAUDE_PROJECT_DIR was set to child
+
+
+def test_run_child_block(tmp_path):
+    import hook_router_lib as lib
+    child = tmp_path / "proj"; child.mkdir()
+    rc, out, err = lib.run_child_hook([sys.executable, str(STUBS / "block_hook.py")], child, b"{}", 15)
+    assert rc == 2
+    assert "stub block" in err
+
+
+def test_run_child_spawn_failure_is_fail_open(tmp_path):
+    import hook_router_lib as lib
+    child = tmp_path / "proj"; child.mkdir()
+    rc, out, err = lib.run_child_hook(["definitely-not-a-real-binary-xyz"], child, b"{}", 15)
+    assert rc == 0                                    # fail-open on spawn failure
+    assert err                                        # but diagnostic surfaced
