@@ -59,7 +59,7 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Venue-specific program identifier (e.g. 'acme-org/acme-pkg' for huntr).",
     )
     p.add_argument(
-        "--fixture",
+        "--from-fixture",
         default=None,
         help=(
             "Path to a canned fixture file; skips the live network call.  "
@@ -75,14 +75,14 @@ def _build_parser() -> argparse.ArgumentParser:
     return p
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     """CLI entry point. Returns exit code (0 = success, 1 = any error)."""
     parser = _build_parser()
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     venue = args.venue
     identifier = args.identifier
-    fixture = Path(args.fixture) if args.fixture else None
+    fixture = Path(args.from_fixture) if args.from_fixture else None
 
     # Resolve fetcher callable
     fetch_fn = FETCHERS.get(venue)
