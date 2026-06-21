@@ -44,3 +44,29 @@ def test_load_config_defaults_when_missing(tmp_path):
     import hook_router_lib as lib
     cfg = lib.load_config(tmp_path / "absent.json")
     assert cfg == {"enabled": True, "ignore": [], "timeout_seconds": 15}
+
+
+import pytest
+
+
+@pytest.mark.parametrize("matcher,tool,expected", [
+    (None, "Edit", True),
+    ("", "Edit", True),
+    ("*", "Edit", True),
+    (".*", "Bash", True),
+    ("Edit|Write", "Edit", True),
+    ("Edit|Write", "Bash", False),
+    ("Bash", "Bash", True),
+    ("^WebFetch$", "WebFetch", True),
+    ("[unclosed", "Edit", False),  # malformed regex -> no match, no crash
+])
+def test_matcher_matches(matcher, tool, expected):
+    import hook_router_lib as lib
+    assert lib.matcher_matches(matcher, tool) is expected
+
+
+def test_resolve_command_substitutes_project_dir(tmp_path):
+    import hook_router_lib as lib
+    child = tmp_path / "sec-research"
+    argv = lib.resolve_command("python ${CLAUDE_PROJECT_DIR}/hooks/pretooluse.py", child)
+    assert argv == ["python", f"{child.as_posix()}/hooks/pretooluse.py"]

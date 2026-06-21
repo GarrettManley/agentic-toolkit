@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import fnmatch
 import json
+import re
+import shlex
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -54,3 +56,21 @@ def discover_projects(root: Path, config: dict) -> list[Project]:
             continue  # a child with broken settings is skipped, not fatal
         projects.append(Project(dir=child, settings=settings))
     return projects
+
+
+def matcher_matches(matcher: str | None, tool_name: str) -> bool:
+    """Claude matchers are regexes over tool_name. Empty / '*' / '.*' mean match-all.
+    A malformed regex matches nothing (and is the child's config bug, not ours)."""
+    if not matcher or matcher in ("*", ".*"):
+        return True
+    try:
+        return re.search(matcher, tool_name) is not None
+    except re.error:
+        return False
+
+
+def resolve_command(command: str, child_dir: Path) -> list[str]:
+    """Substitute ${CLAUDE_PROJECT_DIR} -> child dir (forward slashes) and split to argv.
+    posix=True is correct here because commands use forward slashes by convention."""
+    substituted = command.replace("${CLAUDE_PROJECT_DIR}", Path(child_dir).as_posix())
+    return shlex.split(substituted, posix=True)
