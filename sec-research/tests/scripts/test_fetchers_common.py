@@ -49,3 +49,19 @@ def test_http_get_live_path_calls_check_http(monkeypatch):
     with pytest.raises(ScopeViolation):
         _http.http_get("https://huntr.com/repos/a/b")
     assert calls["url"] == "https://huntr.com/repos/a/b"
+
+
+def test_gh_api_json_live_path_calls_check_http(monkeypatch):
+    """Gate must fire on the synthesized api.github.com URL before gh is shelled out."""
+    from fetchers import _http
+    from lib.policy import ScopeViolation
+    calls = {}
+
+    def fake_check(url, *, bootstrap_hosts):
+        calls["url"] = url
+        raise ScopeViolation(url=url, host="api.github.com", reason="test")
+
+    monkeypatch.setattr(_http, "check_http", fake_check)
+    with pytest.raises(ScopeViolation):
+        _http.gh_api_json("/repos/a/b")
+    assert calls["url"] == "https://api.github.com/repos/a/b"
