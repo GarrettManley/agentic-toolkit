@@ -22,7 +22,8 @@ python scripts/init_workspace.py --verify
 # Stage 2: automated fetch from venue API (writes scope.yaml or scope.draft.yaml)
 python scripts/fetch_program.py --venue <huntr|ghsa|ibb-h1> --identifier <id>
 # Stage 1 fallback: manual YAML ingest or scaffold
-python scripts/load_program.py --venue ghsa --identifier <repo-slug>
+python scripts/load_program.py --from-file path/to/scope.yaml
+python scripts/load_program.py --scaffold --venue <venue> --slug <slug>
 
 # Pre-submission flow (sign_approval requires interactive human typing)
 python scripts/verify_finding.py <trace-id>
@@ -43,7 +44,7 @@ pytest
 
 These are protective — they prevent you from triggering hooks that would block your work mid-stream, and they prevent the workspace from producing rejectable findings.
 
-- **Pre-empt scope checks.** Before any reconnaissance, HTTP fetch, or scripted lookup against an external host, confirm a program scope is loaded (`ls programs/`). If none is loaded and the user is asking for recon work, propose loading one with `python scripts/load_program.py --venue <ghsa|huntr|...> --identifier <slug>` and wait for confirmation — don't attempt the call and let PT-1 block.
+- **Pre-empt scope checks.** Before any reconnaissance, HTTP fetch, or scripted lookup against an external host, confirm a program scope is loaded (`ls programs/`). If none is loaded and the user is asking for recon work, propose loading one with `python scripts/fetch_program.py --venue <ghsa|huntr|ibb-h1> --identifier <id>` (or `python scripts/load_program.py --from-file path/to/scope.yaml` for manual ingest) and wait for confirmation — don't attempt the call and let PT-1 block.
 - **Don't fabricate references.** Every CVE ID, package@version, and commit SHA you write into `findings/**/*.md` is independently verified by PT-4 against NVD / npm / PyPI / cargo / rubygems / GitHub. If you don't have a verified reference, say "unverified" rather than inventing one. PT-4 will catch fabrications either way; saying "unverified" is faster.
 - **Every Fact: line has Citation: + Proof:.** When writing `finding.md`, the discipline is non-negotiable. If you write a `Fact:` or `Claim:` line, the next ~12 lines MUST contain `Citation:` (URL to a Tier-1 or Tier-2 source) and `Proof:` (code excerpt, command output, or HTTP trace). PoT-2 enforces this.
 - **PoC code is gated by PT-5.** PT-5 blocks direct `npm install` / `pip install` / `cargo install` / `bash poc/reproduce.sh` outside a sandbox wrapper. **Stage-1 caveat:** `sandbox_server.py` is not built yet (Stage 4); `verify_finding.py` currently invokes PoCs directly, and PT-5's bypass triggers on the literal substring `sandbox_server` or `docker`. Don't fabricate a sandbox call you can't actually run — if you genuinely need to execute a PoC pre-Stage-4, request a signed PT-5 override.

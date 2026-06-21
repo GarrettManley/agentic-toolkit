@@ -44,3 +44,4 @@ def test_ghsa_bad_identifier(tmp_programs):
     from fetchers import ghsa
     res = ghsa.fetch("noslash", from_fixture=FX / "repos_acme-org_acme-repo.json")
     assert res.ok is False
+    assert any("identifier" in w.lower() for w in res.warnings)
