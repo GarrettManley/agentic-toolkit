@@ -123,7 +123,7 @@ def test_aggregate_concats_when_no_block():
 def test_route_event_blocks_on_child_exit2(fake_root):
     import hook_router_lib as lib
     root, mk = fake_root
-    cmd = f"{sys.executable} {STUBS / 'block_hook.py'}"
+    cmd = f"{Path(sys.executable).as_posix()} {(STUBS / 'block_hook.py').as_posix()}"
     mk("sec-research", {"PreToolUse": [{"matcher": ".*", "hooks": [{"command": cmd}]}]})
     event = json.dumps({"hook_event_name": "PreToolUse", "tool_name": "Edit"}).encode()
     rc, out, err = lib.route_event(event, root, lib.load_config(root / "x.json"))
@@ -133,7 +133,7 @@ def test_route_event_blocks_on_child_exit2(fake_root):
 def test_route_event_passes_when_matcher_excludes(fake_root):
     import hook_router_lib as lib
     root, mk = fake_root
-    cmd = f"{sys.executable} {STUBS / 'block_hook.py'}"
+    cmd = f"{Path(sys.executable).as_posix()} {(STUBS / 'block_hook.py').as_posix()}"
     mk("sec-research", {"PreToolUse": [{"matcher": "Bash", "hooks": [{"command": cmd}]}]})
     event = json.dumps({"hook_event_name": "PreToolUse", "tool_name": "Edit"}).encode()
     rc, out, err = lib.route_event(event, root, lib.load_config(root / "x.json"))
@@ -143,7 +143,7 @@ def test_route_event_passes_when_matcher_excludes(fake_root):
 def test_route_event_userpromptsubmit_concats_stdout(fake_root):
     import hook_router_lib as lib
     root, mk = fake_root
-    cmd = f"{sys.executable} {STUBS / 'echo_hook.py'}"
+    cmd = f"{Path(sys.executable).as_posix()} {(STUBS / 'echo_hook.py').as_posix()}"
     mk("a", {"UserPromptSubmit": [{"hooks": [{"command": cmd}]}]})
     mk("b", {"UserPromptSubmit": [{"hooks": [{"command": cmd}]}]})
     event = json.dumps({"hook_event_name": "UserPromptSubmit"}).encode()
@@ -155,4 +155,4 @@ def test_route_event_unparseable_is_fail_open(fake_root):
     import hook_router_lib as lib
     root, _ = fake_root
     rc, out, err = lib.route_event(b"not json", root, lib.load_config(root / "x.json"))
-    assert rc == 0
+    assert rc == 0 and out == "" and err == ""

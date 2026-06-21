@@ -73,9 +73,12 @@ def matcher_matches(matcher: str | None, tool_name: str) -> bool:
 
 def resolve_command(command: str, child_dir: Path) -> list[str]:
     """Substitute ${CLAUDE_PROJECT_DIR} -> child dir (forward slashes) and split to argv.
-    posix=False is required on Windows so backslashes in paths are not consumed as escapes."""
+    Commands MUST use forward slashes (backslashes are escape characters in POSIX mode).
+    ${CLAUDE_PROJECT_DIR} always expands to a forward-slash path via as_posix(), so real
+    child hooks are safe. Quoted paths with spaces (e.g. "C:/Program Files/x/hook.py")
+    are handled correctly by posix=True."""
     substituted = command.replace("${CLAUDE_PROJECT_DIR}", Path(child_dir).as_posix())
-    return shlex.split(substituted, posix=(os.name != "nt"))
+    return shlex.split(substituted, posix=True)
 
 
 def run_child_hook(argv: list[str], child_dir: Path, stdin_bytes: bytes,
