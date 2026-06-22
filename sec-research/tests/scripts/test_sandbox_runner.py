@@ -53,13 +53,15 @@ def test_install_phase_uses_bridge_and_gates_registry(tmp_path, monkeypatch):
 def test_install_gate_scope_violation_propagates(tmp_path, monkeypatch):
     import sandbox.runner as r
     from lib.policy import ScopeViolation
+    runner_calls = []
     def boom(url, *, bootstrap_hosts):
         raise ScopeViolation(url=url, host="evil.invalid", reason="test")
     monkeypatch.setattr(r, "check_http", boom)
     with pytest.raises(ScopeViolation):
         r.sandbox_run(["curl", "x"], ecosystem="npm", phase="install",
                       workdir_host=tmp_path, timeout=10, network_allow=["evil.invalid"],
-                      runner=lambda *a, **k: _FakeCompleted())
+                      runner=_capture_runner(runner_calls))
+    assert runner_calls == []
 
 
 def test_source_mounted_read_only(tmp_path):
@@ -85,7 +87,7 @@ def test_timeout_sets_timed_out(tmp_path):
         raise subprocess.TimeoutExpired(cmd=argv, timeout=kw.get("timeout", 1))
     res = sandbox_run(["sleep", "999"], ecosystem="npm", phase="execute",
                       workdir_host=tmp_path, timeout=1, runner=runner)
-    assert res.timed_out is True and res.exit_code != 0
+    assert res.timed_out is True and res.exit_code == 124
 
 
 def test_docker_unreachable_raises_sandbox_error(tmp_path):
@@ -107,3 +109,40 @@ def test_run_appends_ledger_event(tmp_path, monkeypatch):
     lines = ledger.read_text(encoding="utf-8").strip().splitlines()
     evt = json.loads(lines[-1])
     assert evt["event"] == "sandbox-exec" and evt["image"] == "node:22-slim"
+    assert evt["phase"] == "execute" and evt["exit"] == 0
+
+
+def test_execute_phase_does_not_gate_network(tmp_path, monkeypatch):
+    import sandbox.runner as r
+    gated = []
+    monkeypatch.setattr(r, "check_http", lambda url, *, bootstrap_hosts: gated.append(url))
+    calls = []
+    r.sandbox_run(["true"], ecosystem="npm", phase="execute",
+                  workdir_host=tmp_path, timeout=10, runner=_capture_runner(calls))
+    assert gated == []
+
+
+def test_empty_network_allow_raises(tmp_path, monkeypatch):
+    import sandbox.runner as r
+    from sandbox.runner import SandboxError
+    monkeypatch.setattr(r, "check_http", lambda url, *, bootstrap_hosts: None)
+    with pytest.raises(SandboxError):
+        r.sandbox_run(["npm", "install", "x"], ecosystem="npm", phase="install",
+                      workdir_host=tmp_path, timeout=10, network_allow=[],
+                      runner=lambda *a, **k: _FakeCompleted())
+
+
+def test_invalid_phase_raises(tmp_path):
+    from sandbox.runner import sandbox_run, SandboxError
+    with pytest.raises(SandboxError):
+        sandbox_run(["true"], ecosystem="npm", phase="excute",
+                    workdir_host=tmp_path, timeout=10,
+                    runner=lambda *a, **k: _FakeCompleted())
+
+
+def test_non_windows_mount_path_raises(tmp_path):
+    from sandbox.runner import sandbox_run, SandboxError
+    with pytest.raises(SandboxError):
+        sandbox_run(["true"], ecosystem="npm", phase="execute",
+                    workdir_host=Path("/etc"), timeout=10,
+                    runner=lambda *a, **k: _FakeCompleted())

@@ -52,15 +52,23 @@ def _append_ledger(event: dict) -> None:
         pass  # best-effort; never suppress the result/raise
 
 
+def _safe_mount(host_path) -> str:
+    """Translate a host path to a WSL path and require it to be a real Windows drive mount."""
+    wsl = win_to_wsl(host_path)
+    if not wsl.startswith("/mnt/"):
+        raise SandboxError(f"refusing to mount non-Windows host path: {host_path!r}")
+    return wsl
+
+
 def _build_argv(image, cmd, *, network, workdir_host, source_host, extra_env) -> list[str]:
     argv = ["wsl", "-e", "docker", "run", "--rm",
             "--memory", MEM_LIMIT, "--cpus", CPU_LIMIT, "--pids-limit", PIDS_LIMIT,
             "--cap-drop", "ALL", "--security-opt", "no-new-privileges",
             "--network", network,
             *extra_env,
-            "-v", f"{win_to_wsl(workdir_host)}:/work", "-w", "/work"]
+            "-v", f"{_safe_mount(workdir_host)}:/work", "-w", "/work"]
     if source_host is not None:
-        argv += ["-v", f"{win_to_wsl(source_host)}:/src:ro"]
+        argv += ["-v", f"{_safe_mount(source_host)}:/src:ro"]
     argv.append(image)
     argv += list(cmd)
     return argv
@@ -86,6 +94,9 @@ def sandbox_run(cmd, *, ecosystem, phase="execute", workdir_host, timeout,
         SandboxError: Docker/wsl not reachable, or unknown ecosystem.
         ScopeViolation: Install-phase host blocked by policy (propagates uncaught).
     """
+    if phase not in ("execute", "install"):
+        raise SandboxError(f"invalid phase {phase!r} (expected 'execute' or 'install')")
+
     try:
         image = image_for(ecosystem)
     except UnknownEcosystem as e:
@@ -95,9 +106,14 @@ def sandbox_run(cmd, *, ecosystem, phase="execute", workdir_host, timeout,
         network = "bridge"
         extra_env = safe_install_env(ecosystem)
         hosts = network_allow if network_allow is not None else [registry_for(ecosystem)]
+        if not hosts:
+            raise SandboxError("install phase requires at least one host in network_allow")
         for host in hosts:
+            h = host.strip()
+            if not h or any(c in h for c in "/@: \t"):
+                raise SandboxError(f"invalid install host {host!r} (bare hostname required)")
             # Gate declared install egress; ScopeViolation propagates uncaught (audit side-effect).
-            check_http(f"https://{host}", bootstrap_hosts=REGISTRY_HOSTS)
+            check_http(f"https://{h}", bootstrap_hosts=REGISTRY_HOSTS)
     else:
         network = "none"
         extra_env = []
