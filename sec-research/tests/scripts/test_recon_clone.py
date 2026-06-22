@@ -47,3 +47,20 @@ def test_clone_scope_violation_propagates(tmp_path, monkeypatch):
     import pytest
     with pytest.raises(ScopeViolation):
         clonemod.clone_repo("github.com/acme-org/acme", tmp_path, runner=lambda *a, **k: _FakeProc())
+
+
+def test_clone_skips_when_size_exceeds_cap(tmp_path, monkeypatch):
+    from recon import clone as clonemod
+    monkeypatch.setattr(clonemod, "gate", lambda url: None)
+    monkeypatch.setattr(clonemod, "_dir_size_mb", lambda path: clonemod.CLONE_SIZE_CAP_MB + 1)
+    def runner(cmd, **kw):
+        if cmd[:2] == ["git", "clone"]:
+            Path(cmd[-1]).mkdir(parents=True, exist_ok=True)
+            return _FakeProc()
+        if "rev-parse" in cmd:
+            return _FakeProc(stdout="abc123\n")
+        return _FakeProc()
+    r = clonemod.clone_repo("github.com/acme-org/acme", tmp_path, runner=runner)
+    assert r.cloned is False
+    assert r.skipped_reason is not None
+    assert "size" in r.skipped_reason or "cap" in r.skipped_reason or "500" in r.skipped_reason

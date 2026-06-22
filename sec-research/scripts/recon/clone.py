@@ -36,7 +36,7 @@ def _slug(repo_identifier: str) -> str:
 
 
 def clone_repo(repo_identifier: str, dest_root: Path, *,
-               runner=subprocess.run, from_fixture=None) -> CloneResult:
+               runner=subprocess.run) -> CloneResult:
     dest = dest_root / _slug(repo_identifier)
     url = _repo_url(repo_identifier)
     gate(url)  # raises ScopeViolation if blocked — propagates uncaught
