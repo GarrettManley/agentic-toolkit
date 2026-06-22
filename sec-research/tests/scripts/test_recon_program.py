@@ -56,3 +56,35 @@ def test_main_all_returns_zero(tmp_path, monkeypatch):
     import recon_program as rp
     monkeypatch.setattr(rp, "load_all_scopes", lambda: {})
     assert rp.main(["--all"]) == 0
+
+
+def test_main_scope_violation_returns_one(tmp_path, monkeypatch):
+    import recon_program as rp
+    from lib.policy import ScopeViolation
+
+    monkeypatch.setattr(rp, "load_all_scopes",
+                        lambda: _scope("huntr-acme", {"asset_type": "package",
+                                                       "identifier": "acme",
+                                                       "ecosystem": "npm"}))
+    monkeypatch.setattr(rp.metadata, "fetch_metadata",
+                        lambda ident, eco, **kw: (_ for _ in ()).throw(
+                            ScopeViolation(url="https://registry.npmjs.org/acme",
+                                           host="registry.npmjs.org",
+                                           reason="host not in scope")))
+    assert rp.main(["--all"]) == 1
+
+
+def test_run_recon_scope_violation_writes_nothing(tmp_path, monkeypatch):
+    import pytest
+    import recon_program as rp
+    from lib.policy import ScopeViolation
+
+    monkeypatch.setattr(rp.metadata, "fetch_metadata",
+                        lambda ident, eco, **kw: (_ for _ in ()).throw(
+                            ScopeViolation(url="https://registry.npmjs.org/acme",
+                                           host="registry.npmjs.org",
+                                           reason="host not in scope")))
+    scopes = _scope("huntr-acme", {"asset_type": "package", "identifier": "acme", "ecosystem": "npm"})
+    with pytest.raises(ScopeViolation):
+        rp.run_recon(scopes, recon_root=tmp_path, ts="t")
+    assert not list(tmp_path.iterdir())

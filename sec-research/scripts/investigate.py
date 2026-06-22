@@ -1,4 +1,4 @@
-"""investigate.py — on-demand deep-dive entry point (Stage 1 SKELETON).
+"""investigate.py — on-demand deep-dive entry point.
 
 Same pipeline as nightly.py but bounded to a single program / asset and interactive.
 
@@ -23,7 +23,7 @@ import nightly  # noqa: E402
 
 
 def main() -> int:
-    p = argparse.ArgumentParser(description="On-demand investigation deep-dive (Stage 1 skeleton).")
+    p = argparse.ArgumentParser(description="On-demand investigation deep-dive.")
     p.add_argument("program_slug")
     p.add_argument("--asset", help="Specific in-scope asset to focus on")
     args = p.parse_args()
@@ -40,15 +40,14 @@ def main() -> int:
     if args.asset:
         print(f"  Bounded to asset: {args.asset}")
 
-    print("\n=== Stage 1 SKELETON pipeline ===")
-    print("(Stages 3-5 are stubs; this proves the framework + hooks + ledger work end-to-end)\n")
+    print("\n=== Investigation pipeline ===\n")
 
     refresh_log = nightly.stage_refresh_scopes(target_scope)
     for line in refresh_log:
         print(f"  scope: {line}")
 
     recon = nightly.stage_recon(target_scope)
-    print(f"  recon: {len(recon)} items (Stage 3 stub)")
+    print(f"  recon: {len(recon)} items")
 
     hypotheses = nightly.stage_hypothesize(target_scope, recon)
     print(f"  hypotheses: {len(hypotheses)} (Stage 4 stub)")
