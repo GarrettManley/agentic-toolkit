@@ -33,6 +33,8 @@ from verify.templates.npm__minimatch__CVE_2022_3517 import (
 #: Maps (ecosystem, package_name, cve_id) → factory(hypothesis: dict) -> PocPlan.
 #: Ecosystem is lowercased; package_name and cve_id are exact-case (match the
 #: evidence_seed values produced by Stage 4b).
+#: Registry keys assume Stage-4b emits a normalized lowercase package_ecosystem;
+#: mixed-case (e.g. "NPM") is treated as unsupported by design.
 TEMPLATE_REGISTRY: dict[tuple[str, str, str], Callable[[dict], PocPlan]] = {
     ("npm", "minimatch", "CVE-2022-3517"): _build_minimatch_cve_2022_3517,
 }

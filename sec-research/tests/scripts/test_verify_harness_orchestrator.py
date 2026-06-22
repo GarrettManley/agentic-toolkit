@@ -474,3 +474,60 @@ def test_empty_input_returns_empty(monkeypatch):
     assert results == []
     started = ledger_cap.events_of_type("verify-started")
     assert started[0]["count"] == 0
+
+
+# ---------------------------------------------------------------------------
+# Test: target_identifier includes version when version_or_revision is present (I-2)
+# ---------------------------------------------------------------------------
+
+def test_target_identifier_includes_version(monkeypatch):
+    """Verdict.target_identifier must be 'identifier@version' when version_or_revision is set."""
+    ledger_cap = _LedgerCapture()
+    monkeypatch.setattr(_harness, "ledger", type("L", (), {"append_event": staticmethod(ledger_cap)})())
+
+    strategy = _FakeStrategy(supports=True)
+
+    def fake_drive(plan, hid, slug, *, runner, verdict_root):
+        return _INSTALL_EV, _TRIGGER_EV_VERIFIED
+
+    monkeypatch.setattr(_harness, "_drive_phased", fake_drive)
+
+    hyp = {
+        "hypothesis_id": "HYP-ver-001",
+        "program_slug": "test-slug",
+        "target": {
+            "identifier": "minimatch",
+            "version_or_revision": "3.0.4",
+        },
+        "vuln_class": "dependency-cve",
+    }
+
+    results = _harness.verify_hypotheses([hyp], strategy=strategy)
+
+    assert len(results) == 1
+    assert results[0]["target_identifier"] == "minimatch@3.0.4"
+
+
+def test_target_identifier_without_version(monkeypatch):
+    """Verdict.target_identifier falls back to bare identifier when version_or_revision absent."""
+    ledger_cap = _LedgerCapture()
+    monkeypatch.setattr(_harness, "ledger", type("L", (), {"append_event": staticmethod(ledger_cap)})())
+
+    strategy = _FakeStrategy(supports=True)
+
+    def fake_drive(plan, hid, slug, *, runner, verdict_root):
+        return _INSTALL_EV, _TRIGGER_EV_VERIFIED
+
+    monkeypatch.setattr(_harness, "_drive_phased", fake_drive)
+
+    hyp = {
+        "hypothesis_id": "HYP-ver-002",
+        "program_slug": "test-slug",
+        "target": {"identifier": "minimatch@3.0.4"},
+        "vuln_class": "dependency-cve",
+    }
+
+    results = _harness.verify_hypotheses([hyp], strategy=strategy)
+
+    assert len(results) == 1
+    assert results[0]["target_identifier"] == "minimatch@3.0.4"

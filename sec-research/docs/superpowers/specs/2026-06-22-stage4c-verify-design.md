@@ -281,14 +281,18 @@ Required seed fields for dependency-cve: `package_ecosystem`, `package_name`,
 ### 5.4 `templates/npm__minimatch__CVE-2022-3517.py`
 
 See §8 (vertical slice) for full rationale. The template produces a `PocPlan` with:
-- `files`: `{"trigger.js": <watchdog script>}` — calls `minimatch()` with a catastrophic
-  pattern under a deadline; emits `REDOS_CONFIRMED` + `exit 0` if backtracking is observed,
-  `REDOS_NOT_OBSERVED` + `exit 1` otherwise. Variable timing never enters stdout.
-- `install_cmd`: `["npm", "install", f"minimatch@{affected_version}"]` (pinned from seed).
+- `files`: `{"trigger.js": <guard-presence probe>, "package.json": <stub>}` — feeds a 70000-char
+  pattern (`"a".repeat(70000)`, exceeding `MAX_PATTERN_LENGTH=65536` introduced by the 3.0.5 fix)
+  to `minimatch()`. minimatch 3.0.5 throws via `assertValidPattern` (length guard) → emits
+  `PATCHED` + `exit 1`; minimatch 3.0.4 has no guard → reaches match silently → emits
+  `VULN_CONFIRMED` + `exit 0`. Only the two constant sentinels reach stdout; the TypeError
+  message goes to stderr. A stub `package.json` is included so `npm install --no-save` and
+  `require("minimatch")` resolve deterministically in the workdir.
+- `install_cmd`: `["npm", "install", "--no-save", f"minimatch@{version}"]` (pinned from seed).
 - `install_hosts`: `["registry.npmjs.org"]`.
 - `expected_trigger_exit`: `0`.
-- `expected_trigger_sha256`: pinned at Task-3 implementation time after confirming the CVE
-  triplet against osv.dev/GHSA (see anti-fabrication gate, §8).
+- `expected_trigger_sha256`: `sha256("VULN_CONFIRMED\n")` — derived offline from `SENTINEL_CONFIRMED`.
+- Empirical validation (3.0.4 → VULN_CONFIRMED, 3.0.5 → PATCHED) pending a docker-capable run.
 
 ### 5.5 `llm_strategy.py`
 
@@ -459,19 +463,16 @@ wc -l`.
 
 ---
 
-## 8. Vertical slice: dependency-cve / minimatch ReDoS
+## 8. Vertical slice: dependency-cve / minimatch guard-presence probe
 
-**The planned slice:** npm `minimatch@3.0.4`, ReDoS —
-GHSA-f8q6-p94x-37v3 / CVE-2022-3517 (affected: 3.0.4; fixed: 3.0.5).
+**The planned slice:** npm `minimatch@3.0.4`, CVE-2022-3517 —
+GHSA-f8q6-p94x-37v3 (affected: < 3.0.5; fixed: 3.0.5, commit a8763f4).
 
 **Why this slice:**
-- Trigger is pure-computational (catastrophic backtracking in a regex match), zero additional
-  dependencies, no network at trigger time.
-- Success collapses to a **constant sentinel + exit code**: a watchdog/deadline around the
-  `minimatch()` call emits `REDOS_CONFIRMED\n` + `exit 0` when backtracking is observed
-  (execution time exceeds deadline), or `REDOS_NOT_OBSERVED\n` + `exit 1` otherwise. Variable
-  timing never enters stdout. Therefore `expected_trigger_sha256 = sha256("REDOS_CONFIRMED\n")`
-  is stable across runs and machines.
+- Trigger is pure-computational, zero additional dependencies, no network at trigger time.
+- Success collapses to a **constant sentinel + exit code**: deterministic guard-presence probe
+  (see below). Variable output never enters stdout. Therefore
+  `expected_trigger_sha256 = sha256("VULN_CONFIRMED\n")` is stable across runs and machines.
 - The `3.0.4` → `verified` / `3.0.5` → `refuted` version boundary proves the harness produces
   *both* verdicts, not a rubber stamp.
 - npm + `npm_config_ignore_scripts=true` (`_images.py:16`) means the fetched package's
@@ -485,21 +486,38 @@ GHSA-f8q6-p94x-37v3 / CVE-2022-3517 (affected: 3.0.4; fixed: 3.0.5).
 > triplet differs from what osv.dev returns, the template *structure* is unchanged
 > but the pinned version and hash are updated to match verified reality.
 
-**Constant-sentinel determinism constraint:**
-Variable output (timing, HRTSC, leaked addresses) must never enter stdout. The `trigger.js`
-watchdog pattern:
+**Guard-presence probe mechanism (v1 deterministic signal):**
+The 3.0.5 fix (commit a8763f4) introduced `MAX_PATTERN_LENGTH = 1024*64` (65536) and
+`assertValidPattern(pattern)` that throws `TypeError('pattern is too long')` at the top of
+`minimatch()` when `pattern.length > 65536`. The `trigger.js` feeds a 70000-char pattern:
+
 ```javascript
-const deadline = Date.now() + THRESHOLD_MS;
-minimatch("...<catastrophic-pattern>...", "...");
-if (Date.now() > deadline) {
-  process.stdout.write("REDOS_CONFIRMED\n"); process.exit(0);
+const OVERLONG = "a".repeat(70000); // > MAX_PATTERN_LENGTH (65536)
+let threw = false;
+try {
+  minimatch("probe-target", OVERLONG);
+} catch (e) {
+  threw = true;
+  process.stderr.write("length guard present (patched): " + e.message + "\n");
+}
+if (!threw) {
+  process.stdout.write("VULN_CONFIRMED\n");  // no length guard -> affected -> verified
+  process.exit(0);
 } else {
-  process.stdout.write("REDOS_NOT_OBSERVED\n"); process.exit(1);
+  process.stdout.write("PATCHED\n");          // guard present -> fixed -> refuted
+  process.exit(1);
 }
 ```
-`THRESHOLD_MS` must be chosen conservatively so that `3.0.4` reliably triggers on the sandbox
-hardware (RTX 4060 / i7-14700F host, `--cpus 1.0` container) and `3.0.5` reliably does not.
-The live test (Task 8) is the empirical confirmation.
+
+- minimatch 3.0.4: no length guard → reaches match silently → `VULN_CONFIRMED\n` + `exit 0` → **verified**
+- minimatch 3.0.5: `assertValidPattern` throws → `PATCHED\n` + `exit 1` → **refuted**
+
+This is the deterministic v1 signal: confirms the resolved version lacks the 3.0.5
+DoS-mitigation guard. True ReDoS detonation (timing-based backtracking) is deferred to a
+future template version; this probe is sufficient and fully reproducible.
+
+**Empirical validation pending a docker-capable run** (VERIFY_LIVE=1 gate). The offline suite
+confirms the Python/JS sentinel contract; docker confirms real minimatch behavior.
 
 ---
 
@@ -543,3 +561,4 @@ The live test (Task 8) is the empirical confirmation.
 | Date | Change |
 |------|--------|
 | 2026-06-22 | Initial design. Decisions locked in brainstorm: PoC authoring = Hybrid (templated v1 + LLM seam behind Protocol); verification depth = full exploit reproduction; constant-sentinel constraint bounds v1 template scope; `scripts/verify/` package mirrors `scripts/sandbox/` / `scripts/llm/`; `ScopeViolation` propagates uncaught; install→trigger shared-workdir handoff; `runtime/verdicts/` layout; `nightly.stage_verify` is the only existing file modified. Vertical slice: npm minimatch ReDoS (CVE-2022-3517 / GHSA-f8q6-p94x-37v3) — triplet to be confirmed against osv.dev at Task-3 time. |
+| 2026-06-22 | C-1 correction: replaced timing/brace-expansion approach with deterministic guard-presence probe grounded in the real 3.0.5 fix commit (a8763f4). New mechanism feeds a 70000-char pattern; 3.0.5 throws via `assertValidPattern` (MAX_PATTERN_LENGTH=65536) → PATCHED → refuted; 3.0.4 has no guard → VULN_CONFIRMED → verified. Sentinel updated from `REDOS_CONFIRMED` → `VULN_CONFIRMED`; stub `package.json` added to plan.files (I-1); `target_identifier` now includes version (I-2); lowercase-ecosystem registry assumption documented (T3). Empirical validation pending docker-capable run. |

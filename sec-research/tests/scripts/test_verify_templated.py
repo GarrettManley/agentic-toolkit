@@ -184,11 +184,29 @@ def test_build_plan_trigger_js_requires_minimatch():
 
 
 def test_build_plan_trigger_js_contains_sentinel():
-    """trigger.js content must contain the REDOS_CONFIRMED sentinel string."""
+    """trigger.js content must contain the VULN_CONFIRMED sentinel string."""
     from verify.templates.npm__minimatch__CVE_2022_3517 import SENTINEL_CONFIRMED
     strategy = _strategy()
     plan = strategy.build_plan(_minimatch_hypothesis("3.0.4"))
     assert SENTINEL_CONFIRMED in plan.files["trigger.js"]
+
+
+def test_build_plan_trigger_js_contains_overlong_repeat():
+    """trigger.js must contain the 70000-char OVERLONG repeat (guard-presence probe)."""
+    strategy = _strategy()
+    plan = strategy.build_plan(_minimatch_hypothesis("3.0.4"))
+    assert "repeat(70000)" in plan.files["trigger.js"]
+
+
+def test_build_plan_files_contains_package_json():
+    """files must contain a stub 'package.json' for deterministic npm install."""
+    strategy = _strategy()
+    plan = strategy.build_plan(_minimatch_hypothesis("3.0.4"))
+    assert "package.json" in plan.files
+    import json
+    pkg = json.loads(plan.files["package.json"])
+    assert pkg.get("name") == "poc"
+    assert pkg.get("private") is True
 
 
 def test_build_plan_template_id():
@@ -207,8 +225,12 @@ def test_expected_sha256_matches_sentinel_plus_newline():
 
     This is the determinism invariant: the Python hash is derived from the same
     sentinel string that trigger.js writes to stdout. They can never drift.
+    SENTINEL_CONFIRMED == "VULN_CONFIRMED" (guard-presence probe mechanism).
     """
     from verify.templates.npm__minimatch__CVE_2022_3517 import SENTINEL_CONFIRMED
+    assert SENTINEL_CONFIRMED == "VULN_CONFIRMED", (
+        f"Sentinel changed from expected 'VULN_CONFIRMED'; got {SENTINEL_CONFIRMED!r}"
+    )
     strategy = _strategy()
     plan = strategy.build_plan(_minimatch_hypothesis("3.0.4"))
     expected_hash = hashlib.sha256((SENTINEL_CONFIRMED + "\n").encode()).hexdigest()

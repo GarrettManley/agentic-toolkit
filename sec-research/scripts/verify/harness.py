@@ -232,7 +232,10 @@ def verify_hypotheses(
     for h in hypotheses:
         hid = h["hypothesis_id"]
         slug = h.get("program_slug", "")
-        tid = h.get("target", {}).get("identifier", "")
+        _t = h.get("target", {})
+        _ident = _t.get("identifier", "")
+        _ver = _t.get("version_or_revision")
+        tid = f"{_ident}@{_ver}" if _ver else _ident
         vcls = h.get("vuln_class", "")
 
         def _mk(verdict: str, reason: str, evidence: list, template_id) -> Verdict:
