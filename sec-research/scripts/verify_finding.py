@@ -63,17 +63,23 @@ def _find_finding_dir(trace_id: str) -> Path | None:
     return None
 
 
-def run_poc_in_sandbox(*, poc_dir: Path, ecosystem: str, expected_exit_code: int,
+def run_poc_in_sandbox(*, workdir: Path, ecosystem: str, expected_exit_code: int,
                        deterministic: bool, expected_hash: str | None,
                        timeout: int = 120) -> tuple[bool, str]:
-    """Run poc/reproduce.sh inside the Docker sandbox. Returns (ok, message).
+    """Run reproduce.sh inside the Docker sandbox. Returns (ok, message).
+
+    The mount is confined to the poc/ subdirectory (workdir); sibling dirs
+    (evidence/, timeline.md, finding.md) are never mounted into the container,
+    preventing an untrusted PoC from tampering with its own evidence.
 
     v1: one-pass with network (install+trigger together) — the immutable finding
     contract. phase='install' so the registry is reachable; host-isolation provides
     containment. Fails closed on SandboxError (no host fallback)."""
+    if not (workdir / "reproduce.sh").exists():
+        return False, "poc/reproduce.sh not found"
     try:
-        res = sandbox_run(["bash", "poc/reproduce.sh"], ecosystem=ecosystem,
-                          phase="install", workdir_host=poc_dir, timeout=timeout)
+        res = sandbox_run(["bash", "reproduce.sh"], ecosystem=ecosystem,
+                          phase="install", workdir_host=workdir, timeout=timeout)
     except SandboxError as e:
         return False, f"sandbox unavailable: {e}"
 
@@ -210,7 +216,7 @@ def verify(trace_id: str, *, run_poc: bool = True) -> tuple[bool, dict]:
         expected_exit = int(poc_meta.get("expected_exit_code", 0))
         deterministic = bool(poc_meta.get("deterministic", False))
         expected_hash = poc_meta.get("expected_output_hash")
-        ok, msg = run_poc_in_sandbox(poc_dir=finding_dir, ecosystem=ecosystem,
+        ok, msg = run_poc_in_sandbox(workdir=finding_dir / "poc", ecosystem=ecosystem,
                                      expected_exit_code=expected_exit,
                                      deterministic=deterministic,
                                      expected_hash=expected_hash)

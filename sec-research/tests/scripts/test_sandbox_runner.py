@@ -37,8 +37,15 @@ def test_execute_phase_builds_hardened_no_network_argv(tmp_path):
 
 def test_install_phase_uses_bridge_and_gates_registry(tmp_path, monkeypatch):
     import sandbox.runner as r
+    events = []
     gated = []
-    monkeypatch.setattr(r, "check_http", lambda url, *, bootstrap_hosts: gated.append((url, bootstrap_hosts)))
+    monkeypatch.setattr(r, "check_http",
+                        lambda url, *, bootstrap_hosts: (events.append("gate"), gated.append((url, bootstrap_hosts))))
+
+    def capturing_runner(argv, **kw):
+        events.append("run")
+        return _FakeCompleted(returncode=0, stdout="", stderr="")
+
     calls = []
     sandbox_run = r.sandbox_run
     sandbox_run(["npm", "install", "left-pad@1.3.0"], ecosystem="npm", phase="install",
@@ -48,6 +55,11 @@ def test_install_phase_uses_bridge_and_gates_registry(tmp_path, monkeypatch):
     assert "npm_config_ignore_scripts=true" in " ".join(argv)  # safe-install env injected
     # registry host gated before the run
     assert gated and "registry.npmjs.org" in gated[0][0]
+    # I3: gate must precede container launch — reset events and run a fresh call
+    events.clear()
+    sandbox_run(["npm", "install", "left-pad@1.3.0"], ecosystem="npm", phase="install",
+                workdir_host=tmp_path, timeout=60, runner=capturing_runner)
+    assert events == ["gate", "run"]
 
 
 def test_install_gate_scope_violation_propagates(tmp_path, monkeypatch):
@@ -146,6 +158,25 @@ def test_non_windows_mount_path_raises(tmp_path):
         sandbox_run(["true"], ecosystem="npm", phase="execute",
                     workdir_host=Path("/etc"), timeout=10,
                     runner=lambda *a, **k: _FakeCompleted())
+
+
+@pytest.mark.parametrize("bad_host", [
+    "evil.com/path",
+    "user@host",
+    "host:8080",
+    "host with space",
+])
+def test_invalid_install_host_raises(tmp_path, monkeypatch, bad_host):
+    """I4: host-injection character guard fires before the container is launched."""
+    import sandbox.runner as r
+    from sandbox.runner import SandboxError
+    runner_calls = []
+    monkeypatch.setattr(r, "check_http", lambda url, *, bootstrap_hosts: None)
+    with pytest.raises(SandboxError):
+        r.sandbox_run(["npm", "install", "x"], ecosystem="npm", phase="install",
+                      workdir_host=tmp_path, timeout=10, network_allow=[bad_host],
+                      runner=_capture_runner(runner_calls))
+    assert runner_calls == []  # guard fires before the container
 
 
 def _docker_available():
