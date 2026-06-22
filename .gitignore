@@ -49,6 +49,7 @@ apps/hw-dashboard/**/*.pyc
 apps/hw-dashboard/.pytest_cache/
 apps/hw-dashboard/web/node_modules/
 apps/hw-dashboard/web/dist/
+apps/hw-dashboard/web/*.tsbuildinfo
 
 # Python bytecode caches under .claude/ (e.g. hook-router test runs)
 .claude/**/__pycache__/
