@@ -201,6 +201,17 @@ def main() -> int:
         else:
             issues.append(f"OVERRIDE KEY: {err}")
 
+    # Sandbox readiness (warn-only — docker may not be installed yet)
+    if args.verify:
+        print("== Sandbox ==")
+        try:
+            from sandbox.doctor import sandbox_doctor
+            ok, msgs = sandbox_doctor()
+            print("[sandbox] " + ("ready" if ok else "NOT ready (PoC verification will fail closed): "
+                                  + "; ".join(msgs)))
+        except Exception as e:  # never let the optional sandbox check break init
+            print(f"[sandbox] check skipped: {e}")
+
     # Report
     print(f"\n{len(okays)} OK / {len(issues)} issues")
     if issues:

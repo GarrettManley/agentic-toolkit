@@ -15,7 +15,6 @@ import argparse
 import hashlib
 import json
 import re
-import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -29,6 +28,7 @@ from lib.schema_validate import validate_finding_frontmatter, validate_evidence 
 from lib.nvd_lookup import validate_cve_ids_in_text  # noqa: E402
 from lib.registry_lookup import extract_pkg_versions, version_exists  # noqa: E402
 from lib.git_lookup import extract_repo_sha_pairs_from_text, commit_exists  # noqa: E402
+from sandbox.runner import sandbox_run, SandboxError  # noqa: E402
 
 
 def _utc_now() -> str:
@@ -63,36 +63,26 @@ def _find_finding_dir(trace_id: str) -> Path | None:
     return None
 
 
-def _validate_poc(poc_path: Path, expected_exit: int, expected_hash: str | None,
-                  deterministic: bool, timeout: int = 120) -> tuple[bool, str]:
-    """Run reproduce.sh; check exit code and (if deterministic) stdout hash.
+def run_poc_in_sandbox(*, poc_dir: Path, ecosystem: str, expected_exit_code: int,
+                       deterministic: bool, expected_hash: str | None,
+                       timeout: int = 120) -> tuple[bool, str]:
+    """Run poc/reproduce.sh inside the Docker sandbox. Returns (ok, message).
 
-    Stage 1: runs the script directly. Stage 4 will switch to sandbox_server.py.
-    For now we trust that PT-5 + reviewer have ensured the PoC is benign.
-    """
-    if not poc_path.exists():
-        return False, f"PoC script not found: {poc_path}"
+    v1: one-pass with network (install+trigger together) — the immutable finding
+    contract. phase='install' so the registry is reachable; host-isolation provides
+    containment. Fails closed on SandboxError (no host fallback)."""
     try:
-        result = subprocess.run(
-            ["bash", str(poc_path)] if poc_path.suffix == ".sh" else [str(poc_path)],
-            capture_output=True, text=True, timeout=timeout,
-            cwd=str(poc_path.parent),
-        )
-    except subprocess.TimeoutExpired:
+        res = sandbox_run(["bash", "poc/reproduce.sh"], ecosystem=ecosystem,
+                          phase="install", workdir_host=poc_dir, timeout=timeout)
+    except SandboxError as e:
+        return False, f"sandbox unavailable: {e}"
+
+    if res.timed_out:
         return False, f"PoC timed out after {timeout}s"
-    except FileNotFoundError as exc:
-        return False, f"failed to invoke PoC: {exc}"
-
-    if result.returncode != expected_exit:
-        return False, f"expected exit {expected_exit}, got {result.returncode}; stderr={result.stderr[:500]!r}"
-
-    if deterministic:
-        if not expected_hash:
-            return False, "deterministic=true but no expected_output_hash declared"
-        actual = hashlib.sha256(result.stdout.encode("utf-8", errors="replace")).hexdigest()
-        if actual != expected_hash:
-            return False, f"deterministic stdout hash mismatch: expected {expected_hash}, got {actual}"
-
+    if res.exit_code != expected_exit_code:
+        return False, f"PoC exit {res.exit_code} != expected {expected_exit_code}"
+    if deterministic and res.stdout_sha256 != expected_hash:
+        return False, f"PoC stdout hash {res.stdout_sha256} != expected {expected_hash}"
     return True, "PoC reproduced successfully"
 
 
@@ -207,11 +197,21 @@ def verify(trace_id: str, *, run_poc: bool = True) -> tuple[bool, dict]:
 
     # PoC reproduction
     if run_poc:
+        ecosystem = (fm.get("target") or {}).get("ecosystem")
+        if not ecosystem:
+            result["checks"].append({
+                "name": "poc-reproduction", "ok": False,
+                "message": "finding has no target.ecosystem — sandbox needs it",
+            })
+            return False, result
         poc_meta = fm.get("poc", {})
         expected_exit = int(poc_meta.get("expected_exit_code", 0))
         deterministic = bool(poc_meta.get("deterministic", False))
         expected_hash = poc_meta.get("expected_output_hash")
-        ok, msg = _validate_poc(poc_script, expected_exit, expected_hash, deterministic)
+        ok, msg = run_poc_in_sandbox(poc_dir=finding_dir, ecosystem=ecosystem,
+                                     expected_exit_code=expected_exit,
+                                     deterministic=deterministic,
+                                     expected_hash=expected_hash)
         result["checks"].append({"name": "poc-reproduction", "ok": ok, "message": msg})
         if not ok:
             return False, result

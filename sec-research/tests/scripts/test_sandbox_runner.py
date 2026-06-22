@@ -146,3 +146,20 @@ def test_non_windows_mount_path_raises(tmp_path):
         sandbox_run(["true"], ecosystem="npm", phase="execute",
                     workdir_host=Path("/etc"), timeout=10,
                     runner=lambda *a, **k: _FakeCompleted())
+
+
+def _docker_available():
+    import subprocess
+    try:
+        p = subprocess.run(["wsl", "-e", "docker", "info"], capture_output=True, text=True, timeout=20)
+        return p.returncode == 0
+    except Exception:
+        return False
+
+
+@pytest.mark.skipif(not _docker_available(), reason="docker engine not reachable in WSL2")
+def test_integration_real_container_echo(tmp_path):
+    from sandbox.runner import sandbox_run
+    res = sandbox_run(["printf", "hello"], ecosystem="npm", phase="execute",
+                      workdir_host=tmp_path, timeout=60)
+    assert res.exit_code == 0 and "hello" in res.stdout
