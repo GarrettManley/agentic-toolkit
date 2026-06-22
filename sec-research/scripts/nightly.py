@@ -36,6 +36,7 @@ from lib.scope_match import load_all_scopes  # noqa: E402
 from lib import ledger  # noqa: E402
 from recon_program import run_recon  # noqa: E402
 from llm.generate import generate_hypotheses  # noqa: E402
+from verify.harness import verify_hypotheses  # noqa: E402
 
 
 def _utc_now_iso() -> str:
@@ -68,8 +69,12 @@ def stage_hypothesize(scopes: dict, recon: list) -> list[dict]:
 
 
 def stage_verify(hypotheses: list) -> list[dict]:
-    """STUB (Stage 4). Trivially returns input as 'unverified'."""
-    return [{"hypothesis": h, "verified": False, "reason": "Stage 1 stub"} for h in hypotheses]
+    """Stage 4c — build a per-hypothesis PoC, run it phased through the Stage-4a
+    sandbox (install -> trigger/--network none), and emit verified/refuted/skipped/
+    error verdicts. ScopeViolation propagates (audit); SandboxError/SeedIncomplete
+    are isolated per item. Each returned dict carries a 'verified' bool for the
+    briefing counter."""
+    return verify_hypotheses(hypotheses)
 
 
 def stage_draft_findings(verified: list) -> list[str]:
