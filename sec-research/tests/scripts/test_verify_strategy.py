@@ -183,10 +183,12 @@ def test_select_strategy_explicit_templated_attempts_import(monkeypatch):
         select_strategy("templated")
 
 
-def test_select_strategy_explicit_llm_attempts_import(monkeypatch):
-    """select_strategy('llm') attempts to import verify.llm_strategy (lazy import)."""
-    with pytest.raises(ImportError):
-        select_strategy("llm")
+def test_select_strategy_explicit_llm_returns_instance(monkeypatch):
+    """select_strategy('llm') returns an LLMPocStrategy instance now that the module exists."""
+    from verify.llm_strategy import LLMPocStrategy
+    result = select_strategy("llm")
+    assert isinstance(result, LLMPocStrategy)
+    assert isinstance(result, PocStrategy)
 
 
 def test_select_strategy_name_lowercased(monkeypatch):
