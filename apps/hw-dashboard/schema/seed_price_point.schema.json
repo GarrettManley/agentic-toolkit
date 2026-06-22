@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "seed_price_point.schema.json",
+  "title": "SeedPricePoint",
+  "description": "A backfilled historical price point from a third-party aggregator. Kept in a separate stream from first-party captures so synthetic history never masquerades as ground truth; confidence is capped below first-party history of equal length.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["sku_id", "capture_date", "price", "currency", "source", "seed_provenance"],
+  "properties": {
+    "sku_id": { "type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$" },
+    "captured_at": { "type": "string", "format": "date-time" },
+    "capture_date": { "type": "string", "format": "date" },
+    "price": { "type": "number", "minimum": 0 },
+    "currency": { "type": "string" },
+    "retailer": { "type": "string" },
+    "source": { "type": "string", "const": "seed" },
+    "seed_provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_name", "source_url", "granularity"],
+      "properties": {
+        "source_name": { "type": "string", "minLength": 1 },
+        "source_url": { "type": "string", "format": "uri" },
+        "granularity": { "type": "string", "enum": ["daily", "weekly", "monthly"] },
+        "retrieved_at": { "type": "string", "format": "date-time" },
+        "note": { "type": "string" }
+      }
+    }
+  }
+}

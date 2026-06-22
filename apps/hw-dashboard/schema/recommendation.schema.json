@@ -1,0 +1,160 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "recommendation.schema.json",
+  "title": "UpgradeRecommendation",
+  "description": "Final artifact emitted by the upgrade-dashboard workflow: ranked, citation-backed upgrade options vetted for compatibility and price-timing, consumed by the API + frontend.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["profile_id", "generated_at", "ranked_options", "verification_summary"],
+  "properties": {
+    "profile_id": { "type": "string" },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "run_config": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "scale": { "type": "string", "enum": ["quick", "standard", "deep"] },
+        "budget_usd": { "type": ["number", "null"] },
+        "categories": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "ranked_options": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["rank", "category", "component", "compatibility"],
+        "properties": {
+          "rank": { "type": "integer", "minimum": 1 },
+          "category": { "type": "string", "enum": ["gpu", "ram", "storage", "cpu", "motherboard", "psu", "cooler"] },
+          "component": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["make", "model"],
+            "properties": {
+              "make": { "type": "string" },
+              "model": { "type": "string" },
+              "id": { "type": "string" }
+            }
+          },
+          "specs": { "type": "array", "items": { "$ref": "#/$defs/claim" } },
+          "compatibility": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["verdict"],
+            "properties": {
+              "verdict": { "type": "string", "enum": ["compatible", "conditional", "incompatible"] },
+              "checks": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["dimension", "pass"],
+                  "properties": {
+                    "dimension": { "type": "string" },
+                    "pass": { "type": ["boolean", "null"], "description": "null = could not be verified (e.g. PSU wattage unknown)" },
+                    "detail": { "type": "string" },
+                    "citation": { "$ref": "#/$defs/citation" }
+                  }
+                }
+              },
+              "blocking_reasons": { "type": "array", "items": { "type": "string" } }
+            }
+          },
+          "price": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "current_usd": { "type": ["number", "null"] },
+              "currency": { "type": "string" },
+              "citation": { "$ref": "#/$defs/citation" }
+            }
+          },
+          "forecast": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "recommendation": { "type": "string", "enum": ["buy", "wait", "hold"] },
+              "narrative": { "type": "string" },
+              "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+              "target_window": { "type": "string" },
+              "series_ref": { "type": "string" }
+            }
+          },
+          "value_per_dollar": { "type": ["number", "null"] },
+          "rationale": { "type": "string" },
+          "evidence": { "type": "array", "items": { "$ref": "#/$defs/citation" } }
+        }
+      }
+    },
+    "whole_machine_paths": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "components"],
+        "properties": {
+          "name": { "type": "string" },
+          "components": { "type": "array", "items": { "type": "string" } },
+          "total_usd": { "type": ["number", "null"] },
+          "combined_value_per_dollar": { "type": ["number", "null"] },
+          "notes": { "type": "string" }
+        }
+      }
+    },
+    "excluded": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["component", "reason"],
+        "properties": {
+          "component": { "type": "object", "additionalProperties": true },
+          "reason": { "type": "string" },
+          "failed_claims": { "type": "array", "items": { "$ref": "#/$defs/claim" } }
+        }
+      }
+    },
+    "verification_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["claims_total", "claims_passed", "claims_demoted"],
+      "properties": {
+        "claims_total": { "type": "integer", "minimum": 0 },
+        "claims_passed": { "type": "integer", "minimum": 0 },
+        "claims_demoted": { "type": "integer", "minimum": 0 },
+        "votes_per_claim": { "type": "integer", "minimum": 1 }
+      }
+    }
+  },
+  "$defs": {
+    "citation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["url", "tier", "claim"],
+      "properties": {
+        "url": { "type": "string", "format": "uri" },
+        "tier": { "type": "integer", "enum": [1, 2, 3] },
+        "claim": { "type": "string", "minLength": 1 },
+        "excerpt": { "type": "string" },
+        "source_kind": { "type": "string" },
+        "retrieved_at": { "type": "string", "format": "date-time" },
+        "corroborator_url": { "type": "string", "format": "uri" }
+      },
+      "if": { "properties": { "tier": { "const": 3 } } },
+      "then": { "required": ["url", "tier", "claim", "corroborator_url"] }
+    },
+    "claim": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["field", "value", "status"],
+      "properties": {
+        "field": { "type": "string" },
+        "value": {},
+        "unit": { "type": "string" },
+        "citation": { "$ref": "#/$defs/citation" },
+        "status": { "type": "string", "enum": ["verified", "hypothesis"] }
+      }
+    }
+  }
+}

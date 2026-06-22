@@ -1,0 +1,13 @@
+{
+  "sku_id": "ddr5-64gb-6000-cl30-gskill",
+  "component_id": "ddr5-64gb-6000-cl30",
+  "display_name": "G.Skill Trident Z5 Neo RGB DDR5-6000 CL30 64GB (2x32GB)",
+  "mpn": "F5-6000J3040G32GX2-TZ5NR",
+  "tracked_urls": [
+    { "retailer": "newegg", "url": "https://www.newegg.com/p/N82E16820374476" }
+  ],
+  "currency": "USD",
+  "msrp": 209,
+  "active": true,
+  "created_at": "2026-06-22T15:00:00Z"
+}

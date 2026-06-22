@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "component.schema.json",
+  "title": "Component",
+  "description": "One tracked upgrade candidate, evaluated against a machine profile. Specs and prices carry citations (see citation.schema.json).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["component_id", "category", "name", "manufacturer", "created_at"],
+  "properties": {
+    "component_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+      "description": "kebab-case; matches the filename stem"
+    },
+    "category": {
+      "type": "string",
+      "enum": ["gpu", "ram", "storage", "cpu", "motherboard", "psu", "cooler"]
+    },
+    "name": { "type": "string", "minLength": 1 },
+    "manufacturer": { "type": "string", "minLength": 1 },
+    "model": { "type": "string" },
+    "specs": {
+      "type": "object",
+      "description": "Category-shaped spec bag; each load-bearing value should be backed by a citation in source_citations.",
+      "additionalProperties": true
+    },
+    "compatibility": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "socket": { "type": ["string", "null"] },
+        "ram_type": { "type": ["string", "null"], "enum": ["DDR3", "DDR4", "DDR5", null] },
+        "pcie_gen": { "type": ["integer", "null"] },
+        "form_factor": { "type": ["string", "null"] },
+        "tdp_w": { "type": ["number", "null"] },
+        "length_mm": { "type": ["number", "null"] },
+        "requires_bios_update": { "type": ["boolean", "null"] }
+      }
+    },
+    "relieves": {
+      "type": "array",
+      "items": { "type": "string", "enum": ["vram_ceiling", "system_ram", "storage_capacity", "cpu_compute", "gpu_compute"] },
+      "uniqueItems": true
+    },
+    "tracked_sku_ids": {
+      "type": "array",
+      "items": { "type": "string" },
+      "uniqueItems": true
+    },
+    "source_citations": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/citation" }
+    },
+    "enriched_by": { "type": "string", "enum": ["agent", "manual"] },
+    "created_at": { "type": "string", "format": "date-time" },
+    "updated_at": { "type": "string", "format": "date-time" }
+  },
+  "$defs": {
+    "citation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["url", "tier", "claim"],
+      "properties": {
+        "url": { "type": "string", "format": "uri" },
+        "tier": { "type": "integer", "enum": [1, 2, 3] },
+        "claim": { "type": "string", "minLength": 1, "description": "the specific fact this source substantiates" },
+        "excerpt": { "type": "string" },
+        "source_kind": { "type": "string" },
+        "retrieved_at": { "type": "string", "format": "date-time" },
+        "corroborator_url": { "type": "string", "format": "uri", "description": "required when tier == 3 (tertiary source)" }
+      },
+      "if": { "properties": { "tier": { "const": 3 } } },
+      "then": { "required": ["url", "tier", "claim", "corroborator_url"] }
+    }
+  }
+}

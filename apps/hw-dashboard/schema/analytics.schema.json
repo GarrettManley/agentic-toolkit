@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "analytics.schema.json",
+  "title": "Analytics",
+  "description": "Computed price signal for one SKU. Confidence scales with first-party history length; thin-data forecasts are flagged in caveats.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["sku_id", "computed_at", "engine_version", "history_days", "data_points", "current", "recommendation"],
+  "properties": {
+    "sku_id": { "type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$" },
+    "component_id": { "type": "string" },
+    "computed_at": { "type": "string", "format": "date-time" },
+    "engine_version": { "type": "string" },
+    "history_days": { "type": "integer", "minimum": 0, "description": "distinct first-party capture days" },
+    "seed_days": { "type": "integer", "minimum": 0 },
+    "data_points": { "type": "integer", "minimum": 0 },
+    "current": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["price", "currency"],
+      "properties": {
+        "price": { "type": "number" },
+        "currency": { "type": "string" },
+        "retailer": { "type": ["string", "null"] },
+        "captured_at": { "type": ["string", "null"] },
+        "in_stock": { "type": ["boolean", "null"] }
+      }
+    },
+    "historical": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "all_time_low": { "type": ["number", "null"] },
+        "all_time_low_date": { "type": ["string", "null"] },
+        "all_time_high": { "type": ["number", "null"] },
+        "pct_above_low": { "type": ["number", "null"] },
+        "percentile_rank": { "type": ["number", "null"], "minimum": 0, "maximum": 1 }
+      }
+    },
+    "rolling": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "mean_7d": { "type": ["number", "null"] },
+        "median_7d": { "type": ["number", "null"] },
+        "mean_30d": { "type": ["number", "null"] },
+        "median_30d": { "type": ["number", "null"] },
+        "stdev_30d": { "type": ["number", "null"] },
+        "volatility": { "type": ["number", "null"], "description": "coefficient of variation (stdev/mean)" }
+      }
+    },
+    "trend": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "usd_per_day": { "type": ["number", "null"] },
+        "direction": { "type": "string", "enum": ["falling", "flat", "rising", "unknown"] },
+        "holt_forecast_7d": { "type": ["number", "null"] },
+        "r_squared": { "type": ["number", "null"] }
+      }
+    },
+    "events": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "nearest_event": { "type": ["string", "null"] },
+        "days_until": { "type": ["integer", "null"] },
+        "next_gen_launch_flag": { "type": "boolean" },
+        "note": { "type": "string" }
+      }
+    },
+    "recommendation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["signal", "confidence", "confidence_label"],
+      "properties": {
+        "signal": { "type": "string", "enum": ["buy_now", "watch", "wait"] },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+        "confidence_label": { "type": "string", "enum": ["very_low", "low", "moderate", "high"] },
+        "rationale": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "caveats": { "type": "array", "items": { "type": "string" } }
+  }
+}

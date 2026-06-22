@@ -33,6 +33,23 @@ sec-research/__pycache__/
 sec-research/**/__pycache__/
 sec-research/**/*.pyc
 
+# apps/hw-dashboard — standalone hardware-upgrade dashboard. Track source + curated
+# records; the price time-series and computed analytics are per-machine runtime.
+# Three-line idiom (a bare `!apps/hw-dashboard/` can't escape the `/*` parent rule).
+!apps/
+apps/*
+!apps/hw-dashboard/
+apps/hw-dashboard/data/series/
+apps/hw-dashboard/data/analytics/
+apps/hw-dashboard/data/intake/
+apps/hw-dashboard/data/recommendation.json
+apps/hw-dashboard/data/collector-runs.jsonl
+apps/hw-dashboard/**/__pycache__/
+apps/hw-dashboard/**/*.pyc
+apps/hw-dashboard/.pytest_cache/
+apps/hw-dashboard/web/node_modules/
+apps/hw-dashboard/web/dist/
+
 # Python bytecode caches under .claude/ (e.g. hook-router test runs)
 .claude/**/__pycache__/
 .claude/**/*.pyc

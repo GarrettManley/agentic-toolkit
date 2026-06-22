@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "sku.schema.json",
+  "title": "SKU",
+  "description": "A concrete purchasable unit of a component, with the retailer URLs the collector tracks.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["sku_id", "component_id", "display_name", "tracked_urls", "currency", "active", "created_at"],
+  "properties": {
+    "sku_id": { "type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$" },
+    "component_id": { "type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$" },
+    "display_name": { "type": "string", "minLength": 1 },
+    "mpn": { "type": "string", "description": "manufacturer part number" },
+    "upc": { "type": "string" },
+    "tracked_urls": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["retailer", "url"],
+        "properties": {
+          "retailer": { "type": "string", "minLength": 1 },
+          "url": { "type": "string", "format": "uri" },
+          "retailer_sku": { "type": "string" },
+          "monitor_id": { "type": "string", "description": "links a firecrawl-monitor watch, if any" }
+        }
+      }
+    },
+    "currency": { "type": "string", "default": "USD" },
+    "msrp": { "type": "number", "minimum": 0 },
+    "active": { "type": "boolean", "description": "false = retired SKU; stop fetching but keep its history" },
+    "created_at": { "type": "string", "format": "date-time" },
+    "updated_at": { "type": "string", "format": "date-time" }
+  }
+}

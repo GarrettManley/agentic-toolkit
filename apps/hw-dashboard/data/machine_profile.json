@@ -1,0 +1,63 @@
+{
+  "profile_id": "garrett-desktop-20260622",
+  "detected_at": "2026-06-22T14:57:46Z",
+  "detected_by": "detect_machine.ps1",
+  "os": "Microsoft Windows 11 Home",
+  "cpu": {
+    "model": "Intel(R) Core(TM) i7-14700F",
+    "socket": "LGA1700",
+    "socket_silk": "U3E1",
+    "cores": 20,
+    "threads": 28
+  },
+  "motherboard": {
+    "manufacturer": "Micro-Star International Co., Ltd.",
+    "model": "PRO B760-VC WIFI HS BULK (MS-7D98)",
+    "chipset": "B760",
+    "ram_type": "DDR5",
+    "ram_slots": 2
+  },
+  "ram": {
+    "total_gb": 32.0,
+    "type": "DDR5",
+    "speed_mts": 5600,
+    "modules": 2
+  },
+  "gpu": {
+    "model": "NVIDIA GeForce RTX 4060",
+    "vram_gb": 8.0,
+    "driver": "32.0.16.1047"
+  },
+  "storage": [
+    {
+      "model": "ADATA LEGEND 800 GOLD",
+      "capacity_gb": 1863.0,
+      "media": "Fixed hard disk media"
+    }
+  ],
+  "psu": {
+    "watts": null,
+    "rating": null,
+    "_needs_manual": "CIM cannot read PSU; fill in by hand"
+  },
+  "case": {
+    "max_gpu_len_mm": null,
+    "max_cooler_height_mm": null,
+    "_needs_manual": "measure or look up case spec"
+  },
+  "goals": {
+    "primary": "1440p gaming + local LLM inference",
+    "priorities": [
+      "gpu_vram",
+      "gpu_perf",
+      "ram_capacity"
+    ]
+  },
+  "constraints": {
+    "keep_socket": true
+  },
+  "exclusions": [
+    "never read C:\\Users\\Garre\\Workspace\\Duracell*",
+    "never read C:\\Users\\Garre\\Workspace\\malachite\\"
+  ]
+}

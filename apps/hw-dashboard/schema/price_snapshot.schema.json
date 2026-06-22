@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "price_snapshot.schema.json",
+  "title": "PriceSnapshot",
+  "description": "One row of the append-only price time-series for a SKU. Idempotency key is (sku_id, capture_date, retailer).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["sku_id", "captured_at", "capture_date", "price", "currency", "retailer", "source"],
+  "properties": {
+    "sku_id": { "type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$" },
+    "captured_at": { "type": "string", "format": "date-time", "description": "UTC instant of capture" },
+    "capture_date": { "type": "string", "format": "date", "description": "local (Mountain Time) calendar date; the per-day idempotency key" },
+    "price": { "type": "number", "minimum": 0 },
+    "currency": { "type": "string" },
+    "retailer": { "type": "string", "minLength": 1 },
+    "url": { "type": "string", "format": "uri" },
+    "in_stock": { "type": ["boolean", "null"] },
+    "condition": { "type": "string", "enum": ["new", "refurb", "used", "open-box"], "default": "new" },
+    "source": { "type": "string", "enum": ["nightly-http", "firecrawl-monitor", "firecrawl-cli", "price-api", "manual", "seed"] },
+    "source_detail": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "http_status": { "type": ["integer", "null"] },
+        "parser_version": { "type": "string" },
+        "monitor_id": { "type": "string" },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "raw_ref": { "type": "string", "description": "path to a saved raw capture for audit" }
+  }
+}

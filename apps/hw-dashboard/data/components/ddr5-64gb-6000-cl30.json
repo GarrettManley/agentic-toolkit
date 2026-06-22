@@ -1,0 +1,16 @@
+{
+  "component_id": "ddr5-64gb-6000-cl30",
+  "category": "ram",
+  "name": "DDR5-6000 CL30 64GB (2x32GB) Kit",
+  "manufacturer": "G.Skill",
+  "model": "Trident Z5 Neo RGB 64GB",
+  "specs": { "capacity_gb": 64, "kit_config": "2x32GB", "speed_mts": 6000, "cas_latency": 30, "ddr_gen": "DDR5" },
+  "compatibility": { "socket": null, "ram_type": "DDR5", "pcie_gen": null, "form_factor": "DIMM", "tdp_w": null, "length_mm": null, "requires_bios_update": false },
+  "relieves": ["system_ram"],
+  "tracked_sku_ids": ["ddr5-64gb-6000-cl30-gskill"],
+  "source_citations": [
+    { "url": "https://www.gskill.com/product/165/390/", "tier": 1, "claim": "Trident Z5 Neo 64GB (2x32GB) DDR5-6000 CL30", "source_kind": "manufacturer" }
+  ],
+  "enriched_by": "manual",
+  "created_at": "2026-06-22T15:00:00Z"
+}

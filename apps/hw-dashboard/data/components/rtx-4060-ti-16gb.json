@@ -1,0 +1,16 @@
+{
+  "component_id": "rtx-4060-ti-16gb",
+  "category": "gpu",
+  "name": "GeForce RTX 4060 Ti 16GB",
+  "manufacturer": "NVIDIA",
+  "model": "RTX 4060 Ti 16GB",
+  "specs": { "vram_gb": 16, "vram_type": "GDDR6", "tdp_w": 165, "bus_interface": "PCIe 4.0 x8", "length_mm": 245 },
+  "compatibility": { "socket": null, "ram_type": null, "pcie_gen": 4, "form_factor": "dual-slot", "tdp_w": 165, "length_mm": 245, "requires_bios_update": false },
+  "relieves": ["vram_ceiling", "gpu_compute"],
+  "tracked_sku_ids": ["rtx-4060-ti-16gb-asus"],
+  "source_citations": [
+    { "url": "https://www.nvidia.com/en-us/geforce/graphics-cards/40-series/rtx-4060-4060ti/", "tier": 1, "claim": "RTX 4060 Ti 16GB has 16GB GDDR6 and a 165W TGP", "source_kind": "manufacturer" }
+  ],
+  "enriched_by": "manual",
+  "created_at": "2026-06-22T15:00:00Z"
+}
