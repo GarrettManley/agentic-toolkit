@@ -3,7 +3,11 @@
 One canonical lockfile per ecosystem in v1; the _PARSERS registry makes
 alternate lockfiles (yarn/pnpm/Pipfile/uv) additive. A missing lockfile yields
 an empty closure with no_lockfile=True (never silently treated as zero deps).
-The closure is capped at MAX_CLOSURE_NODES with truncated=True + total_before_cap."""
+The closure is capped at MAX_CLOSURE_NODES with truncated=True + total_before_cap.
+
+v1 does not distinguish direct from transitive deps; `direct` is always empty
+(requires manifest parsing — a follow-up); `deps` is the full pinned lockfile
+closure."""
 from __future__ import annotations
 
 import json
@@ -25,6 +29,8 @@ class Dep:
 
 @dataclass
 class Closure:
+    # v1: `direct` is always [] — distinguishing direct from transitive requires
+    # manifest parsing, which is a follow-up. `deps` is the full pinned closure.
     direct: list[Dep] = field(default_factory=list)
     deps: list[Dep] = field(default_factory=list)
     lockfile: str | None = None
@@ -70,7 +76,12 @@ def _parse_gemfile_lock(path: Path, ecosystem: str) -> list[Dep]:
     for line in path.read_text(encoding="utf-8").splitlines():
         m = _GEMSPEC_RE.match(line)
         if m:
-            out.append(Dep(name=m.group(1), version=m.group(2), ecosystem=ecosystem))
+            # Platform-qualified gems append `-<platform>` to the version string
+            # (e.g. "1.16.3-x86_64-linux"). Ruby canonical versions never contain
+            # `-`; strip the suffix to get the advisory-matchable version.
+            raw_version = m.group(2)
+            version = raw_version.split("-", 1)[0]
+            out.append(Dep(name=m.group(1), version=version, ecosystem=ecosystem))
     return out
 
 
@@ -84,6 +95,12 @@ _PARSERS: dict[str, tuple[str, Callable[[Path, str], list[Dep]]]] = {
 
 
 def resolve_closure(source_dir: Path, ecosystem: str) -> Closure:
+    """Return the full pinned lockfile closure for *ecosystem* under *source_dir*.
+
+    v1 does not distinguish direct from transitive deps — `direct` is always []
+    (requires manifest parsing, which is a follow-up task). `deps` is the full
+    pinned closure, capped at MAX_CLOSURE_NODES.
+    """
     spec = _PARSERS.get(ecosystem)
     if spec is None:
         return Closure(no_lockfile=True)
@@ -95,7 +112,7 @@ def resolve_closure(source_dir: Path, ecosystem: str) -> Closure:
     total = len(deps)
     truncated = total > MAX_CLOSURE_NODES
     capped = deps[:MAX_CLOSURE_NODES] if truncated else deps
-    return Closure(direct=capped, deps=capped, lockfile=filename,
+    return Closure(direct=[], deps=capped, lockfile=filename,
                    no_lockfile=False, truncated=truncated, total_before_cap=total)
 
 

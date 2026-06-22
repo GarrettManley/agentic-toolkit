@@ -23,6 +23,7 @@ def test_npm_package_lock_v3_closure(tmp_path):
     assert ("lodash", "4.17.21") in names and ("ms", "2.1.3") in names
     assert all(d.ecosystem == "npm" for d in c.deps)
     assert ("root", "1.0.0") not in names  # the "" root package is excluded
+    assert c.direct == []  # v1: direct is always empty (manifest parsing is a follow-up)
 
 
 def test_cargo_lock_closure(tmp_path):
@@ -53,6 +54,22 @@ def test_gemfile_lock_closure(tmp_path):
     c = resolve_closure(tmp_path, "rubygems")
     names = {(d.name, d.version) for d in c.deps}
     assert ("rack", "3.0.9") in names and ("rake", "13.1.0") in names
+
+
+def test_gemfile_lock_platform_gem_strips_suffix(tmp_path):
+    """Platform-qualified versions like '1.16.3-x86_64-linux' must be normalised
+    to '1.16.3' so they match advisory records.  Pure versions ('3.0.9') and
+    pre-release dots ('1.0.0.beta1') must be left unchanged."""
+    from recon.deps import resolve_closure
+    _write(tmp_path / "Gemfile.lock",
+           "GEM\n  remote: https://rubygems.org/\n  specs:\n"
+           "    nokogiri (1.16.3-x86_64-linux)\n"
+           "    rack (3.0.9)\n\nPLATFORMS\n  x86_64-linux\n")
+    c = resolve_closure(tmp_path, "rubygems")
+    names = {(d.name, d.version) for d in c.deps}
+    assert ("nokogiri", "1.16.3") in names        # platform suffix stripped
+    assert ("nokogiri", "1.16.3-x86_64-linux") not in names  # raw form absent
+    assert ("rack", "3.0.9") in names             # non-platform version unchanged
 
 
 def test_no_lockfile_sets_flag_and_empty_closure(tmp_path):
