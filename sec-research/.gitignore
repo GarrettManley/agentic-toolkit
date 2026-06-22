@@ -4,6 +4,9 @@
 # Runtime artifacts (never tracked)
 runtime/
 
+# Subagent-driven-development scratch (progress ledger + task reports)
+.superpowers/
+
 # Raw evidence (only redacted versions are tracked)
 findings/**/evidence/raw/
 
