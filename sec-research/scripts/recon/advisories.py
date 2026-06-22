@@ -44,6 +44,9 @@ def _detail_to_advisory(detail: dict, package: str) -> Advisory:
                     if "fixed" in ev:
                         fixed = ev["fixed"]
                         affected_range = f"<{fixed}"
+                        break
+                if fixed:
+                    break
             break
     return Advisory(id=detail.get("id", ""), cve=cve, source="osv",
                     severity=sev, affected_range=affected_range, fixed=fixed, package=package)

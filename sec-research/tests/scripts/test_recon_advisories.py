@@ -41,6 +41,30 @@ def test_disclosed_reports_are_folded_in(tmp_path):
     assert any(a.id == "GHSA-yyyy" and a.source == "disclosed" for a in advs)
 
 
+def test_first_fixed_event_wins_over_later_ones(tmp_path):
+    from recon.advisories import correlate
+    batch = tmp_path / "batch.json"
+    batch.write_text(json.dumps({"results": [
+        {"vulns": [{"id": "GHSA-multi"}]},
+    ]}), encoding="utf-8")
+    detail = {
+        "GHSA-multi": {
+            "id": "GHSA-multi",
+            "affected": [{"package": {"name": "acme"},
+                          "ranges": [
+                              {"events": [{"introduced": "0"}, {"fixed": "4.2.0"}]},
+                              {"events": [{"introduced": "0"}, {"fixed": "5.1.0"}]},
+                          ]}],
+        }
+    }
+    deps = [Dep("acme", "4.1.0", "npm")]
+    advs, errors = correlate(deps, tmp_path / "disclosed",
+                             osv_batch_fixture=batch, osv_detail_fixtures=detail)
+    assert errors == []
+    a = next(x for x in advs if x.id == "GHSA-multi")
+    assert a.fixed == "4.2.0", f"expected first fixed '4.2.0', got '{a.fixed}'"
+
+
 def test_osv_source_error_is_flagged_not_fatal(tmp_path, monkeypatch):
     from recon import advisories as adv
     def boom(url, payload, **kw):
