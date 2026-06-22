@@ -32,6 +32,7 @@ from lib.paths import (  # noqa: E402
 )
 from lib.scope_match import load_all_scopes  # noqa: E402
 from lib import ledger  # noqa: E402
+from recon_program import run_recon  # noqa: E402
 
 
 def _utc_now_iso() -> str:
@@ -53,8 +54,8 @@ def stage_refresh_disclosed(scopes: dict) -> list[str]:
 
 
 def stage_recon(scopes: dict) -> list[dict]:
-    """STUB (Stage 3). Returns empty recon for Stage 1."""
-    return []
+    """Stage 3 recon — per-asset known-vulnerability baseline."""
+    return run_recon(scopes)
 
 
 def stage_hypothesize(scopes: dict, recon: list) -> list[dict]:
