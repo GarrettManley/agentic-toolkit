@@ -45,3 +45,13 @@ def test_http_get_live_path_gates_then_propagates_scope_violation(monkeypatch):
     monkeypatch.setattr(_http, "check_http", fake_check)
     with pytest.raises(ScopeViolation):
         _http.http_get("https://evil.invalid/x")  # live path: no fixture
+
+
+def test_http_post_json_live_path_gates_then_propagates_scope_violation(monkeypatch):
+    from recon import _http
+    from lib.policy import ScopeViolation
+    def fake_check(url, *, bootstrap_hosts):
+        raise ScopeViolation(url=url, host="evil.invalid", reason="test")
+    monkeypatch.setattr(_http, "check_http", fake_check)
+    with pytest.raises(ScopeViolation):
+        _http.http_post_json("https://evil.invalid/x", {})  # live path: no fixture
