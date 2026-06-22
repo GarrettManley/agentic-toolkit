@@ -52,7 +52,7 @@ THRESHOLD_MS: int = 2000
 # NOTE on the brace pattern:
 #   A sequence of nested braces like "{a,b,c,...}{a,b,c,...}..." causes minimatch's
 #   braceExpand() to explore an exponential number of combinations via recursive
-#   regex alternation. The pattern below (64 repetitions of {a,b}) is sufficient to
+#   regex alternation. The pattern below (32 repetitions of {a,b}) is sufficient to
 #   stall minimatch@3.0.4 for several seconds on modern hardware.
 #   THRESHOLD_MS and the exact pattern are empirically confirmed in Task 8.
 
