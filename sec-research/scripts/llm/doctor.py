@@ -25,7 +25,7 @@ def llm_doctor(provider: str | None = None) -> tuple[bool, list[str]]:
             return False, notes
     if name == "llama":
         from llm.providers.llama import ENDPOINT
-        from lib.policy import check_http
+        from lib.policy import check_http, ScopeViolation
         from llm._hosts import LLAMA_BOOTSTRAP_HOSTS
         health = ENDPOINT.rsplit("/v1/", 1)[0] + "/health"
         try:
@@ -33,6 +33,9 @@ def llm_doctor(provider: str | None = None) -> tuple[bool, list[str]]:
             with urllib.request.urlopen(health, timeout=5):
                 notes.append(f"llama: {health} reachable")
             return True, notes
+        except ScopeViolation as e:
+            notes.append(f"llama: endpoint blocked by scope policy ({e})")
+            return False, notes
         except (urllib.error.URLError, OSError) as e:
             notes.append(f"llama: {health} unreachable ({e})")
             return False, notes

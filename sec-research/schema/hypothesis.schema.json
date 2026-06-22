@@ -37,7 +37,10 @@
     "rationale": {"type": "string", "minLength": 40},
     "confidence": {"type": "number", "minimum": 0.0, "maximum": 1.0},
     "signals_matched": {"type": "array", "minItems": 1, "items": {"type": "string"}},
-    "evidence_seed": {"type": "object"},
+    "evidence_seed": {
+      "type": "object",
+      "description": "Best-effort seed of the class evidence template populated by the model at generation time. For dependency-cve hypotheses the seed should include: package_ecosystem, package_name, affected_versions_range, candidate_cve_id, attack_vector_hypothesis. This object is intentionally unconstrained so grammar-conversion for llama-server remains stable; Stage 4c (verification) is responsible for validating completeness before a finding is drafted."
+    },
     "advisory_refs": {"type": "array", "items": {"type": "string"}},
     "dedup_hint": {"type": "string"},
     "recon_ref": {
