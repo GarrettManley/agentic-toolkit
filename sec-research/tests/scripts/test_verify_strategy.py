@@ -168,19 +168,22 @@ def test_select_strategy_env_var_read(monkeypatch):
 def test_select_strategy_env_var_default_is_templated(monkeypatch):
     """With no env var and name=None, default resolves to 'templated'.
 
-    templated.py doesn't exist yet (Task 3), so we expect ImportError — NOT ValueError.
-    ImportError proves the strategy name resolved to 'templated' and the lazy import
-    was attempted.
+    Now that templated.py is implemented (Task 3), select_strategy(None) returns a
+    TemplatedPocStrategy instance rather than raising ImportError.
     """
+    from verify.templated import TemplatedPocStrategy
     monkeypatch.delenv("SECRESEARCH_POC_STRATEGY", raising=False)
-    with pytest.raises(ImportError):
-        select_strategy(None)
+    result = select_strategy(None)
+    assert isinstance(result, TemplatedPocStrategy)
+    assert isinstance(result, PocStrategy)
 
 
-def test_select_strategy_explicit_templated_attempts_import(monkeypatch):
-    """select_strategy('templated') attempts to import verify.templated (lazy import)."""
-    with pytest.raises(ImportError):
-        select_strategy("templated")
+def test_select_strategy_explicit_templated_returns_instance(monkeypatch):
+    """select_strategy('templated') returns a TemplatedPocStrategy instance."""
+    from verify.templated import TemplatedPocStrategy
+    result = select_strategy("templated")
+    assert isinstance(result, TemplatedPocStrategy)
+    assert isinstance(result, PocStrategy)
 
 
 def test_select_strategy_explicit_llm_returns_instance(monkeypatch):
