@@ -1,0 +1,9 @@
+{
+  "model": "deepseek-r1-7b",
+  "choices": [
+    {"finish_reason": "stop",
+     "message": {"role": "assistant",
+       "content": "{\"hypotheses\": [{\"program_slug\": \"huntr-acme\", \"target\": {\"asset_type\": \"package\", \"identifier\": \"lodash\", \"ecosystem\": \"npm\"}, \"vuln_class\": \"dependency-cve\", \"source_playbook\": {\"vuln_class\": \"dependency-cve\", \"technique\": \"known-advisory-confirmation\"}, \"rationale\": \"Recon found OSV advisory affecting <4.17.21 and the resolved version is in range.\", \"confidence\": 0.6, \"signals_matched\": [\"known_advisory present\"], \"evidence_seed\": {\"package_ecosystem\": \"npm\", \"package_name\": \"lodash\"}}]}"}}
+  ],
+  "usage": {"prompt_tokens": 900, "completion_tokens": 220}
+}

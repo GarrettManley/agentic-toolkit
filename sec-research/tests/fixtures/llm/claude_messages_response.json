@@ -1,0 +1,16 @@
+{
+  "id": "msg_01",
+  "model": "claude-sonnet-4-6",
+  "stop_reason": "tool_use",
+  "usage": {"input_tokens": 1200, "output_tokens": 300},
+  "content": [
+    {"type": "tool_use", "name": "emit_hypotheses", "id": "tu_01",
+     "input": {"hypotheses": [{"program_slug": "huntr-acme",
+        "target": {"asset_type": "package", "identifier": "lodash", "ecosystem": "npm"},
+        "vuln_class": "dependency-cve",
+        "source_playbook": {"vuln_class": "dependency-cve", "technique": "known-advisory-confirmation"},
+        "rationale": "Recon found OSV advisory affecting <4.17.21 and the resolved version is in range.",
+        "confidence": 0.7, "signals_matched": ["known_advisory present"],
+        "evidence_seed": {"package_ecosystem": "npm", "package_name": "lodash"}}]}}
+  ]
+}
