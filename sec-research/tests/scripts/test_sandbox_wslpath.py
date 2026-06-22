@@ -16,3 +16,8 @@ def test_win_to_wsl_accepts_path_object():
     from sandbox._wslpath import win_to_wsl
     out = win_to_wsl(Path("C:/Users/Garre/x"))
     assert out == "/mnt/c/Users/Garre/x"
+
+
+def test_win_to_wsl_passthrough_posix():
+    from sandbox._wslpath import win_to_wsl
+    assert win_to_wsl("/mnt/c/already/posix") == "/mnt/c/already/posix"

@@ -40,6 +40,6 @@ def registry_for(ecosystem: str) -> str:
 def safe_install_env(ecosystem: str) -> list[str]:
     """Flat list of docker -e flag pairs, e.g. ['-e', 'npm_config_ignore_scripts=true']."""
     out: list[str] = []
-    for k, v in _entry(ecosystem).get("install_env", {}).items():
+    for k, v in _entry(ecosystem)["install_env"].items():
         out += ["-e", f"{k}={v}"]
     return out

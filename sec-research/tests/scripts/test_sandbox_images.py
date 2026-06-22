@@ -18,7 +18,7 @@ def test_image_for_unknown_raises():
 def test_registry_for_and_hosts():
     from sandbox._images import registry_for, REGISTRY_HOSTS
     assert registry_for("npm") == "registry.npmjs.org"
-    assert "pypi.org" in REGISTRY_HOSTS and "crates.io" in REGISTRY_HOSTS
+    assert REGISTRY_HOSTS == {"registry.npmjs.org", "pypi.org", "crates.io", "rubygems.org"}
 
 
 def test_safe_install_env_npm_disables_scripts():
@@ -28,6 +28,13 @@ def test_safe_install_env_npm_disables_scripts():
     assert "-e" in env and any("ignore_scripts=true" in e for e in env)
 
 
-def test_safe_install_env_unknown_is_empty():
+def test_safe_install_env_cargo_is_empty():
     from sandbox._images import safe_install_env
     assert safe_install_env("cargo") == []  # cargo has no global script-disable in v1
+
+
+def test_safe_install_env_unknown_raises():
+    from sandbox._images import safe_install_env, UnknownEcosystem
+    import pytest
+    with pytest.raises(UnknownEcosystem):
+        safe_install_env("maven")
