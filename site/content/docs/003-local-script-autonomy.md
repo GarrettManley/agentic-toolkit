@@ -1,13 +1,13 @@
 ---
 title: "ADR 003: Local Script Autonomy & Sandboxing"
-date: 2026-06-12
+date: 2026-06-19
 draft: false
 weight: 003
 ---
 
 # Engineering Specification: ADR 003: Local Script Autonomy & Sandboxing
 
-**Standard:** ISO/IEC 25059:2026 | **Trace ID:** trace-20260612-003  
+**Standard:** ISO/IEC 25059:2026 | **Trace ID:** trace-20260619-003  
 **Consistency (Pass^k):** 98% | **Cost-per-Success:** $0.005 | **Convergence:** 3.2 steps
 
 ---
