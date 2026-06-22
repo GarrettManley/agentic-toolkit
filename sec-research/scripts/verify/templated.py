@@ -67,6 +67,9 @@ class TemplatedPocStrategy:
     build_plan() raises KeyError.  In normal usage supports() gates build_plan().
     """
 
+    name: str = "templated"
+    """Strategy label carried into verdict dicts by verify_hypotheses."""
+
     def supports(self, hypothesis: dict) -> bool:
         """Return True iff the hypothesis's (ecosystem, package, cve) triple is registered.
 

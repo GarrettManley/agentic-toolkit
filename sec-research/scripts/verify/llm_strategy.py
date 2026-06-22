@@ -58,6 +58,9 @@ class LLMPocStrategy:
     ``PocStrategy`` without triggering type errors.
     """
 
+    name: str = "llm"
+    """Strategy label carried into verdict dicts by verify_hypotheses."""
+
     def supports(self, hypothesis: dict) -> bool:
         """Return False — LLM strategy is not wired in v1.
 
