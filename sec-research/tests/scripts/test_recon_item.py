@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 
 from recon.deps import Closure, Dep
@@ -44,6 +45,25 @@ def test_flags_propagate_from_closure_and_clone():
     assert "advisory_source_error:osv" in item["flags"]
 
 
+def test_validate_recon_item_rejects_invalid():
+    from recon.recon_item import validate_recon_item
+    ok, errors = validate_recon_item({"slug": 123})
+    assert ok is False
+    assert len(errors) > 0
+
+
+def test_flags_closure_truncated():
+    from recon.recon_item import build_recon_item
+    c = Closure(direct=[Dep("lodash", "4.17.21", "npm")],
+                deps=[Dep("lodash", "4.17.21", "npm")],
+                lockfile="package-lock.json", no_lockfile=False,
+                truncated=True, total_before_cap=5)
+    item = build_recon_item(
+        "s", {"asset_type": "package", "identifier": "x", "ecosystem": "npm"},
+        None, c, None, [], extra_flags=[], ts="2026-06-21T00:00:00Z")
+    assert "closure_truncated" in item["flags"]
+
+
 def test_write_program_recon_emits_json_and_closure(tmp_path):
     from recon.recon_item import build_recon_item, write_program_recon
     item = build_recon_item("s", {"asset_type": "package", "identifier": "x", "ecosystem": "npm"},
@@ -52,3 +72,12 @@ def test_write_program_recon_emits_json_and_closure(tmp_path):
     assert (tmp_path / "s" / "recon.json").exists()
     assert (tmp_path / "s" / "dep-graph" / "x.closure.jsonl").exists()
     assert out == tmp_path / "s" / "recon.json"
+    written_items = json.loads((tmp_path / "s" / "recon.json").read_text(encoding="utf-8"))
+    assert len(written_items) == 1
+    assert written_items[0]["slug"] == "s"
+    assert written_items[0]["asset"]["identifier"] == "x"
+    closure_lines = (tmp_path / "s" / "dep-graph" / "x.closure.jsonl").read_text(
+        encoding="utf-8").splitlines()
+    assert len(closure_lines) >= 1
+    dep = json.loads(closure_lines[0])
+    assert dep["name"] == "lodash"
