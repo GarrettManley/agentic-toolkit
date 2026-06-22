@@ -7,7 +7,7 @@ from pathlib import Path
 
 
 SCHEMA_DIR = Path(__file__).resolve().parent.parent.parent / "schema"
-SCHEMA_NAMES = ["program", "finding", "evidence", "override", "submission"]
+SCHEMA_NAMES = ["program", "finding", "evidence", "override", "submission", "hypothesis"]
 
 
 @pytest.mark.parametrize("name", SCHEMA_NAMES)

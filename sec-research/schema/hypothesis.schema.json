@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sec-research.local/schema/hypothesis.schema.json",
+  "title": "Hypothesis",
+  "description": "A candidate vulnerability hypothesis emitted by Stage 4b, consumed by Stage 4c verification.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["hypothesis_id", "program_slug", "target", "vuln_class",
+               "source_playbook", "rationale", "confidence", "signals_matched",
+               "evidence_seed", "recon_ref", "generated_at", "generator"],
+  "properties": {
+    "hypothesis_id": {"type": "string", "pattern": "^HYP-\\d{4}-\\d{2}-\\d{2}-\\d{3}$"},
+    "program_slug": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]*[a-z0-9]$"},
+    "target": {
+      "type": "object", "additionalProperties": false,
+      "required": ["asset_type", "identifier"],
+      "properties": {
+        "asset_type": {"enum": ["package", "repo", "url", "host"]},
+        "identifier": {"type": "string", "minLength": 1},
+        "version_or_revision": {"type": "string"},
+        "ecosystem": {"enum": ["npm", "pypi", "cargo", "rubygems"]}
+      }
+    },
+    "vuln_class": {"enum": ["supply-chain-malicious-pkg", "dependency-cve",
+                            "code-injection", "auth-bypass", "ssrf", "rce",
+                            "info-disclosure", "dos", "crypto-weakness",
+                            "logic-flaw", "other"]},
+    "source_playbook": {
+      "type": "object", "additionalProperties": false,
+      "required": ["vuln_class", "technique"],
+      "properties": {
+        "vuln_class": {"type": "string"},
+        "technique": {"type": "string"},
+        "playbook_trace_id": {"type": ["string", "null"]}
+      }
+    },
+    "rationale": {"type": "string", "minLength": 40},
+    "confidence": {"type": "number", "minimum": 0.0, "maximum": 1.0},
+    "signals_matched": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+    "evidence_seed": {"type": "object"},
+    "advisory_refs": {"type": "array", "items": {"type": "string"}},
+    "dedup_hint": {"type": "string"},
+    "recon_ref": {
+      "type": "object", "additionalProperties": false,
+      "required": ["slug", "asset_identifier", "recon_ts"],
+      "properties": {
+        "slug": {"type": "string"},
+        "asset_identifier": {"type": "string"},
+        "recon_ts": {"type": "string"}
+      }
+    },
+    "generated_at": {"type": "string"},
+    "generator": {
+      "type": "object", "additionalProperties": false,
+      "required": ["provider", "model"],
+      "properties": {"provider": {"type": "string"}, "model": {"type": "string"}}
+    }
+  }
+}
