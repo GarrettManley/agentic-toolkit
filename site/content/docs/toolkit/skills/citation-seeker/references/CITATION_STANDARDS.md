@@ -1,6 +1,6 @@
 ---
 title: "Agent Skill: citation-seeker / references / CITATION_STANDARDS.md"
-date: 2026-06-19
+date: 2026-06-22
 draft: false
 ---
 

@@ -1,6 +1,6 @@
 ---
 title: "Agent Skill: local-orchestrator / SKILL.md"
-date: 2026-06-19
+date: 2026-06-22
 draft: false
 ---
 

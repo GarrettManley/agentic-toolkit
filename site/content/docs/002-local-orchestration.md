@@ -1,13 +1,13 @@
 ---
 title: "ADR 002: Local Orchestration & Tool-Enabled Reasoning"
-date: 2026-06-19
+date: 2026-06-22
 draft: false
 weight: 002
 ---
 
 # Engineering Specification: ADR 002: Local Orchestration & Tool-Enabled Reasoning
 
-**Standard:** ISO/IEC 25059:2026 | **Trace ID:** trace-20260619-002  
+**Standard:** ISO/IEC 25059:2026 | **Trace ID:** trace-20260622-002  
 **Consistency (Pass^k):** 98% | **Cost-per-Success:** $0.005 | **Convergence:** 3.2 steps
 
 ---
