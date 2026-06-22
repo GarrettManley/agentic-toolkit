@@ -14,6 +14,7 @@ Import resolution for RUNTIME_DIR:
 """
 from __future__ import annotations
 
+import json
 import subprocess
 from dataclasses import asdict
 from datetime import datetime, timezone
@@ -202,8 +203,8 @@ def verify_hypotheses(
     """Turn a batch of hypotheses into verdict dicts.
 
     For each hypothesis: select strategy, validate seed, drive the phased PoC
-    via _drive_phased, derive the verdict, isolate per-item failures, and emit
-    ledger events. Persistence is NOT performed here (Task 6 adds _persist).
+    via _drive_phased, derive the verdict, isolate per-item failures, emit
+    ledger events, and persist verdicts grouped by slug via _persist.
 
     Args:
         hypotheses: List of hypothesis dicts as produced by Stage 4b.
@@ -279,4 +280,47 @@ def verify_hypotheses(
         )
         verdicts.append(_mk(vstr, reason, [install_ev, trigger_ev], plan.template_id))
 
+    _persist(verdicts, verdict_root=verdict_root)
     return [asdict(v) | {"verified": v.verdict == VERDICT_VERIFIED} for v in verdicts]
+
+
+# ---------------------------------------------------------------------------
+# _persist — write verdicts grouped by slug to runtime/verdicts/<slug>/verdicts.json
+# ---------------------------------------------------------------------------
+
+def _persist(verdicts: list[Verdict], *, verdict_root: Path | None = None) -> None:
+    """Persist verdicts to disk, grouped by program slug.
+
+    Mirrors scripts/llm/generate.py's ``_persist`` (group-by-slug, one JSON file
+    per slug). Best-effort: an ``OSError`` during a write is caught, a
+    ``verify-persist-error`` ledger event is emitted for the affected slug, and
+    processing continues. An empty ``verdicts`` list is a no-op.
+
+    Args:
+        verdicts: List of Verdict dataclasses to persist.
+        verdict_root: Override root directory; defaults to RUNTIME_VERDICTS_DIR.
+
+    Writes:
+        ``<verdict_root>/<slug>/verdicts.json`` — JSON array of ``asdict(Verdict)``
+        records (no ``"verified"`` key; that's only in the return projection from
+        ``verify_hypotheses``).
+    """
+    if not verdicts:
+        return
+
+    root = verdict_root or RUNTIME_VERDICTS_DIR
+
+    by_slug: dict[str, list[Verdict]] = {}
+    for v in verdicts:
+        by_slug.setdefault(v.program_slug, []).append(v)
+
+    for slug, items in by_slug.items():
+        prog_dir = root / slug
+        try:
+            prog_dir.mkdir(parents=True, exist_ok=True)
+            (prog_dir / "verdicts.json").write_text(
+                json.dumps([asdict(v) for v in items], indent=2),
+                encoding="utf-8",
+            )
+        except OSError as exc:
+            ledger.append_event("verify-persist-error", slug=slug, error=str(exc))
