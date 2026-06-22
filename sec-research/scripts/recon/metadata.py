@@ -16,9 +16,6 @@ _REGISTRY_URL = {
     "rubygems": "https://rubygems.org/api/v1/gems/{id}.json",
 }
 
-_GH_RE = re.compile(r"github\.com[/:]([^/]+)/([^/.\s]+)")
-
-
 @dataclass(frozen=True)
 class AssetMetadata:
     identifier: str
@@ -32,7 +29,8 @@ class AssetMetadata:
 def _normalize_repo(raw: str | None) -> str | None:
     if not raw:
         return None
-    m = _GH_RE.search(raw)
+    cleaned = re.sub(r"\.git$", "", raw.rstrip("/"))
+    m = re.search(r"github\.com[/:]([^/\s]+)/([^/\s]+)", cleaned)
     return f"github.com/{m.group(1)}/{m.group(2)}" if m else None
 
 

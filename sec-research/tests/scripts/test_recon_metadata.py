@@ -45,3 +45,17 @@ def test_metadata_missing_repo_is_none(tmp_path):
     _write(fx, {"dist-tags": {"latest": "1.0.0"}, "versions": {"1.0.0": {}}})
     m = fetch_metadata("noredir", "npm", from_fixture=fx)
     assert m.repo_url is None and m.latest == "1.0.0"
+
+
+def test_npm_dotted_repo_name_preserved(tmp_path):
+    """Dotted repo names (e.g. socket.io) must not be truncated at the first dot."""
+    from recon.metadata import fetch_metadata
+    fx = tmp_path / "npm.json"
+    _write(fx, {
+        "dist-tags": {"latest": "4.7.5"},
+        "versions": {"4.7.5": {}},
+        "repository": {"url": "git+https://github.com/socketio/socket.io.git"},
+        "maintainers": [{"name": "rauchg"}],
+    })
+    m = fetch_metadata("socket.io", "npm", from_fixture=fx)
+    assert m.repo_url == "github.com/socketio/socket.io"
