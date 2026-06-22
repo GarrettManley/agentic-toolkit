@@ -1,0 +1,21 @@
+{
+  "slug": "huntr-lodash-test",
+  "asset": {
+    "asset_type": "package",
+    "identifier": "lodash",
+    "ecosystem": "npm"
+  },
+  "resolved_version": "4.17.20",
+  "recon_ts": "2026-06-22T08:00:00Z",
+  "known_advisories": [
+    {
+      "id": "GHSA-p6mc-m468-83gw",
+      "cve": "CVE-2021-23337",
+      "affected_range": "<4.17.21",
+      "fixed": "4.17.21",
+      "package": "lodash",
+      "severity": "high",
+      "title": "Command Injection in lodash"
+    }
+  ]
+}

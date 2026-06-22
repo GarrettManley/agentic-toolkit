@@ -25,6 +25,8 @@ from pathlib import Path
 
 HOOKS_DIR = Path(__file__).resolve().parent.parent / "hooks"
 sys.path.insert(0, str(HOOKS_DIR))
+SCRIPTS_DIR = Path(__file__).resolve().parent
+sys.path.insert(0, str(SCRIPTS_DIR))
 
 from lib.paths import (  # noqa: E402
     PROGRAMS_DIR, RUNTIME_RECON_DIR, RUNTIME_BRIEFINGS_DIR, RUNTIME_SCHEDULED_RUNS,
@@ -33,6 +35,7 @@ from lib.paths import (  # noqa: E402
 from lib.scope_match import load_all_scopes  # noqa: E402
 from lib import ledger  # noqa: E402
 from recon_program import run_recon  # noqa: E402
+from llm.generate import generate_hypotheses  # noqa: E402
 
 
 def _utc_now_iso() -> str:
@@ -59,8 +62,9 @@ def stage_recon(scopes: dict) -> list[dict]:
 
 
 def stage_hypothesize(scopes: dict, recon: list) -> list[dict]:
-    """STUB (Stage 4). No hypotheses for Stage 1."""
-    return []
+    """Stage 4b — LLM reads each recon item + class playbooks, emits scope-bounded,
+    schema-validated candidate hypotheses. ScopeViolation propagates (audit)."""
+    return generate_hypotheses(scopes, recon)
 
 
 def stage_verify(hypotheses: list) -> list[dict]:
