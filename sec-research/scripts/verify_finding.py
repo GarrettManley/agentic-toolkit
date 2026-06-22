@@ -81,6 +81,8 @@ def run_poc_in_sandbox(*, poc_dir: Path, ecosystem: str, expected_exit_code: int
         return False, f"PoC timed out after {timeout}s"
     if res.exit_code != expected_exit_code:
         return False, f"PoC exit {res.exit_code} != expected {expected_exit_code}"
+    if deterministic and not expected_hash:
+        return False, "deterministic=true but no expected_output_hash declared"
     if deterministic and res.stdout_sha256 != expected_hash:
         return False, f"PoC stdout hash {res.stdout_sha256} != expected {expected_hash}"
     return True, "PoC reproduced successfully"

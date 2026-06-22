@@ -45,3 +45,26 @@ def test_verify_deterministic_hash_mismatch_fails(tmp_path, monkeypatch):
                                     expected_exit_code=0, deterministic=True,
                                     expected_hash="deadbeef", timeout=60)
     assert ok is False
+
+
+def test_verify_timeout_fails(tmp_path, monkeypatch):
+    import verify_finding as vf
+    import hashlib
+    from sandbox.runner import SandboxResult
+    monkeypatch.setattr(vf, "sandbox_run", lambda cmd, **kw: SandboxResult(
+        exit_code=124, stdout="", stderr="timeout",
+        stdout_sha256=hashlib.sha256(b"").hexdigest(), duration_s=1.0,
+        timed_out=True, image="node:22-slim"))
+    ok, msg = vf.run_poc_in_sandbox(poc_dir=tmp_path, ecosystem="npm",
+                                    expected_exit_code=0, deterministic=False,
+                                    expected_hash=None, timeout=1)
+    assert ok is False and "tim" in msg.lower()
+
+
+def test_verify_deterministic_without_hash_fails_clearly(tmp_path, monkeypatch):
+    import verify_finding as vf
+    monkeypatch.setattr(vf, "sandbox_run", lambda cmd, **kw: _fake_result(exit_code=0))
+    ok, msg = vf.run_poc_in_sandbox(poc_dir=tmp_path, ecosystem="npm",
+                                    expected_exit_code=0, deterministic=True,
+                                    expected_hash=None, timeout=60)
+    assert ok is False and "expected_output_hash" in msg
