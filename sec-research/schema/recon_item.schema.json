@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Recon Item",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["slug", "asset", "transitive_closure", "known_advisories", "flags", "recon_ts"],
+  "properties": {
+    "slug": {"type": "string"},
+    "asset": {
+      "type": "object", "additionalProperties": false, "required": ["asset_type", "identifier"],
+      "properties": {
+        "asset_type": {"type": "string"},
+        "identifier": {"type": "string"},
+        "ecosystem": {"type": ["string", "null"]}
+      }
+    },
+    "resolved_version": {"type": ["string", "null"]},
+    "repo": {
+      "type": ["object", "null"], "additionalProperties": false,
+      "properties": {
+        "identifier": {"type": ["string", "null"]},
+        "clone_path": {"type": ["string", "null"]},
+        "commit_sha": {"type": ["string", "null"]},
+        "cloned": {"type": "boolean"}
+      }
+    },
+    "direct_deps": {"type": "array", "items": {"type": "object"}},
+    "transitive_closure": {
+      "type": "object", "additionalProperties": false, "required": ["count", "truncated"],
+      "properties": {
+        "count": {"type": "integer"},
+        "truncated": {"type": "boolean"},
+        "path": {"type": ["string", "null"]}
+      }
+    },
+    "known_advisories": {"type": "array", "items": {"type": "object"}},
+    "flags": {"type": "array", "items": {"type": "string"}},
+    "recon_ts": {"type": "string"}
+  }
+}
