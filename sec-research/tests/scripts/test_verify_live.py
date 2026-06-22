@@ -1,6 +1,8 @@
-"""docker-gated live integration test — Stage 4c end-to-end exploit reproduction.
+"""docker-gated live integration test — Stage 4c end-to-end verification.
 
-Proves full verify pipeline against real containers:
+Proves the full verify pipeline against real containers via the deterministic
+guard-presence probe (the resolved version is run; the fixed 3.0.5 rejects an
+over-length pattern via its assertValidPattern guard, the affected 3.0.4 does not):
   - minimatch@3.0.4 (affected)  → verdict "verified"
   - minimatch@3.0.5 (fixed)     → verdict "refuted"
 
@@ -39,9 +41,9 @@ def _docker_available() -> bool:
 def test_minimatch_304_verified_305_refuted(tmp_path):
     """End-to-end: affected 3.0.4 is verified; fixed 3.0.5 is refuted.
 
-    Both assertions constitute the full-exploit-reproduction proof:
-      - The affected version triggers ReDoS in a real container.
-      - The fixed version does not.
+    Both assertions constitute the verification proof:
+      - The affected version lacks the 3.0.5 length guard → VULN_CONFIRMED.
+      - The fixed version rejects the over-length pattern → PATCHED.
     """
     from verify.harness import verify_hypotheses
 
