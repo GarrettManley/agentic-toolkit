@@ -38,10 +38,10 @@ _STUB_RATIONALE = (
     "draft-complete."
 )
 
-# Conservative HIGH default score used when an advisory supplies a CVSS vector
+# Unverified placeholder score used when an advisory supplies a CVSS vector
 # string but not a numeric score. OSV does not embed the numeric score in the
-# vector itself; 7.5 (HIGH) is a safe conservative bound for a network-reachable
-# dependency-cve until a researcher-verified numeric score replaces it.
+# vector itself; 7.5 (HIGH) is a stub placeholder for a network-reachable
+# dependency-cve. Recompute from the vector before promoting beyond draft.
 _ADVISORY_DEFAULT_CVSS_SCORE = 7.5
 
 
@@ -54,12 +54,15 @@ def _pick_trigger(evidence: list[EvidenceCapture]) -> EvidenceCapture | None:
 
 
 def _parse_package_version(target_identifier: str) -> tuple[str, str]:
-    """Split 'package@version' into (package, version). Raises IncompleteVerdict."""
+    """Split 'package@version' into (package, version). Raises IncompleteVerdict.
+
+    Handles scoped packages: @scope/pkg@1.2.3 -> (@scope/pkg, 1.2.3).
+    """
     if "@" not in target_identifier:
         raise IncompleteVerdict(
             f"target_identifier {target_identifier!r} has no '@' separator"
         )
-    pkg, _, ver = target_identifier.partition("@")
+    pkg, _, ver = target_identifier.rpartition("@")
     if not pkg or not ver:
         raise IncompleteVerdict(
             f"target_identifier {target_identifier!r} yields empty package or version"
@@ -142,8 +145,9 @@ def build(verdict: Verdict, advisories: list[Advisory]) -> FindingDoc:
             cvss_vector = f"CVSS:3.1/{cvss_vector.lstrip('CVSS:3.1/')}"
         cvss_score = _ADVISORY_DEFAULT_CVSS_SCORE
         rationale = (
-            f"Score derived from advisory {same_pkg_adv.id} "
+            f"Score is a placeholder (unverified) derived from advisory {same_pkg_adv.id} "
             f"(source={same_pkg_adv.source}). "
+            f"Recompute from the vector before promoting beyond draft. "
             f"Affected: {same_pkg_adv.affected_range or 'unknown'}; "
             f"fixed: {same_pkg_adv.fixed or 'unknown'}."
         )

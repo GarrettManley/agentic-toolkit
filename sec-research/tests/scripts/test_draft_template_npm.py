@@ -49,6 +49,7 @@ def test_build_fills_structural_frontmatter_and_poc():
     assert fm["target"]["ecosystem"] == "npm"
     assert fm["poc"]["expected_exit_code"] == 0
     assert fm["poc"]["expected_output_hash"] == "a" * 64
+    assert fm["poc"]["deterministic"] is True
 
 
 def test_body_has_fact_citation_proof():
@@ -65,6 +66,14 @@ def test_novel_finding_is_draft_incomplete_without_advisory():
 def test_unparseable_target_raises():
     with pytest.raises(IncompleteVerdict):
         build(_v(target="not-a-package-spec"), [])
+
+
+def test_scoped_package_parses_correctly():
+    """Scoped packages like @scope/pkg@1.2.3 split correctly via rpartition."""
+    doc = build(_v(target="@scope/pkg@1.2.3"), [])
+    fm = doc.frontmatter
+    assert fm["target"]["identifier"] == "@scope/pkg@1.2.3"
+    assert fm["title"].startswith("@scope/pkg@1.2.3")
 
 
 def test_build_with_same_package_advisory_is_draft_complete():
