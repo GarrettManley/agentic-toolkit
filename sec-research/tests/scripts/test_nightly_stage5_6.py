@@ -1,4 +1,4 @@
-"""Tests for nightly.stage_triage — Stage 5 wire-up.
+"""Tests for nightly Stage 5 (stage_triage) and Stage 6 (stage_draft_findings).
 
 Task 5 — wire stage_triage into the nightly pipeline.
 
@@ -6,6 +6,13 @@ stage_triage(verdicts, slug, *, now) -> list[Verdict]
   - drops verified verdicts whose template_id CVE matches a loaded advisory
   - returns novel verified verdicts (no advisory match)
   - calls persist_triage (monkeypatched so no disk I/O in unit tests)
+
+Task 11 — wire stage_draft_findings into the nightly pipeline.
+
+stage_draft_findings(novel, slug, *, today) -> list[str]
+  - calls draft_findings with slug's advisories (via load_advisories) and FINDINGS_ROOT
+  - returns list of trace_ids for drafted findings
+  - FINDINGS_ROOT is module-level and patchable; tests redirect to tmp_path
 
 Monkeypatch convention: target the module object directly (same pattern as
 test_nightly_stage_verify.py → monkeypatch.setattr(nightly, "verify_hypotheses", ...)).
@@ -99,6 +106,42 @@ def test_stage_triage_persist_called(monkeypatch, tmp_path):
     nightly.stage_triage([_v("npm:x:CVE-2099-9")], "my-slug", now="2026-01-01T00:00:00Z")
     assert len(calls) == 1
     assert calls[0][0] == "my-slug"
+
+
+def test_stage_draft_findings_writes_for_novel(monkeypatch, tmp_path):
+    """stage_draft_findings drafts a finding file for a novel VERDICT_VERIFIED verdict."""
+    import nightly
+    import scripts.draft.drafter as _drafter
+    from verify.model import Verdict, EvidenceCapture, VERDICT_VERIFIED
+
+    # Redirect FINDINGS_ROOT to tmp_path so no real findings/ dir is touched.
+    monkeypatch.setattr(nightly, "FINDINGS_ROOT", tmp_path, raising=False)
+    # load_advisories returns empty list (no known advisories for this slug).
+    monkeypatch.setattr(nightly, "load_advisories", lambda slug, **kw: [])
+    # Patch the ledger inside the drafter so no submissions/ledger.jsonl is written.
+    class _FakeLedger:
+        def append_event(self, event_type, **fields):
+            return {}
+    monkeypatch.setattr(_drafter, "ledger", _FakeLedger(), raising=False)
+
+    v = Verdict(
+        hypothesis_id="h",
+        program_slug="huntr-npm-left-pad",
+        target_identifier="left-pad@1.0.0",
+        vuln_class="dependency-cve",
+        verdict=VERDICT_VERIFIED,
+        reason="redos",
+        strategy="templated",
+        template_id="npm:left-pad:CVE-PROPOSED",
+        evidence=[EvidenceCapture(
+            phase="trigger", exit_code=0, stdout_sha256="a" * 64,
+            timed_out=False, duration_s=0.3,
+        )],
+        verified_at="t",
+    )
+    ids = nightly.stage_draft_findings([v], "huntr-npm-left-pad", today="2026-06-22")
+    assert ids == ["FIND-2026-06-22-001"]
+    assert (tmp_path / "FIND-2026-06-22-001" / "finding.md").exists()
 
 
 def test_verdict_from_dict_rebuilds_evidence():

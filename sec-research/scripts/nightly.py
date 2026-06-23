@@ -6,7 +6,7 @@ Pipeline framework:
     3. Recon -> runtime/recon/<slug>/                                (Stage 3 — STUB)
     4. Hypothesis generation via fast_orchestrator.py + playbooks    (Stage 4 — STUB)
     5. Sandboxed verification of candidates                          (Stage 4 — STUB)
-    6. Draft findings -> findings/<trace>/                           (Stage 6 — STUB)
+    6. Draft findings -> findings/<trace>/                           (Stage 6 — WIRED)
     7. Append to runtime/briefings/<date>.md
 
 In Stage 1, stages 1-6 are NO-OPs. Stage 7 still runs to produce a briefing
@@ -42,6 +42,9 @@ from triage.dedup import triage_verdicts  # noqa: E402
 from triage.recon_advisories import load_advisories  # noqa: E402
 from triage.persist import persist_triage  # noqa: E402
 from triage.model import TRIAGE_NOVEL  # noqa: E402
+from draft.drafter import draft_findings  # noqa: E402
+
+FINDINGS_ROOT = FINDINGS_DIR
 
 
 def _verdict_from_dict(vd: dict) -> Verdict:
@@ -115,9 +118,20 @@ def stage_triage(verdicts: list, slug: str, *, now: str) -> list:
     return [r.verdict for r in results if r.triage_status == TRIAGE_NOVEL]
 
 
-def stage_draft_findings(verified: list) -> list[str]:
-    """STUB (Stage 6). Returns empty — no automated drafting in Stage 1."""
-    return []
+def stage_draft_findings(novel: list, slug: str, *, today: str) -> list[str]:
+    """Stage 6 — deterministically draft schema-valid findings for novel verdicts.
+
+    Args:
+        novel: Novel Verdict instances from stage_triage for this slug.
+        slug: Program slug — used to load the slug's own advisories for template rendering.
+        today: ISO date YYYY-MM-DD (from _today()) for trace_id allocation.
+
+    Returns:
+        List of trace_ids for successfully drafted findings.
+    """
+    advisories = load_advisories(slug)
+    results = draft_findings(novel, advisories, findings_root=FINDINGS_ROOT, today=today)
+    return [r.trace_id for r in results]
 
 
 def stage_briefing(scopes: dict, recon: list, hypotheses: list, verified: list, drafts: list) -> Path:
@@ -143,7 +157,7 @@ Stage: 1 (foundation) — skeletons only; pipeline body is fixture-data
 - Recon items: {len(recon)} (Stage 3 stub)
 - Hypotheses generated: {len(hypotheses)} (Stage 4 stub)
 - Verified candidates: {sum(1 for v in verified if v.get('verified'))} (Stage 4 stub)
-- Drafts produced: {len(drafts)} (Stage 6 stub)
+- Findings drafted: {len(drafts)} (trace-ids: {', '.join(drafts) if drafts else 'none'})
 
 ## Action items
 - Stage 1 is foundation only; no real findings expected from skeleton runs.
@@ -171,10 +185,11 @@ def main() -> int:
     hypotheses = stage_hypothesize(scopes, recon)
     verified = stage_verify(hypotheses)
 
-    # Stage 5: triage — group verified Verdict objects by slug, dedup against
-    # recon advisories, collect novel verdicts across all programs.
+    # Stage 5 + 6: triage then draft — group verified Verdict objects by slug,
+    # dedup against recon advisories (Stage 5), draft novel findings per slug (Stage 6).
     now_ts = _utc_now_iso()
-    novel: list = []
+    today = _today()
+    all_drafts: list[str] = []
     by_slug: dict[str, list] = {}
     for vd in verified:
         slug_key = vd.get("program_slug", "")
@@ -183,9 +198,10 @@ def main() -> int:
         by_slug.setdefault(slug_key, []).append(vd)
     for slug_key, vd_list in by_slug.items():
         verdicts_typed = [_verdict_from_dict(vd) for vd in vd_list]
-        novel.extend(stage_triage(verdicts_typed, slug_key, now=now_ts))
+        novel = stage_triage(verdicts_typed, slug_key, now=now_ts)
+        all_drafts.extend(stage_draft_findings(novel, slug_key, today=today))
 
-    drafts = stage_draft_findings(novel)
+    drafts = all_drafts
     briefing = stage_briefing(scopes, recon, hypotheses, verified, drafts)
 
     finished_at = _utc_now_iso()
