@@ -37,6 +37,10 @@ from lib import ledger  # noqa: E402
 from recon_program import run_recon  # noqa: E402
 from llm.generate import generate_hypotheses  # noqa: E402
 from verify.harness import verify_hypotheses  # noqa: E402
+from scripts.triage.dedup import triage_verdicts  # noqa: E402
+from scripts.triage.recon_advisories import load_advisories  # noqa: E402
+from scripts.triage.persist import persist_triage  # noqa: E402
+from scripts.triage.model import TRIAGE_NOVEL  # noqa: E402
 
 
 def _utc_now_iso() -> str:
@@ -75,6 +79,26 @@ def stage_verify(hypotheses: list) -> list[dict]:
     are isolated per item. Each returned dict carries a 'verified' bool for the
     briefing counter."""
     return verify_hypotheses(hypotheses)
+
+
+def stage_triage(verdicts: list, slug: str, *, now: str) -> list:
+    """Stage 5 — dedup verified verdicts vs recon's pre-fetched advisories.
+
+    Returns the novel verdicts (no known-CVE match) for drafting; duplicates are
+    persisted and dropped.
+
+    Args:
+        verdicts: List of Verdict dataclasses to triage (typically VERDICT_VERIFIED).
+        slug: Program slug used to load the matching recon advisories.
+        now: ISO-8601 UTC timestamp string; use nightly's _utc_now_iso() at call site.
+
+    Returns:
+        List of Verdict instances whose triage_status is TRIAGE_NOVEL.
+    """
+    advisories = load_advisories(slug)
+    results = triage_verdicts(verdicts, advisories, now=now)
+    persist_triage(slug, results)
+    return [r.verdict for r in results if r.triage_status == TRIAGE_NOVEL]
 
 
 def stage_draft_findings(verified: list) -> list[str]:
@@ -132,7 +156,24 @@ def main() -> int:
     recon = stage_recon(scopes)
     hypotheses = stage_hypothesize(scopes, recon)
     verified = stage_verify(hypotheses)
-    drafts = stage_draft_findings(verified)
+
+    # Stage 5: triage — group verified Verdict objects by slug, dedup against
+    # recon advisories, collect novel verdicts across all programs.
+    from scripts.verify.model import Verdict as _Verdict  # local import avoids top-level circular
+    now_ts = _utc_now_iso()
+    novel: list = []
+    by_slug: dict[str, list] = {}
+    for vd in verified:
+        slug_key = vd.get("program_slug", "")
+        by_slug.setdefault(slug_key, []).append(vd)
+    for slug_key, vd_list in by_slug.items():
+        verdicts_typed = [
+            _Verdict(**{k: v for k, v in vd.items() if k != "verified"})
+            for vd in vd_list
+        ]
+        novel.extend(stage_triage(verdicts_typed, slug_key, now=now_ts))
+
+    drafts = stage_draft_findings(novel)
     briefing = stage_briefing(scopes, recon, hypotheses, verified, drafts)
 
     finished_at = _utc_now_iso()
