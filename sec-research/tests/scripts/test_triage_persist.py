@@ -65,8 +65,13 @@ class _LedgerCapture:
 # Tests
 # ---------------------------------------------------------------------------
 
-def test_persist_writes_triage_json(tmp_path: Path):
+def test_persist_writes_triage_json(tmp_path: Path, monkeypatch):
     """persist_triage writes runtime/triage/<slug>/triage.json with correct shape."""
+    import scripts.triage.persist as _persist_mod
+
+    cap = _LedgerCapture()
+    monkeypatch.setattr(_persist_mod, "ledger", cap)
+
     results = [
         _result(TRIAGE_DUPLICATE, "npm:minimatch:CVE-2022-3517"),
         _result(TRIAGE_NOVEL, "npm:left-pad:CVE-2099-0001"),
@@ -126,16 +131,6 @@ def test_persist_uses_default_runtime_when_none(monkeypatch):
 
     cap = _LedgerCapture()
     monkeypatch.setattr(_persist_mod, "ledger", cap)
-
-    # Monkeypatch the mkdir and write_text to avoid actual disk writes in the real runtime
-    written: list[Path] = []
-
-    original_mkdir = Path.mkdir
-
-    def _fake_mkdir(self, *args, **kwargs):
-        original_mkdir(self, *args, **kwargs)
-
-    monkeypatch.setattr(Path, "mkdir", _fake_mkdir)
 
     # Just verify the returned path has the right structure
     import tempfile
