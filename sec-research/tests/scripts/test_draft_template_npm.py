@@ -141,3 +141,20 @@ def test_citations_nonempty():
     """citations must have at least one entry."""
     doc = build(_v(), [])
     assert len(doc.frontmatter["citations"]) >= 1
+
+
+def test_cvss_vector_prefix_already_present():
+    """When advisory's severity already has CVSS:3.1/ prefix, use as-is without mangling."""
+    adv = Advisory(
+        id="GHSA-test-0002-defg",
+        cve="CVE-2022-0002",
+        source="osv",
+        severity="CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",  # Already has prefix
+        affected_range="<2.0.0",
+        fixed="2.0.0",
+        package="left-pad",
+    )
+    doc = build(_v(), [adv])
+    cvss_vec = doc.frontmatter["severity"]["cvss_v3_1_vector"]
+    # Should be unmangled, exactly as provided
+    assert cvss_vec == "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H"

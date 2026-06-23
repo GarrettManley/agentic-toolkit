@@ -19,7 +19,6 @@ from __future__ import annotations
 import yaml
 
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 from lib import ledger
 from scripts.draft.errors import IncompleteVerdict
@@ -28,9 +27,6 @@ from scripts.draft.registry import ecosystem_of, select_finding_template
 from scripts.draft.validate import FindingInvalid, validate_finding
 from scripts.recon.advisories import Advisory
 from scripts.verify.model import Verdict
-
-if TYPE_CHECKING:
-    pass
 
 _DEFAULT_FINDINGS_ROOT = Path(__file__).resolve().parents[2] / "findings"
 

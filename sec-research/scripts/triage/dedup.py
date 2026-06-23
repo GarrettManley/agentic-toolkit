@@ -27,6 +27,9 @@ def match_advisories(verdict: Verdict, advisories: list[Advisory]) -> list[str]:
 def triage_verdict(verdict: Verdict, advisories: list[Advisory], *, now: str) -> TriageResult:
     hits = match_advisories(verdict, advisories)
     checked = [a.cve or a.id for a in advisories if (a.cve or a.id)]
+    # source="none" reflects an EMPTY ADVISORY LIST, not a no-CVE verdict.
+    # A verdict with no extractable CVE is always classified novel and is
+    # recoverable from the persisted verdict's template_id/reason.
     source = "recon-osv" if advisories else "none"
     is_novel = not hits
     return TriageResult(

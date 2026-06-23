@@ -46,7 +46,7 @@ def load_advisories(slug: str, *, runtime_root: Path | None = None) -> list[Advi
     for item in items:
         for a in item.get("known_advisories", []):
             out.append(Advisory(
-                id=a["id"],
+                id=a.get("id", ""),
                 cve=a.get("cve"),
                 source=a.get("source", "osv"),
                 severity=a.get("severity"),

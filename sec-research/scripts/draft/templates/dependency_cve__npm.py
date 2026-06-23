@@ -142,7 +142,7 @@ def build(verdict: Verdict, advisories: list[Advisory]) -> FindingDoc:
         # Advisory has a CVSS vector string from OSV
         cvss_vector = same_pkg_adv.severity
         if not cvss_vector.startswith("CVSS:3.1/"):
-            cvss_vector = f"CVSS:3.1/{cvss_vector.lstrip('CVSS:3.1/')}"
+            cvss_vector = f"CVSS:3.1/{cvss_vector.removeprefix('CVSS:3.1/')}"
         cvss_score = _ADVISORY_DEFAULT_CVSS_SCORE
         rationale = (
             f"Score is a placeholder (unverified) derived from advisory {same_pkg_adv.id} "
