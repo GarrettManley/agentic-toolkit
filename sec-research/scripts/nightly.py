@@ -37,10 +37,24 @@ from lib import ledger  # noqa: E402
 from recon_program import run_recon  # noqa: E402
 from llm.generate import generate_hypotheses  # noqa: E402
 from verify.harness import verify_hypotheses  # noqa: E402
-from scripts.triage.dedup import triage_verdicts  # noqa: E402
-from scripts.triage.recon_advisories import load_advisories  # noqa: E402
-from scripts.triage.persist import persist_triage  # noqa: E402
-from scripts.triage.model import TRIAGE_NOVEL  # noqa: E402
+from verify.model import Verdict, EvidenceCapture  # noqa: E402
+from triage.dedup import triage_verdicts  # noqa: E402
+from triage.recon_advisories import load_advisories  # noqa: E402
+from triage.persist import persist_triage  # noqa: E402
+from triage.model import TRIAGE_NOVEL  # noqa: E402
+
+
+def _verdict_from_dict(vd: dict) -> Verdict:
+    """Reconstruct a Verdict dataclass from a serialized dict (as returned by
+    verify_hypotheses via asdict()). Rebuilds nested EvidenceCapture objects so
+    Stage 6 can access evidence[i].exit_code / .stdout_sha256 via attribute access.
+
+    The 'verified' key (added by the harness for the briefing counter) is stripped
+    before reconstruction — it is not a Verdict field.
+    """
+    evidence = [EvidenceCapture(**e) for e in vd.get("evidence", [])]
+    fields = {k: v for k, v in vd.items() if k not in ("verified", "evidence")}
+    return Verdict(**fields, evidence=evidence)
 
 
 def _utc_now_iso() -> str:
@@ -159,18 +173,16 @@ def main() -> int:
 
     # Stage 5: triage — group verified Verdict objects by slug, dedup against
     # recon advisories, collect novel verdicts across all programs.
-    from scripts.verify.model import Verdict as _Verdict  # local import avoids top-level circular
     now_ts = _utc_now_iso()
     novel: list = []
     by_slug: dict[str, list] = {}
     for vd in verified:
         slug_key = vd.get("program_slug", "")
+        if not slug_key:
+            print(f"[nightly] warning: verdict missing program_slug, bucketing under '': {vd.get('hypothesis_id', '?')}")
         by_slug.setdefault(slug_key, []).append(vd)
     for slug_key, vd_list in by_slug.items():
-        verdicts_typed = [
-            _Verdict(**{k: v for k, v in vd.items() if k != "verified"})
-            for vd in vd_list
-        ]
+        verdicts_typed = [_verdict_from_dict(vd) for vd in vd_list]
         novel.extend(stage_triage(verdicts_typed, slug_key, now=now_ts))
 
     drafts = stage_draft_findings(novel)

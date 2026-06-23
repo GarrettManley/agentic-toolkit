@@ -26,7 +26,7 @@ if str(_SCRIPTS) not in sys.path:
 
 
 def _v(template_id):
-    from scripts.verify.model import Verdict, VERDICT_VERIFIED
+    from verify.model import Verdict, VERDICT_VERIFIED
     return Verdict(
         hypothesis_id="h",
         program_slug="huntr-npm-minimatch",
@@ -43,7 +43,7 @@ def _v(template_id):
 
 def test_stage_triage_drops_known_cve(monkeypatch, tmp_path):
     """A verdict whose CVE matches a loaded advisory is dropped; novel one is kept."""
-    from scripts.recon.advisories import Advisory
+    from recon.advisories import Advisory
     import nightly
 
     monkeypatch.setattr(
@@ -99,3 +99,54 @@ def test_stage_triage_persist_called(monkeypatch, tmp_path):
     nightly.stage_triage([_v("npm:x:CVE-2099-9")], "my-slug", now="2026-01-01T00:00:00Z")
     assert len(calls) == 1
     assert calls[0][0] == "my-slug"
+
+
+def test_verdict_from_dict_rebuilds_evidence():
+    """_verdict_from_dict must reconstruct nested EvidenceCapture objects.
+
+    verify_hypotheses returns dicts (via asdict()), so evidence entries are dicts.
+    Stage 6 will access verdict.evidence[i].exit_code via attribute — this test
+    guards that the reconstruction path produces EvidenceCapture instances, not dicts.
+    """
+    import nightly
+    from verify.model import EvidenceCapture, Verdict, VERDICT_VERIFIED
+
+    vd = {
+        "hypothesis_id": "h-001",
+        "program_slug": "huntr-npm-minimatch",
+        "target_identifier": "minimatch@3.0.4",
+        "vuln_class": "dependency-cve",
+        "verdict": VERDICT_VERIFIED,
+        "reason": "exit+sha match",
+        "strategy": "templated",
+        "template_id": "npm:minimatch:CVE-2022-3517",
+        "evidence": [
+            {
+                "phase": "install",
+                "exit_code": 0,
+                "stdout_sha256": "abc123",
+                "timed_out": False,
+                "duration_s": 1.2,
+            },
+            {
+                "phase": "trigger",
+                "exit_code": 1,
+                "stdout_sha256": "def456",
+                "timed_out": False,
+                "duration_s": 0.4,
+            },
+        ],
+        "verified_at": "2026-06-22T00:00:00Z",
+        "verified": True,  # harness-added key; must be stripped
+    }
+
+    result = nightly._verdict_from_dict(vd)
+
+    assert isinstance(result, Verdict)
+    assert len(result.evidence) == 2
+    assert isinstance(result.evidence[0], EvidenceCapture)
+    assert result.evidence[0].exit_code == 0
+    assert result.evidence[0].stdout_sha256 == "abc123"
+    assert isinstance(result.evidence[1], EvidenceCapture)
+    assert result.evidence[1].exit_code == 1
+    assert result.evidence[1].stdout_sha256 == "def456"
