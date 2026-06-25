@@ -38,7 +38,7 @@
   /* Text scale */
   --text-primary:   #e8eaed;
   --text-secondary: #8a9099;
-  --text-muted:     #4a5260;
+  --text-muted:     #7e8794;
   --text-inverse:   #0a0c0d;
 
   /* Borders */
@@ -216,11 +216,13 @@
 .wordmark {
   font-family: var(--font-display);
   font-size: 1.5rem;
+  font-weight: 400;
   letter-spacing: 0.12em;
   color: var(--amber);
   text-transform: uppercase;
   white-space: nowrap;
   flex-shrink: 0;
+  margin: 0;
 }
 
 .wordmark-sub {

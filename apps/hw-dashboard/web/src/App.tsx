@@ -45,9 +45,9 @@ export default function App() {
       <header className="site-header" role="banner">
         <div className="header-inner">
           <div>
-            <span className="wordmark" aria-label="Hardware Dashboard">
+            <h1 className="wordmark" aria-label="Hardware Dashboard">
               HW//DASH
-            </span>
+            </h1>
             <span className="wordmark-sub">UPGRADE INTELLIGENCE</span>
           </div>
 

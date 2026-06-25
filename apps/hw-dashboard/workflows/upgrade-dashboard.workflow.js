@@ -12,11 +12,13 @@ export const meta = {
 }
 
 // args: { profile, categories, scale, budgetUSD, forecastDir }
-const profile = args.profile
-const categories = args.categories || ['gpu', 'ram', 'storage', 'cpu', 'motherboard']
-const scale = args.scale || 'standard'
-const budgetUSD = args.budgetUSD ?? null
-const forecastDir = args.forecastDir || 'apps/hw-dashboard/data/analytics'
+// The Workflow harness delivers `args` as a JSON string; parse defensively (also tolerate a pre-parsed object).
+const A = typeof args === 'string' ? JSON.parse(args) : (args || {})
+const profile = A.profile
+const categories = A.categories || ['gpu', 'ram', 'storage', 'cpu', 'motherboard']
+const scale = A.scale || 'standard'
+const budgetUSD = A.budgetUSD ?? null
+const forecastDir = A.forecastDir || 'apps/hw-dashboard/data/analytics'
 
 const capN = { quick: 3, standard: 6, deep: 12 }[scale]
 const votes = { quick: 1, standard: 2, deep: 3 }[scale]
@@ -95,7 +97,10 @@ const UPGRADE_RECOMMENDATION = {
 const scoutPrompt = (category) =>
   `Scout upgrade candidates for category="${category}".\nMachine profile:\n${profileJSON}\n` +
   `Budget USD: ${budgetUSD ?? 'unbounded'}. Return at most ${capN} deduplicated candidates ` +
-  `that plausibly fit this machine and advance its goals. JSON only per the candidates schema.`
+  `that plausibly fit this machine and advance its goals. ` +
+  `Span a range: include at least one option that fits the EXISTING power (PSU wattage) and case ` +
+  `clearance envelope, alongside higher-end options that may require a supporting upgrade such as a ` +
+  `larger PSU. JSON only per the candidates schema.`
 
 const specPrompt = (cand) =>
   `Research authoritative, citation-backed specs for this candidate:\n${JSON.stringify(cand)}\n` +
@@ -109,7 +114,16 @@ const verifyPrompt = (spec, i) =>
 
 const compatPrompt = (spec) =>
   `Decide compatibility of this spec'd part against the machine.\nSpec:\n${JSON.stringify(spec)}\n` +
-  `Machine profile:\n${profileJSON}\nJSON only per the compatibility schema.`
+  `Machine profile:\n${profileJSON}\n` +
+  `Verdict semantics — choose exactly one: ` +
+  `"compatible" = drops in with NO other change; ` +
+  `"conditional" = physically and electrically workable but requires ONE clearly-stated supporting ` +
+  `upgrade (e.g. a higher-wattage/ATX 3.x PSU, or a BIOS update) — state that requirement in ` +
+  `blocking_reasons; ` +
+  `"incompatible" = cannot work even WITH reasonable supporting upgrades (wrong CPU socket, exceeds ` +
+  `case max GPU length, no viable PSU exists). ` +
+  `A GPU that merely needs a larger PSU than the current one is "conditional", NOT "incompatible".\n` +
+  `JSON only per the compatibility schema.`
 
 const forecastPrompt = (cand) =>
   `Interpret the price analytics for candidate "${cand.candidate_id || cand.id}". ` +
@@ -175,8 +189,10 @@ const evaluated = await pipeline(
         .then((verdict) => ({ verdict, spec: vspec }))
     : null
 )
-const fit = evaluated.filter(Boolean).filter((e) => e.verdict && e.verdict.verdict === 'compatible')
-log(`${fit.length} candidates passed verification + compatibility`)
+// Keep compatible AND conditional (e.g. fits but needs a PSU upgrade) — the strategist flags conditional
+// options per the run intent; only hard-incompatible candidates are dropped here.
+const fit = evaluated.filter(Boolean).filter((e) => e.verdict && (e.verdict.verdict === 'compatible' || e.verdict.verdict === 'conditional'))
+log(`${fit.length} candidates passed verification + compatibility (compatible or conditional)`)
 
 phase('Forecast')
 const forecasts = (await parallel(fit.map((e) => () =>

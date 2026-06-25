@@ -10,6 +10,7 @@ import { LoadingPanel } from "../components/LoadingPanel";
 import { ErrorPanel } from "../components/ErrorPanel";
 import { SignalBadge } from "../components/SignalBadge";
 import { DisclosureSection } from "../components/DisclosureSection";
+import { usd, ratio } from "../format";
 
 const ALL = "__all__";
 
@@ -176,7 +177,7 @@ function ComponentCard({ opt }: { opt: RankedOption }) {
                 lineHeight: 1,
               }}
             >
-              ${opt.price.current_usd.toFixed(0)}
+              {usd(opt.price.current_usd)}
               <span className="readout-unit" style={{ marginLeft: "0.3em" }}>
                 {opt.price.currency}
               </span>
@@ -192,7 +193,7 @@ function ComponentCard({ opt }: { opt: RankedOption }) {
                 lineHeight: 1.2,
               }}
             >
-              {opt.value_per_dollar.toFixed(2)}
+              {ratio(opt.value_per_dollar)}
             </p>
           </div>
           <div style={{ flex: 1, minWidth: "200px" }}>

@@ -9,6 +9,7 @@ import { LoadingPanel } from "../components/LoadingPanel";
 import { ErrorPanel } from "../components/ErrorPanel";
 import { SignalBadge } from "../components/SignalBadge";
 import { ConfidenceBar } from "../components/ConfidenceBar";
+import { usd, ratio } from "../format";
 
 const staggerChild = {
   hidden: { opacity: 0, y: 12 },
@@ -254,7 +255,7 @@ export function Overview() {
                       style={{
                         fontFamily: "var(--font-body)",
                         fontSize: "0.8125rem",
-                        color: "var(--text-secondary)",
+                        color: "var(--text-primary)",
                         maxWidth: "60ch",
                       }}
                     >
@@ -271,10 +272,10 @@ export function Overview() {
                           color: "var(--amber)",
                         }}
                       >
-                        ${opt.price.current_usd.toFixed(0)}
+                        {usd(opt.price.current_usd)}
                       </span>
                       <span className="readout-unit">
-                        value/$ {opt.value_per_dollar.toFixed(2)}
+                        value/$ {ratio(opt.value_per_dollar)}
                       </span>
                     </div>
                   </div>
@@ -349,7 +350,7 @@ export function Overview() {
                         color: "var(--amber)",
                       }}
                     >
-                      ${path.total_usd.toFixed(0)}
+                      {usd(path.total_usd)}
                     </span>
                   </div>
                   <div
@@ -358,7 +359,7 @@ export function Overview() {
                   >
                     <span className="readout-unit">combined value/$</span>
                     <span className="readout" style={{ fontSize: "0.75rem" }}>
-                      {path.combined_value_per_dollar.toFixed(2)}
+                      {ratio(path.combined_value_per_dollar)}
                     </span>
                   </div>
                   <p
@@ -467,7 +468,7 @@ function SignalTile({ tile }: { tile: AnalyticsTile }) {
               lineHeight: 1,
             }}
           >
-            ${tile.current_price.toFixed(0)}
+            {usd(tile.current_price)}
           </span>
           <div className="stack-sm" style={{ textAlign: "right" }}>
             <span className="readout-unit">confidence</span>

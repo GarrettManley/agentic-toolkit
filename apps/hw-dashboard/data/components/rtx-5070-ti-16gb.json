@@ -1,0 +1,16 @@
+{
+  "component_id": "rtx-5070-ti-16gb",
+  "category": "gpu",
+  "name": "GeForce RTX 5070 Ti 16GB",
+  "manufacturer": "NVIDIA",
+  "model": "RTX 5070 Ti 16GB",
+  "specs": { "vram_gb": 16, "vram_type": "GDDR7", "memory_bandwidth_gbs": 896, "tdp_w": 300, "recommended_psu_w": 750, "bus_interface": "PCIe 5.0 x16", "length_mm": 329 },
+  "compatibility": { "socket": null, "ram_type": null, "pcie_gen": 5, "form_factor": "triple-slot", "tdp_w": 300, "length_mm": 329, "requires_bios_update": false },
+  "relieves": ["vram_ceiling", "gpu_compute"],
+  "tracked_sku_ids": ["rtx-5070-ti-16gb"],
+  "source_citations": [
+    { "url": "https://www.nvidia.com/en-us/geforce/graphics-cards/50-series/rtx-5070-family/", "tier": 1, "claim": "RTX 5070 Ti has 16GB GDDR7 and a 300W TGP; 750W recommended system PSU", "source_kind": "manufacturer" }
+  ],
+  "enriched_by": "agent",
+  "created_at": "2026-06-25T00:00:00Z"
+}

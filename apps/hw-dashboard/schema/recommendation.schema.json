@@ -67,7 +67,8 @@
             "properties": {
               "current_usd": { "type": ["number", "null"] },
               "currency": { "type": "string" },
-              "citation": { "$ref": "#/$defs/citation" }
+              "citation": { "anyOf": [{ "type": "null" }, { "$ref": "#/$defs/citation" }], "description": "null when no first-party price has been tracked yet" },
+              "note": { "type": "string" }
             }
           },
           "forecast": {
@@ -96,6 +97,7 @@
         "properties": {
           "name": { "type": "string" },
           "components": { "type": "array", "items": { "type": "string" } },
+          "supporting_upgrades": { "type": "array", "items": { "type": "string" }, "description": "required supporting parts that make the bundle workable, e.g. a higher-wattage PSU" },
           "total_usd": { "type": ["number", "null"] },
           "combined_value_per_dollar": { "type": ["number", "null"] },
           "notes": { "type": "string" }
@@ -123,7 +125,10 @@
         "claims_total": { "type": "integer", "minimum": 0 },
         "claims_passed": { "type": "integer", "minimum": 0 },
         "claims_demoted": { "type": "integer", "minimum": 0 },
-        "votes_per_claim": { "type": "integer", "minimum": 1 }
+        "votes_per_claim": { "type": "integer", "minimum": 0 },
+        "candidates_total": { "type": "integer", "minimum": 0 },
+        "candidates_excluded": { "type": "integer", "minimum": 0 },
+        "notes": { "type": "string" }
       }
     }
   },

@@ -3,6 +3,7 @@
   "detected_at": "2026-06-22T14:57:46Z",
   "detected_by": "detect_machine.ps1",
   "os": "Microsoft Windows 11 Home",
+  "system_model": "iBUYPOWER Trace Mesh TMI7N4601 (Costco prebuilt)",
   "cpu": {
     "model": "Intel(R) Core(TM) i7-14700F",
     "socket": "LGA1700",
@@ -36,14 +37,18 @@
     }
   ],
   "psu": {
-    "watts": null,
-    "rating": null,
-    "_needs_manual": "CIM cannot read PSU; fill in by hand"
+    "watts": 600,
+    "rating": "80+ Gold",
+    "modular": false,
+    "_source": "iBUYPOWER TMI7N4601 official spec (model identified from MSI PRO B760-VC board + i7-14700F + RTX 4060 + 32GB DDR5-5600 + 2TB ADATA)"
   },
   "case": {
-    "max_gpu_len_mm": null,
-    "max_cooler_height_mm": null,
-    "_needs_manual": "measure or look up case spec"
+    "model": "iBUYPOWER Trace 7 Mesh (ATX mid-tower)",
+    "dimensions_mm": "480 x 220 x 491",
+    "max_gpu_len_mm": 405,
+    "max_cooler_height_mm": 168,
+    "_note": "405mm GPU clearance is the spec without front fans; installed front fans reduce practical length to ~360-380mm (still fits all current consumer GPUs).",
+    "_source": "iBUYPOWER Trace 7 Mesh Pro ARGB case spec; dimensions corroborated by pcvarge.com TMI7N46T01 review (480x220x490mm)"
   },
   "goals": {
     "primary": "1440p gaming + local LLM inference",

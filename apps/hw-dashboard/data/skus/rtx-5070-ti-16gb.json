@@ -1,0 +1,13 @@
+{
+  "sku_id": "rtx-5070-ti-16gb",
+  "component_id": "rtx-5070-ti-16gb",
+  "display_name": "ASUS PRIME GeForce RTX 5070 Ti 16GB",
+  "mpn": "PRIME-RTX5070TI-16G",
+  "tracked_urls": [
+    { "retailer": "newegg", "url": "https://www.newegg.com/asus-prime-rtx5070ti-16g-geforce-rtx-5070-ti-16gb-graphics-card-triple-fans/p/N82E16814126757" }
+  ],
+  "currency": "USD",
+  "msrp": 749,
+  "active": true,
+  "created_at": "2026-06-25T00:00:00Z"
+}

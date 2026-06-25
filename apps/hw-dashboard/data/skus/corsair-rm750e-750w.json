@@ -1,0 +1,13 @@
+{
+  "sku_id": "corsair-rm750e-750w",
+  "component_id": "corsair-rm750e-750w",
+  "display_name": "Corsair RM750e (2025) 750W ATX 3.1 Fully Modular",
+  "mpn": "CP-9020262-NA",
+  "tracked_urls": [
+    { "retailer": "newegg", "url": "https://www.newegg.com/corsair-rmx-series-atx-3-1-compatible-750-w-cybenetics-gold-power-supply-black-rm750e/p/N82E16817139339" }
+  ],
+  "currency": "USD",
+  "msrp": 99,
+  "active": true,
+  "created_at": "2026-06-25T00:00:00Z"
+}
