@@ -531,3 +531,90 @@ def test_target_identifier_without_version(monkeypatch):
 
     assert len(results) == 1
     assert results[0]["target_identifier"] == "minimatch@3.0.4"
+
+
+# ---------------------------------------------------------------------------
+# Differential plan helper + repair-capable strategy
+# ---------------------------------------------------------------------------
+
+def _make_diff_plan(confirmed_sha=_SHA):
+    from dataclasses import replace
+    return replace(
+        _make_plan(),
+        fixed_install_cmd=["npm", "install", "minimatch@3.0.5"],
+        expected_trigger_sha256=confirmed_sha,
+        expected_refuted_exit=1,
+        expected_refuted_sha256=_MISMATCH_SHA,
+    )
+
+
+class _RepairStrategy:
+    """Differential strategy whose first plan never discriminates, second does."""
+    name = "llm"
+    supports_repair = True
+
+    def __init__(self, first: PocPlan, second: PocPlan):
+        self._plans = [first, second]
+        self.build_calls = 0
+
+    def supports(self, h): return True
+
+    def build_plan(self, h, repair_context=None):
+        plan = self._plans[min(self.build_calls, len(self._plans) - 1)]
+        self.build_calls += 1
+        return plan
+
+
+_FIX_TRIGGER_PATCHED = _ev(phase="trigger", exit_code=1, sha=_MISMATCH_SHA)
+
+
+# ---------------------------------------------------------------------------
+# Differential tests
+# ---------------------------------------------------------------------------
+
+def test_differential_verified(monkeypatch):
+    ledger_cap = _LedgerCapture()
+    monkeypatch.setattr(_harness, "ledger", type("L", (), {"append_event": staticmethod(ledger_cap)})())
+    strategy = _FakeStrategy(supports=True, plan=_make_diff_plan())
+
+    def fake_diff(plan, hid, slug, *, runner, verdict_root):
+        return _INSTALL_EV, _TRIGGER_EV_VERIFIED, _INSTALL_EV, _FIX_TRIGGER_PATCHED
+
+    monkeypatch.setattr(_harness, "_drive_differential", fake_diff)
+    results = _harness.verify_hypotheses([_hyp()], strategy=strategy)
+    assert results[0]["verdict"] == VERDICT_VERIFIED
+    assert results[0]["verified"] is True
+
+
+def test_differential_no_discrimination_triggers_one_repair_then_verifies(monkeypatch):
+    ledger_cap = _LedgerCapture()
+    monkeypatch.setattr(_harness, "ledger", type("L", (), {"append_event": staticmethod(ledger_cap)})())
+    strategy = _RepairStrategy(first=_make_diff_plan(), second=_make_diff_plan())
+
+    calls = [0]
+
+    def fake_diff(plan, hid, slug, *, runner, verdict_root):
+        calls[0] += 1
+        if calls[0] == 1:  # first attempt: fixed run ALSO confirms -> no discrimination
+            return _INSTALL_EV, _TRIGGER_EV_VERIFIED, _INSTALL_EV, _TRIGGER_EV_VERIFIED
+        return _INSTALL_EV, _TRIGGER_EV_VERIFIED, _INSTALL_EV, _FIX_TRIGGER_PATCHED
+
+    monkeypatch.setattr(_harness, "_drive_differential", fake_diff)
+    results = _harness.verify_hypotheses([_hyp()], strategy=strategy)
+    assert results[0]["verdict"] == VERDICT_VERIFIED
+    assert strategy.build_calls == 2  # original + one repair
+    assert "verify-repair-attempt" in ledger_cap.event_types()
+
+
+def test_differential_repair_exhausted_is_error(monkeypatch):
+    ledger_cap = _LedgerCapture()
+    monkeypatch.setattr(_harness, "ledger", type("L", (), {"append_event": staticmethod(ledger_cap)})())
+    strategy = _RepairStrategy(first=_make_diff_plan(), second=_make_diff_plan())
+
+    def fake_diff(plan, hid, slug, *, runner, verdict_root):
+        return _INSTALL_EV, _TRIGGER_EV_VERIFIED, _INSTALL_EV, _TRIGGER_EV_VERIFIED  # never discriminates
+
+    monkeypatch.setattr(_harness, "_drive_differential", fake_diff)
+    results = _harness.verify_hypotheses([_hyp()], strategy=strategy)
+    assert results[0]["verdict"] == VERDICT_ERROR
+    assert strategy.build_calls == 2  # one repair attempt, then give up

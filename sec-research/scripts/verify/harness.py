@@ -30,6 +30,7 @@ from verify.model import (
     VERDICT_VERIFIED,
     EvidenceCapture,
     Verdict,
+    derive_differential_verdict,
     derive_verdict,
 )
 from verify.strategy import PocPlan, PocStrategy, SeedIncomplete
@@ -46,6 +47,9 @@ INSTALL_TIMEOUT_S: int = 180
 
 TRIGGER_TIMEOUT_S: int = 120
 """Wall-clock timeout in seconds for the trigger sandbox phase."""
+
+MAX_REPAIR_ATTEMPTS: int = 1
+"""Differential PoCs that fail to discriminate get at most this many re-author retries."""
 
 
 # ---------------------------------------------------------------------------
@@ -290,6 +294,14 @@ def verify_hypotheses(
             )
             continue
 
+        if plan.is_differential:
+            verdicts.append(
+                _verify_differential(h, plan, strategy, hid, slug, tid, vcls, now,
+                                     runner=runner, verdict_root=verdict_root)
+            )
+            continue
+
+        # ---- legacy single-run path (templated non-differential plans) ----
         # ScopeViolation from _drive_phased MUST propagate uncaught (constraint C1).
         # Do NOT add except Exception or except ScopeViolation here.
         try:
@@ -308,16 +320,63 @@ def verify_hypotheses(
         vstr = derive_verdict(trigger_ev, plan)
         reason = _reason_for(vstr, trigger_ev, plan)
         ledger.append_event(
-            "verify-verdict",
-            slug=slug,
-            hypothesis_id=hid,
-            verdict=vstr,
+            "verify-verdict", slug=slug, hypothesis_id=hid, verdict=vstr,
             template_id=plan.template_id,
         )
         verdicts.append(_mk(vstr, reason, [install_ev, trigger_ev], plan.template_id))
 
     _persist(verdicts, verdict_root=verdict_root)
     return [asdict(v) | {"verified": v.verdict == VERDICT_VERIFIED} for v in verdicts]
+
+
+# ---------------------------------------------------------------------------
+# _verify_differential — differential drive with bounded repair
+# ---------------------------------------------------------------------------
+
+def _verify_differential(
+    h, plan, strategy, hid, slug, tid, vcls, now, *, runner, verdict_root,
+) -> Verdict:
+    """Drive a differential plan with at most MAX_REPAIR_ATTEMPTS re-author retries on
+    a 'no-discrimination' outcome. Returns a single Verdict.
+
+    ScopeViolation propagates uncaught (C1). SandboxError → error verdict.
+    """
+    attempt = 0
+    while True:
+        try:
+            aff_i, aff_t, fix_i, fix_t = _drive_differential(
+                plan, hid, slug, runner=runner, verdict_root=verdict_root
+            )
+        except SandboxError as e:
+            ledger.append_event("verify-sandbox-error", slug=slug, hypothesis_id=hid, error=str(e))
+            return Verdict(hid, slug, tid, vcls, VERDICT_ERROR, f"sandbox error: {e}",
+                           strategy.name, plan.template_id, [], _iso(now))
+
+        vstr, reason_code = derive_differential_verdict(aff_t, fix_t, plan)
+        evidence = [aff_i, aff_t, fix_i, fix_t]
+
+        repairable = (
+            reason_code == "no-discrimination"
+            and getattr(strategy, "supports_repair", False)
+            and attempt < MAX_REPAIR_ATTEMPTS
+        )
+        if repairable:
+            ledger.append_event("verify-no-discrimination", slug=slug, hypothesis_id=hid,
+                                attempt=attempt)
+            attempt += 1
+            ledger.append_event("verify-repair-attempt", slug=slug, hypothesis_id=hid,
+                                attempt=attempt)
+            plan = strategy.build_plan(h, repair_context={
+                "issue": reason_code,
+                "affected_exit": aff_t.exit_code,
+                "fixed_exit": fix_t.exit_code,
+            })
+            continue
+
+        ledger.append_event("verify-verdict", slug=slug, hypothesis_id=hid, verdict=vstr,
+                            template_id=plan.template_id)
+        return Verdict(hid, slug, tid, vcls, vstr, f"differential: {reason_code}",
+                       strategy.name, plan.template_id, evidence, _iso(now))
 
 
 # ---------------------------------------------------------------------------
