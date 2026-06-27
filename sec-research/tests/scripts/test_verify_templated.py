@@ -356,6 +356,30 @@ def test_build_plan_raises_seed_incomplete_no_target():
 
 
 # ---------------------------------------------------------------------------
+# Differential contract — minimatch is now a regression anchor
+# ---------------------------------------------------------------------------
+
+def test_minimatch_plan_is_differential():
+    """The minimatch plan.is_differential must be True with all differential fields set."""
+    strategy = _strategy()
+    plan = strategy.build_plan(_minimatch_hypothesis("3.0.4"))
+    assert plan.is_differential is True
+    assert plan.fixed_install_cmd == ["npm", "install", "--no-save", "minimatch@3.0.5"]
+    assert plan.expected_refuted_exit == 1
+
+
+def test_minimatch_refuted_sha_matches_patched_sentinel():
+    """The plan.expected_refuted_sha256 must equal sha256(SENTINEL_PATCHED + '\\n').
+
+    This ensures the refuted verdict hash is anchored to the fixed version's output.
+    """
+    from verify.templates.npm__minimatch__CVE_2022_3517 import SENTINEL_PATCHED
+    strategy = _strategy()
+    plan = strategy.build_plan(_minimatch_hypothesis("3.0.4"))
+    assert plan.expected_refuted_sha256 == hashlib.sha256((SENTINEL_PATCHED + "\n").encode()).hexdigest()
+
+
+# ---------------------------------------------------------------------------
 # select_strategy('templated') now works (no longer ImportError)
 # ---------------------------------------------------------------------------
 

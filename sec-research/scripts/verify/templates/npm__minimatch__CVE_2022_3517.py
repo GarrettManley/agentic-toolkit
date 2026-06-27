@@ -53,6 +53,14 @@ _EXPECTED_SHA256: str = hashlib.sha256(
     (SENTINEL_CONFIRMED + "\n").encode()
 ).hexdigest()
 
+# Computed offline from SENTINEL_PATCHED + "\n" — the fixed version (3.0.5) emits this.
+_EXPECTED_REFUTED_SHA256: str = hashlib.sha256(
+    (SENTINEL_PATCHED + "\n").encode()
+).hexdigest()
+
+# The fixed version that silences the exploit (advisory: fixed in 3.0.5).
+_FIXED_VERSION: str = "3.0.5"
+
 # ---------------------------------------------------------------------------
 # trigger.js template
 # ---------------------------------------------------------------------------
@@ -136,4 +144,7 @@ def build(hypothesis: dict) -> PocPlan:
             "package.json": '{\n  "name": "poc",\n  "version": "1.0.0",\n  "private": true\n}\n',
         },
         template_id="npm:minimatch:CVE-2022-3517",
+        fixed_install_cmd=["npm", "install", "--no-save", f"minimatch@{_FIXED_VERSION}"],
+        expected_refuted_exit=1,
+        expected_refuted_sha256=_EXPECTED_REFUTED_SHA256,
     )
