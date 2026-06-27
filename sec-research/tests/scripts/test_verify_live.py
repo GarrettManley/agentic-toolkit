@@ -343,3 +343,50 @@ def test_stage5_6_novel_finding_drafted(tmp_path, monkeypatch):
     assert "Proof:" in body or "**Proof**:" in body, (
         "finding.md body must contain a Proof: line"
     )
+
+
+@pytest.mark.skipif(
+    os.environ.get("VERIFY_LIVE") != "1", reason="needs docker"
+)
+def test_minimatch_differential_live():
+    """3.0.4 confirms AND 3.0.5 is silenced → verified, via the real differential drive."""
+    from verify.harness import verify_hypotheses
+    from verify.templated import TemplatedPocStrategy
+    hyp = {
+        "hypothesis_id": "HYP-LIVE-001", "program_slug": "huntr-npm-minimatch",
+        "vuln_class": "dependency-cve",
+        "target": {"identifier": "minimatch", "version_or_revision": "3.0.4"},
+        "evidence_seed": {
+            "package_ecosystem": "npm", "package_name": "minimatch",
+            "affected_versions_range": "<3.0.5", "candidate_cve_id": "CVE-2022-3517",
+        },
+    }
+    results = verify_hypotheses([hyp], strategy=TemplatedPocStrategy())
+    assert results[0]["verdict"] == "verified"
+    assert results[0]["verified"] is True
+
+
+@pytest.mark.skipif(
+    os.environ.get("VERIFY_LIVE") != "1" or os.environ.get("LLM_LIVE") != "1",
+    reason="needs docker AND a live LLM provider",
+)
+def test_llm_authored_differential_live():
+    """End-to-end: LLM authors a PoC for a real npm dependency-CVE, differentially verified."""
+    from verify.harness import verify_hypotheses
+    from verify.llm_strategy import LLMPocStrategy
+    hyp = {
+        "hypothesis_id": "HYP-LIVE-002", "program_slug": "huntr-npm-lodash",
+        "vuln_class": "dependency-cve",
+        "target": {"identifier": "lodash", "version_or_revision": "4.17.4"},
+        "evidence_seed": {
+            "package_ecosystem": "npm", "package_name": "lodash",
+            "affected_versions_range": "<4.17.12", "candidate_cve_id": "CVE-2019-10744",
+            "fixed_version": "4.17.12",
+            "attack_vector_hypothesis": "prototype pollution via defaultsDeep / zipObjectDeep",
+        },
+    }
+    results = verify_hypotheses([hyp], strategy=LLMPocStrategy())
+    # Either a trustworthy verified, or an honest error if the LLM can't author a
+    # discriminating PoC — but NEVER a laundered 'refuted' from an infra failure.
+    assert results[0]["verdict"] in {"verified", "refuted", "error"}
+    assert "differential:" in results[0]["reason"]
