@@ -27,13 +27,21 @@ These are enforced by hooks; violation hard-blocks the offending action.
 
 | Stage | Scope | Status |
 |-------|-------|--------|
-| **1** | **Foundation: hooks, schemas, override mechanism, submission gate, scheduling, scaffolding** | **In progress** |
-| 2 | Program Intake — venue scope fetchers (huntr API, GHSA, IBB) | Pending |
-| 3 | Recon Module — OSS pkg metadata, dep graph, repo clone, prior advisories | Pending |
-| 4 | Hypothesis & Test Harness — LLM hypothesizes; sandboxed deterministic verification | Pending |
-| 5 | Triage & Dedup — NVD + GHSA + OSV + program disclosed/ + venue dupe APIs | Pending |
-| 6 | Report Drafting — class-specific venue-format templates | Pending |
+| **1** | **Foundation: hooks, schemas, override mechanism, submission gate, scheduling, scaffolding** | Done |
+| 2 | Program Intake — venue scope fetchers (huntr API, GHSA, IBB) | Done (hb-kz6) |
+| 3 | Recon Module — OSS pkg metadata, dep graph, repo clone, prior advisories | Done (hb-ahp) |
+| 4 | Hypothesis & Test Harness — LLM hypothesizes; sandboxed deterministic verification | Harness proven live 2026-06-26 (4a hb-wy4 / 4b hb-oec / 4c hb-s2c) |
+| 5 | Triage & Dedup — NVD + GHSA + OSV + program disclosed/ + venue dupe APIs | Wired; live-proven via gated tests |
+| 6 | Report Drafting — class-specific venue-format templates | Wired; live-proven via gated tests |
 | 7 | Submission maturation + Self-improvement maturation | Pending |
+
+> **Stage 4 live-validation note (2026-06-26):** Docker Engine installed in WSL2; the
+> Stage-4a sandbox + Stage-4c verify harness were run against real containers for the first
+> time (`VERIFY_LIVE=1`, 348 passed / 1 skipped). The live run corrected the minimatch
+> CVE-2022-3517 exploit template (it had probed the pre-existing `parse()` 64KB guard, present
+> in *both* 3.0.4 and 3.0.5; now probes `braceExpand()`, the function the fix actually hardened
+> — 3.0.4 → verified, 3.0.5 → refuted). The pipeline is end-to-end **wired and harness-proven**;
+> autonomous discovery of a *novel* finding against a real program remains a separate epic.
 
 None of stages 2-7 modify Stage 1's hook contracts or schemas. Stage 1 is the contract.
 
@@ -50,6 +58,13 @@ None of stages 2-7 modify Stage 1's hook contracts or schemas. Stage 1 is the co
 | `schedule` skill | global plugin | Cloud-side `briefing_ping.py` routine |
 | Spec format | `docs/superpowers/specs/` | This workspace's spec follows IEEE/ISO + Trace ID conventions |
 
-## Known limitation (Stage 4 prerequisite)
+## Known limitation (Stage 4 prerequisite) — RESOLVED 2026-06-26
 
-`fast_orchestrator.py` runs subprocesses directly via `subprocess.run`. **Claude's PreToolUse hooks do NOT intercept its commands.** Stage 1 unaffected (skeleton doesn't actually loop). Stage 4 must add a subprocess-level scope-check wrapper before live testing happens.
+Originally: `fast_orchestrator.py` ran subprocesses directly via `subprocess.run`, which
+Claude's PreToolUse hooks do NOT intercept, so a subprocess-level scope-check wrapper was
+required before live testing. **Resolved:** the live Stage-4 path does not use
+`fast_orchestrator.py` (now referenced only in stale doc strings). Hypothesis generation
+routes LLM egress through `llm/generate.py` → `policy.check_http`; verification runs every
+risky subprocess through the `scripts/sandbox/` docker wrapper (`runner.py`), which gates
+declared install hosts via `check_http` and is fail-closed (no direct-host fallback). All
+subprocess egress/exec in the live pipeline is therefore scope-checked.

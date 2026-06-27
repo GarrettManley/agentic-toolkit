@@ -1,16 +1,19 @@
-"""nightly.py — scheduled nightly entry point (Stage 1 SKELETON).
+"""nightly.py — scheduled nightly entry point.
 
-Pipeline framework:
-    1. Refresh program scopes from venues -> programs/<slug>/        (Stage 2 — STUB)
-    2. Refresh disclosed-reports cache -> programs/<slug>/disclosed/ (Stage 2 — STUB)
-    3. Recon -> runtime/recon/<slug>/                                (Stage 3 — STUB)
-    4. Hypothesis generation via fast_orchestrator.py + playbooks    (Stage 4 — STUB)
-    5. Sandboxed verification of candidates                          (Stage 4 — STUB)
-    6. Draft findings -> findings/<trace>/                           (Stage 6 — WIRED)
-    7. Append to runtime/briefings/<date>.md
+Pipeline:
+    1. Refresh program scopes from venues -> programs/<slug>/        (Stage 2 refresh — STUB; intake is the separate fetch_program.py)
+    2. Refresh disclosed-reports cache -> programs/<slug>/disclosed/ (Stage 2 refresh — STUB)
+    3. Recon -> runtime/recon/<slug>/                                (Stage 3 — WIRED: recon_program.run_recon)
+    4. Hypothesis generation from recon + class playbooks           (Stage 4b — WIRED: llm.generate.generate_hypotheses)
+    5. Sandboxed deterministic verification of candidates           (Stage 4c — WIRED: verify.harness.verify_hypotheses, docker)
+    6. Triage/dedup -> draft findings -> findings/<trace>/          (Stage 5/6 — WIRED: triage.dedup + draft.drafter)
+    7. Append to runtime/briefings/<date>.md                        (always-on)
 
-In Stage 1, stages 1-6 are NO-OPs. Stage 7 still runs to produce a briefing
-proving the pipeline framework + hooks + ledger work end-to-end on fixture data.
+Stages 3-6 are wired to real modules; the verify stage requires a reachable docker
+engine in WSL2 (fail-closed via SandboxError otherwise). Hypothesis generation needs an
+LLM provider (Claude API key or local llama-server). Stage-4 was proven live against real
+containers on 2026-06-26 via the VERIFY_LIVE=1 gated tests; autonomous novel-finding
+discovery against a real loaded program is the remaining work.
 
 Hooks fire normally throughout. Errors on safe side: any hook block ends
 the run with structured exit code; the next morning the researcher sees the
@@ -143,7 +146,7 @@ def stage_briefing(scopes: dict, recon: list, hypotheses: list, verified: list, 
     body = f"""# Morning Briefing — {today}
 
 Generated: {_utc_now_iso()}
-Stage: 1 (foundation) — skeletons only; pipeline body is fixture-data
+Pipeline: Stages 3-6 wired; sandbox+verify harness proven live on real Docker (2026-06-26)
 
 ## Loaded program scopes ({len(scopes)})
 """
@@ -154,14 +157,15 @@ Stage: 1 (foundation) — skeletons only; pipeline body is fixture-data
 
     body += f"""
 ## Pipeline summary
-- Recon items: {len(recon)} (Stage 3 stub)
-- Hypotheses generated: {len(hypotheses)} (Stage 4 stub)
-- Verified candidates: {sum(1 for v in verified if v.get('verified'))} (Stage 4 stub)
+- Recon items: {len(recon)}
+- Hypotheses generated: {len(hypotheses)}
+- Verified candidates: {sum(1 for v in verified if v.get('verified'))}
 - Findings drafted: {len(drafts)} (trace-ids: {', '.join(drafts) if drafts else 'none'})
 
 ## Action items
-- Stage 1 is foundation only; no real findings expected from skeleton runs.
-- To advance: implement Stage 2 (program intake) — see `docs/CHARTER.md` § Roadmap.
+- A run produces findings only when a program scope is loaded AND hypotheses verify novel
+  (known-CVE verdicts dedup to true-negatives by design).
+- Next: autonomous discovery of a novel finding against a real loaded program.
 
 ## Ledger health
 - Total entries: {len(ledger.read_all())}

@@ -6,10 +6,12 @@ Advisory facts (confirmed against osv.dev/GHSA at task-3 implementation time):
   Package: npm minimatch
   Affected: < 3.0.5
   Fixed: 3.0.5
-  Root cause: catastrophic backtracking in braceExpand(); fixed by introducing
-  MAX_PATTERN_LENGTH = 1024*64 (65536) and assertValidPattern(pattern) in 3.0.5
-  (commit a8763f4), which throws TypeError('pattern is too long') for patterns
-  exceeding the length cap.
+  Root cause: catastrophic backtracking in braceExpand(); fixed in 3.0.5
+  (commit a8763f4) by factoring the length check into assertValidPattern(pattern)
+  and calling it from braceExpand() (plus the main entry and the Minimatch ctor).
+  3.0.4 already had a 1024*64 (65536) length guard, but ONLY inside parse() — its
+  braceExpand() is unguarded. Verified against the 3.0.4-vs-3.0.5 minimatch.js
+  source diff, 2026-06-26.
 
 Design decisions:
   - SENTINEL_CONFIRMED is the single source of truth for the success output.
@@ -17,14 +19,16 @@ Design decisions:
     computed once here, never recomputed at runtime.
   - Only two constant sentinels ever reach trigger.js stdout; the TypeError message
     goes to stderr. This keeps expected_trigger_sha256 stable across runs and machines.
-  - Mechanism: feed a >64KB pattern (70000 chars). minimatch 3.0.5 throws via
-    assertValidPattern (length guard) → PATCHED → refuted. minimatch 3.0.4 has no
-    length guard → reaches braceExpand/match silently → VULN_CONFIRMED → verified.
+  - Mechanism: call minimatch.braceExpand() with a >64KB pattern (70000 chars).
+    minimatch 3.0.5's braceExpand calls assertValidPattern → throws → PATCHED →
+    refuted. minimatch 3.0.4's braceExpand is unguarded → returns silently →
+    VULN_CONFIRMED → verified. (Probing minimatch(path, pattern) does NOT split the
+    versions: both hit parse()'s pre-existing 64KB guard and throw.)
   - This is the deterministic v1 signal: confirms the resolved version lacks the 3.0.5
     DoS-mitigation guard. True ReDoS detonation (timing-based) is deferred; this
     guard-presence probe is sufficient to split affected/fixed reliably.
-  - Empirical validation (3.0.4 → VULN_CONFIRMED, 3.0.5 → PATCHED) pending a
-    docker-capable run.
+  - Empirical validation: minimatch@3.0.4 → VULN_CONFIRMED (no-throw), minimatch@3.0.5
+    → PATCHED (throws 'pattern is too long'); confirmed via docker run on 2026-06-26.
 """
 from __future__ import annotations
 
@@ -55,21 +59,26 @@ _EXPECTED_SHA256: str = hashlib.sha256(
 
 _TRIGGER_JS_TEMPLATE: str = """\
 // trigger.js — minimatch CVE-2022-3517 guard-presence probe
-// Feeds a >64KB pattern to minimatch.  The 3.0.5 fix introduced
-// MAX_PATTERN_LENGTH = 1024*64 (65536) and assertValidPattern(pattern) that
-// throws TypeError('pattern is too long') for patterns exceeding the cap.
+// Probes braceExpand() directly with a >64KB pattern. The 3.0.5 fix added a call
+// to assertValidPattern() inside braceExpand() (throws TypeError('pattern is too
+// long') for patterns over MAX_PATTERN_LENGTH = 1024*64). 3.0.4's braceExpand has
+// NO such guard — its only 64KB check lives in parse(), which braceExpand runs
+// before, so braceExpand() returns silently on 3.0.4 but throws on 3.0.5.
+// (Probing minimatch(path, pattern) instead would NOT split the versions: both
+// reach parse()'s pre-existing 64KB guard and throw — verified against the 3.0.4
+// vs 3.0.5 source diff, 2026-06-26.)
 //
-// minimatch 3.0.4 — no length guard → reaches match silently → VULN_CONFIRMED (exit 0)
-// minimatch 3.0.5 — length guard present → throws → PATCHED (exit 1)
+// minimatch 3.0.4 — braceExpand unguarded → returns silently → VULN_CONFIRMED (exit 0)
+// minimatch 3.0.5 — braceExpand guarded   → throws           → PATCHED (exit 1)
 //
 // Only the two constant sentinels reach stdout; the exception message goes to stderr.
 
 "use strict";
 const minimatch = require("minimatch");
-const OVERLONG = "a".repeat(70000); // > MAX_PATTERN_LENGTH (65536) introduced by the 3.0.5 fix
+const OVERLONG = "a".repeat(70000); // > MAX_PATTERN_LENGTH (65536)
 let threw = false;
 try {{
-  minimatch("probe-target", OVERLONG);
+  minimatch.braceExpand(OVERLONG);
 }} catch (e) {{
   threw = true;
   process.stderr.write("length guard present (patched): " + e.message + "\\n");

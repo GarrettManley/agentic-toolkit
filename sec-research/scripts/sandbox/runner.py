@@ -27,6 +27,14 @@ MEM_LIMIT = "512m"
 CPU_LIMIT = "1.0"
 PIDS_LIMIT = "256"
 
+# Drop root for the execute (trigger) phase: the untrusted PoC runs as an
+# unprivileged uid:gid. The install phase stays root so it can write node_modules
+# into /work (the install→trigger channel); the trigger only reads /work + runs the
+# interpreter, and npm/pip/etc. write world-readable trees, so a non-root reader is
+# fine. Numeric uid keeps this image-agnostic. Per-phase --read-only / install-script
+# neutralization for pip/cargo/rubygems is deferred to hb-nxz.
+EXEC_USER = "1000:1000"
+
 
 class SandboxError(RuntimeError):
     """Docker/runtime failure: daemon unreachable, missing image, bad invocation, timeout-kill."""
@@ -60,13 +68,15 @@ def _safe_mount(host_path) -> str:
     return wsl
 
 
-def _build_argv(image, cmd, *, network, workdir_host, source_host, extra_env) -> list[str]:
+def _build_argv(image, cmd, *, network, workdir_host, source_host, extra_env, user=None) -> list[str]:
     argv = ["wsl", "-e", "docker", "run", "--rm",
             "--memory", MEM_LIMIT, "--cpus", CPU_LIMIT, "--pids-limit", PIDS_LIMIT,
             "--cap-drop", "ALL", "--security-opt", "no-new-privileges",
-            "--network", network,
-            *extra_env,
-            "-v", f"{_safe_mount(workdir_host)}:/work", "-w", "/work"]
+            "--network", network]
+    if user is not None:
+        argv += ["--user", user]
+    argv += [*extra_env,
+             "-v", f"{_safe_mount(workdir_host)}:/work", "-w", "/work"]
     if source_host is not None:
         argv += ["-v", f"{_safe_mount(source_host)}:/src:ro"]
     argv.append(image)
@@ -118,8 +128,9 @@ def sandbox_run(cmd, *, ecosystem, phase="execute", workdir_host, timeout,
         network = "none"
         extra_env = []
 
+    user = EXEC_USER if phase == "execute" else None
     argv = _build_argv(image, cmd, network=network, workdir_host=workdir_host,
-                       source_host=source_host, extra_env=extra_env)
+                       source_host=source_host, extra_env=extra_env, user=user)
 
     start = clock()
     timed_out = False
