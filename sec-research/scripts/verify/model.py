@@ -164,6 +164,13 @@ def derive_differential_verdict(
     Returns (verdict, reason_code). Never laundered: output matching neither the
     verified nor the refuted signature is ERROR, not REFUTED (hb-be9).
     """
+    # Degenerate plan: identical verified and refuted signatures cannot discriminate
+    # vulnerable from patched. Never grant verified — fail closed.
+    if (plan.expected_trigger_exit, plan.expected_trigger_sha256) == (
+        plan.expected_refuted_exit, plan.expected_refuted_sha256
+    ):
+        return VERDICT_ERROR, "degenerate-signature"
+
     if affected.timed_out or fixed.timed_out:
         return VERDICT_ERROR, "timeout"
 

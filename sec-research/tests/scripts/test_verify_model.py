@@ -256,3 +256,22 @@ def test_differential_timeout_is_error():
     affected = _trigger(timed_out=True)
     fixed = _trigger(exit_code=1, sha="patched")
     assert derive_differential_verdict(affected, fixed, plan) == (VERDICT_ERROR, "timeout")
+
+
+def test_differential_degenerate_signatures_never_verified():
+    """C1: if verified and refuted signatures are identical, the oracle must fail closed
+    (VERDICT_ERROR / 'degenerate-signature') — never grant verified."""
+    from verify.model import derive_differential_verdict, VERDICT_ERROR
+    degenerate_plan = PocPlan(
+        ecosystem="npm", install_cmd=["npm", "install", "x@1"], install_hosts=["r"],
+        trigger_cmd=["node", "t.js"],
+        expected_trigger_exit=0, expected_trigger_sha256="same_sentinel",
+        files={"t.js": "x"}, template_id="t",
+        fixed_install_cmd=["npm", "install", "x@2"],
+        expected_refuted_exit=0, expected_refuted_sha256="same_sentinel",
+    )
+    # Even if the fixed run "matches" the refuted signature (because it IS the verified one),
+    # the oracle must refuse to grant verified.
+    affected = _trigger(exit_code=0, sha="same_sentinel")
+    fixed = _trigger(exit_code=0, sha="same_sentinel")
+    assert derive_differential_verdict(affected, fixed, degenerate_plan) == (VERDICT_ERROR, "degenerate-signature")

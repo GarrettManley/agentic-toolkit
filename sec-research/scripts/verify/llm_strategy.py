@@ -84,6 +84,8 @@ class LLMPocStrategy:
         cve = seed["candidate_cve_id"]
         confirmed = authored["sentinel_confirmed"]
         patched = authored["sentinel_patched"]
+        if confirmed == patched and int(authored["expected_confirmed_exit"]) == int(authored["expected_patched_exit"]):
+            raise SeedIncomplete(["distinct_sentinels"])
         return PocPlan(
             ecosystem="npm",
             install_cmd=["npm", "install", "--no-save", f"{pkg}@{affected}"],

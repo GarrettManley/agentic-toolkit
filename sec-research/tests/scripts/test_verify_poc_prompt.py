@@ -40,3 +40,10 @@ def test_prompt_includes_versions_and_cve_in_data_fence():
 def test_repair_context_is_appended():
     system, messages = build_poc_prompt(_hyp(), repair_context={"issue": "no-discrimination"})
     assert "no-discrimination" in messages[0]["content"]
+
+
+def test_system_prompt_forbids_version_sniffing():
+    """R1: SYSTEM prompt must contain the rule forbidding version/metadata sniffing."""
+    system, _ = build_poc_prompt(_hyp())
+    assert "version check is not a proof" in system
+    assert "metadata" in system.lower()

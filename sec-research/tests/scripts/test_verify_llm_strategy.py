@@ -122,3 +122,13 @@ def test_build_plan_passes_repair_context_into_prompt():
     client = _FakeClient(_payload())
     LLMPocStrategy(client=client).build_plan(_hyp(), repair_context={"issue": "no-discrimination"})
     assert "no-discrimination" in client.calls[-1]["messages"][0]["content"]
+
+
+def test_build_plan_raises_seed_incomplete_for_degenerate_sentinels():
+    """C1 (Fix 2): a payload where sentinel_patched == sentinel_confirmed AND exit codes
+    match must be rejected early by build_plan so the degenerate PoC never runs the sandbox."""
+    degenerate_payload = _payload()
+    degenerate_payload["sentinel_patched"] = degenerate_payload["sentinel_confirmed"]  # "VC"
+    degenerate_payload["expected_patched_exit"] = degenerate_payload["expected_confirmed_exit"]  # 0
+    with pytest.raises(SeedIncomplete):
+        LLMPocStrategy(client=_FakeClient(degenerate_payload)).build_plan(_hyp())
