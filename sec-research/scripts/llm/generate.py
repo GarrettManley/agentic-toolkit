@@ -43,6 +43,20 @@ def _advisory_fixed_version(item: dict, cve: str | None) -> str | None:
     return None
 
 
+def _resolve_fixed_version(item: dict, seed: dict) -> None:
+    """Enforce server-controlled trust boundary for evidence_seed.fixed_version.
+
+    Always takes fixed_version from the trusted recon advisory, overwriting any
+    LLM-supplied value.  If no advisory match exists, drops any LLM-supplied
+    fixed_version so it can never be used as a trust boundary for the
+    differential fixed-version install."""
+    fixed = _advisory_fixed_version(item, seed.get("candidate_cve_id"))
+    if fixed:
+        seed["fixed_version"] = fixed       # trusted recon advisory value (overwrite)
+    else:
+        seed.pop("fixed_version", None)     # no trusted source -> never trust an LLM-supplied pin
+
+
 def generate_hypotheses(scopes: dict, recon: list, *, client: LLMClient | None = None,
                         provider: str | None = None, playbooks_root: Path | None = None,
                         hyp_root: Path | None = None, now: datetime | None = None) -> list[dict]:
@@ -92,10 +106,7 @@ def generate_hypotheses(scopes: dict, recon: list, *, client: LLMClient | None =
                 ledger.append_event("hypothesis-invalid", slug=slug, errors=errors[:3])
                 continue
             seed = h.setdefault("evidence_seed", {})
-            if not (seed.get("fixed_version") or "").strip():
-                fixed = _advisory_fixed_version(item, seed.get("candidate_cve_id"))
-                if fixed:
-                    seed["fixed_version"] = fixed
+            _resolve_fixed_version(item, seed)
             tgt = h["target"]
             in_scope, prog = is_in_scope(tgt["asset_type"], tgt["identifier"])
             if not in_scope or prog != slug:
