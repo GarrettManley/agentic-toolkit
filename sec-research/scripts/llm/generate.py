@@ -28,6 +28,21 @@ def _iso(dt: datetime) -> str:
     return dt.strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
+def _advisory_fixed_version(item: dict, cve: str | None) -> str | None:
+    """Return the fixed version from the recon item's advisory matching ``cve``.
+
+    Recon (scripts/recon/advisories.py) extracts ``fixed`` from OSV events into
+    each known_advisories entry. Used to server-stamp evidence_seed.fixed_version
+    so the differential oracle's fixed-version target is deterministic, not
+    LLM-authored."""
+    if not cve:
+        return None
+    for adv in item.get("known_advisories", []) or []:
+        if adv.get("cve") == cve and adv.get("fixed"):
+            return adv["fixed"]
+    return None
+
+
 def generate_hypotheses(scopes: dict, recon: list, *, client: LLMClient | None = None,
                         provider: str | None = None, playbooks_root: Path | None = None,
                         hyp_root: Path | None = None, now: datetime | None = None) -> list[dict]:
@@ -76,6 +91,11 @@ def generate_hypotheses(scopes: dict, recon: list, *, client: LLMClient | None =
             if not ok:
                 ledger.append_event("hypothesis-invalid", slug=slug, errors=errors[:3])
                 continue
+            seed = h.setdefault("evidence_seed", {})
+            if not (seed.get("fixed_version") or "").strip():
+                fixed = _advisory_fixed_version(item, seed.get("candidate_cve_id"))
+                if fixed:
+                    seed["fixed_version"] = fixed
             tgt = h["target"]
             in_scope, prog = is_in_scope(tgt["asset_type"], tgt["identifier"])
             if not in_scope or prog != slug:
