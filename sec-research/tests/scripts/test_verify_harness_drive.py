@@ -247,3 +247,39 @@ def test_evidence_capture_shape_on_success(tmp_path, monkeypatch):
     expected_sha = hashlib.sha256(sentinel.encode("utf-8")).hexdigest()
     assert trigger_ev.stdout_sha256 == expected_sha
     assert isinstance(trigger_ev.duration_s, float)
+
+
+# ---------------------------------------------------------------------------
+# _drive_differential — affected + fixed versions in distinct workdirs
+# ---------------------------------------------------------------------------
+
+def _make_diff_plan():
+    from dataclasses import replace
+    base = _make_plan()
+    return replace(
+        base,
+        fixed_install_cmd=["npm", "install", "minimatch@3.0.5"],
+        expected_refuted_exit=1,
+        expected_refuted_sha256="0" * 64,
+    )
+
+
+def test_drive_differential_runs_four_phases_distinct_workdirs(tmp_path, monkeypatch):
+    import verify.harness as h
+    import sandbox.runner as r
+    monkeypatch.setattr(r, "check_http", lambda url, *, bootstrap_hosts: None)
+
+    calls = []
+    plan = _make_diff_plan()
+    aff_i, aff_t, fix_i, fix_t = h._drive_differential(
+        plan, "hyp-d", "slug-d", runner=_capture_runner(calls), verdict_root=tmp_path,
+    )
+    assert len(calls) == 4  # affected install+trigger, fixed install+trigger
+    # affected uses install_cmd; fixed uses fixed_install_cmd
+    assert "minimatch@3.0.4" in " ".join(calls[0][0])
+    assert "minimatch@3.0.5" in " ".join(calls[2][0])
+    # distinct workdirs so node_modules can't collide
+    aff_wd = tmp_path / "slug-d" / "work" / "hyp-d-affected"
+    fix_wd = tmp_path / "slug-d" / "work" / "hyp-d-fixed"
+    assert aff_wd.exists() and fix_wd.exists()
+    assert aff_i.phase == "install" and fix_t.phase == "trigger"

@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import json
 import subprocess
-from dataclasses import asdict
+from dataclasses import asdict, replace
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -95,6 +95,7 @@ def _drive_phased(
     *,
     runner=subprocess.run,
     verdict_root: Path | None = None,
+    work_suffix: str = "",
 ) -> tuple[EvidenceCapture, EvidenceCapture]:
     """Drive one PocPlan through two sandbox phases and return evidence.
 
@@ -132,7 +133,7 @@ def _drive_phased(
         or ScopeViolation. Both exception types propagate to the caller.
     """
     root = verdict_root or RUNTIME_VERDICTS_DIR
-    W: Path = root / slug / "work" / hypothesis_id
+    W: Path = root / slug / "work" / f"{hypothesis_id}{work_suffix}"
     W.mkdir(parents=True, exist_ok=True)
 
     # Materialize plan files into the workdir before install.
@@ -186,6 +187,38 @@ def _drive_phased(
     )
 
     return install_ev, trigger_ev
+
+
+# ---------------------------------------------------------------------------
+# _drive_differential — run the plan against both affected and fixed versions
+# ---------------------------------------------------------------------------
+
+def _drive_differential(
+    plan: PocPlan,
+    hypothesis_id: str,
+    slug: str,
+    *,
+    runner=subprocess.run,
+    verdict_root: Path | None = None,
+) -> tuple[EvidenceCapture, EvidenceCapture, EvidenceCapture, EvidenceCapture]:
+    """Drive one differential PocPlan against BOTH the affected and fixed versions.
+
+    The affected run uses plan.install_cmd; the fixed run uses plan.fixed_install_cmd
+    (same files, same trigger). Distinct workdir suffixes keep node_modules isolated.
+
+    Returns (aff_install, aff_trigger, fix_install, fix_trigger).
+    Raises SandboxError / ScopeViolation exactly as _drive_phased does.
+    """
+    aff_install, aff_trigger = _drive_phased(
+        plan, hypothesis_id, slug, runner=runner, verdict_root=verdict_root,
+        work_suffix="-affected",
+    )
+    fixed_plan = replace(plan, install_cmd=plan.fixed_install_cmd)
+    fix_install, fix_trigger = _drive_phased(
+        fixed_plan, hypothesis_id, slug, runner=runner, verdict_root=verdict_root,
+        work_suffix="-fixed",
+    )
+    return aff_install, aff_trigger, fix_install, fix_trigger
 
 
 # ---------------------------------------------------------------------------
