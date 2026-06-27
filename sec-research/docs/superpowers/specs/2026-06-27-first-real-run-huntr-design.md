@@ -1,7 +1,8 @@
 # Design: First Real End-to-End Run (sec-research × huntr.com)
 
 **Trace ID**: trace-20260627-001 (integration/validation epic, not a new stage)
-**Status**: Draft
+**Status**: DEFERRED — blocked on a prerequisite. Adversarial review (`*.review.md`) found the run cannot produce a genuine outcome until LLM PoC authoring exists; that prerequisite is now `2026-06-27-llm-poc-authoring-design.md` (tracker hb-ane). Revisit this spec (and re-review it against the findings file) once hb-ane lands.
+**Status (original)**: Draft
 **Charter**: `docs/CHARTER.md` (§Stages — exercises the full Stage 1–6 pipeline against real data for the first time)
 **Predecessors**: Stages 1–6 wired and live-proven on the minimatch known-CVE fixture (Stage 4 Docker activation 2026-06-26, trackers hb-ctr + hb-s2c)
 **Tracker**: hb-322 (depends on / blocked by hb-be9)
