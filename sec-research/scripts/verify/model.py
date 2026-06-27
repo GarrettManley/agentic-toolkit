@@ -141,3 +141,43 @@ def derive_verdict(trigger: EvidenceCapture, plan: PocPlan) -> str:
         return VERDICT_VERIFIED
 
     return VERDICT_REFUTED
+
+
+# ---------------------------------------------------------------------------
+# derive_differential_verdict — the trust oracle
+# ---------------------------------------------------------------------------
+
+
+def _matches(ev: EvidenceCapture, exit_code: int, sha: str) -> bool:
+    return ev.exit_code == exit_code and ev.stdout_sha256 == sha
+
+
+def derive_differential_verdict(
+    affected: EvidenceCapture, fixed: EvidenceCapture, plan: PocPlan
+) -> tuple[str, str]:
+    """Differential trust oracle. Pure function — no I/O.
+
+    The SAME authored PoC is run against the affected and fixed versions. A real
+    exploit fires on the affected version (verified signature) and is silenced on
+    the fixed version (refuted signature). Any other shape is untrusted.
+
+    Returns (verdict, reason_code). Never laundered: output matching neither the
+    verified nor the refuted signature is ERROR, not REFUTED (hb-be9).
+    """
+    if affected.timed_out or fixed.timed_out:
+        return VERDICT_ERROR, "timeout"
+
+    aff_confirmed = _matches(affected, plan.expected_trigger_exit, plan.expected_trigger_sha256)
+    aff_patched = _matches(affected, plan.expected_refuted_exit, plan.expected_refuted_sha256)
+    fix_confirmed = _matches(fixed, plan.expected_trigger_exit, plan.expected_trigger_sha256)
+    fix_patched = _matches(fixed, plan.expected_refuted_exit, plan.expected_refuted_sha256)
+
+    if aff_confirmed:
+        if fix_patched:
+            return VERDICT_VERIFIED, "discriminates"
+        if fix_confirmed:
+            return VERDICT_ERROR, "no-discrimination"
+        return VERDICT_ERROR, "fixed-indeterminate"
+    if aff_patched:
+        return VERDICT_REFUTED, "affected-not-vulnerable"
+    return VERDICT_ERROR, "affected-indeterminate"

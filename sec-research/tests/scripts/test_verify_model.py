@@ -192,3 +192,67 @@ def test_derive_verdict_error_timed_out_overrides_match():
     result = derive_verdict(trigger, plan)
     assert result == VERDICT_ERROR
     assert result != VERDICT_VERIFIED
+
+
+# ---------------------------------------------------------------------------
+# Differential verdict helpers and tests
+# ---------------------------------------------------------------------------
+
+
+def _diff_plan():
+    return PocPlan(
+        ecosystem="npm", install_cmd=["npm", "install", "x@1"], install_hosts=["r"],
+        trigger_cmd=["node", "t.js"], expected_trigger_exit=0, expected_trigger_sha256="confirmed",
+        files={"t.js": "x"}, template_id="t",
+        fixed_install_cmd=["npm", "install", "x@2"],
+        expected_refuted_exit=1, expected_refuted_sha256="patched",
+    )
+
+
+def test_differential_verified():
+    from verify.model import derive_differential_verdict, VERDICT_VERIFIED
+    plan = _diff_plan()
+    affected = _trigger(exit_code=0, sha="confirmed")
+    fixed = _trigger(exit_code=1, sha="patched")
+    assert derive_differential_verdict(affected, fixed, plan) == (VERDICT_VERIFIED, "discriminates")
+
+
+def test_differential_no_discrimination_is_error():
+    from verify.model import derive_differential_verdict, VERDICT_ERROR
+    plan = _diff_plan()
+    affected = _trigger(exit_code=0, sha="confirmed")
+    fixed = _trigger(exit_code=0, sha="confirmed")  # fired on patched too -> slop
+    assert derive_differential_verdict(affected, fixed, plan) == (VERDICT_ERROR, "no-discrimination")
+
+
+def test_differential_affected_refuted():
+    from verify.model import derive_differential_verdict, VERDICT_REFUTED
+    plan = _diff_plan()
+    affected = _trigger(exit_code=1, sha="patched")  # did NOT fire on vulnerable code
+    fixed = _trigger(exit_code=1, sha="patched")
+    assert derive_differential_verdict(affected, fixed, plan) == (VERDICT_REFUTED, "affected-not-vulnerable")
+
+
+def test_differential_affected_indeterminate_is_error_not_refuted():
+    """hb-be9: output matching NEITHER signature must NOT be laundered to refuted."""
+    from verify.model import derive_differential_verdict, VERDICT_ERROR
+    plan = _diff_plan()
+    affected = _trigger(exit_code=137, sha="oom-garbage")  # infra failure
+    fixed = _trigger(exit_code=1, sha="patched")
+    assert derive_differential_verdict(affected, fixed, plan) == (VERDICT_ERROR, "affected-indeterminate")
+
+
+def test_differential_fixed_indeterminate_is_error():
+    from verify.model import derive_differential_verdict, VERDICT_ERROR
+    plan = _diff_plan()
+    affected = _trigger(exit_code=0, sha="confirmed")
+    fixed = _trigger(exit_code=99, sha="weird")  # matches neither
+    assert derive_differential_verdict(affected, fixed, plan) == (VERDICT_ERROR, "fixed-indeterminate")
+
+
+def test_differential_timeout_is_error():
+    from verify.model import derive_differential_verdict, VERDICT_ERROR
+    plan = _diff_plan()
+    affected = _trigger(timed_out=True)
+    fixed = _trigger(exit_code=1, sha="patched")
+    assert derive_differential_verdict(affected, fixed, plan) == (VERDICT_ERROR, "timeout")
