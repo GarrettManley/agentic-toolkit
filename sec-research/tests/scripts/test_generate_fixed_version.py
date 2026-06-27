@@ -1,6 +1,28 @@
 from __future__ import annotations
 
-from llm.generate import _advisory_fixed_version, _resolve_fixed_version
+from llm.generate import _advisory_fixed_version, _normalize_seed_keys, _resolve_fixed_version
+
+
+def test_normalize_seed_maps_finding_vocab_to_hypothesis_keys():
+    """Models often emit finding-schema field names (per the playbook's evidence
+    template); normalize them onto the canonical hypothesis evidence_seed keys so
+    _resolve_fixed_version can find the CVE. Caught live: gemma/qwen emitted
+    cve_id_proposed_or_assigned, leaving candidate_cve_id absent -> un-verifiable."""
+    seed = {"package_name": "minimatch",
+            "cve_id_proposed_or_assigned": "CVE-2026-41907",
+            "attack_vector": "RCE via untrusted input"}
+    _normalize_seed_keys(seed)
+    assert seed["candidate_cve_id"] == "CVE-2026-41907"
+    assert seed["attack_vector_hypothesis"] == "RCE via untrusted input"
+    assert "cve_id_proposed_or_assigned" not in seed
+    assert "attack_vector" not in seed
+
+
+def test_normalize_seed_does_not_clobber_canonical():
+    """If the model already used the canonical key, the alias must not overwrite it."""
+    seed = {"candidate_cve_id": "CVE-1", "cve_id_proposed_or_assigned": "CVE-2"}
+    _normalize_seed_keys(seed)
+    assert seed["candidate_cve_id"] == "CVE-1"
 
 
 def test_advisory_fixed_version_matches_cve():

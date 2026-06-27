@@ -45,6 +45,12 @@ class ClaudeApiClient:
         return {"x-api-key": self._api_key or _resolve_key(),
                 "anthropic-version": ANTHROPIC_VERSION}
 
+    def preflight(self) -> None:
+        """Token-free readiness check: confirm an API key is resolvable. Raises
+        LLMConfigError if no key is configured (env or keyring)."""
+        if not self._api_key:
+            _resolve_key()  # raises LLMConfigError if missing
+
     def build_payload(self, *, system: str, messages: list[dict], schema: dict,
                       max_tokens: int, temperature: float) -> dict:
         return {

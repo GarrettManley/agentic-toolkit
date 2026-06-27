@@ -39,7 +39,15 @@
     "signals_matched": {"type": "array", "minItems": 1, "items": {"type": "string"}},
     "evidence_seed": {
       "type": "object",
-      "description": "Best-effort seed of the class evidence template populated by the model at generation time. For dependency-cve hypotheses the seed should include: package_ecosystem, package_name, affected_versions_range, candidate_cve_id, attack_vector_hypothesis. This object is intentionally unconstrained so grammar-conversion for llama-server remains stable; Stage 4c (verification) is responsible for validating completeness before a finding is drafted."
+      "description": "Best-effort seed of the class evidence template populated by the model at generation time. For dependency-cve hypotheses the seed should include: package_ecosystem, package_name, affected_versions_range, candidate_cve_id, attack_vector_hypothesis. Properties are declared (all OPTIONAL) so llama-server's strict json_schema grammar can populate them: an unconstrained object was emitted as {} under grammar constraints, leaving the local path unable to seed candidate_cve_id. Fields remain optional so a novel-vuln hypothesis can legitimately omit candidate_cve_id (never invent one); additionalProperties stays open for the server-stamped fixed_version. Stage 4c (verification) validates completeness before a finding is drafted.",
+      "properties": {
+        "package_ecosystem": {"type": "string"},
+        "package_name": {"type": "string"},
+        "affected_versions_range": {"type": "string"},
+        "candidate_cve_id": {"type": "string"},
+        "attack_vector_hypothesis": {"type": "string"}
+      },
+      "additionalProperties": true
     },
     "advisory_refs": {"type": "array", "items": {"type": "string"}},
     "dedup_hint": {"type": "string"},

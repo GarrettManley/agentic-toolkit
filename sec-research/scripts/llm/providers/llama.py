@@ -21,6 +21,21 @@ class LlamaServerClient:
     def __init__(self, *, model: str | None = None) -> None:
         self.model = model or DEFAULT_MODEL
 
+    def preflight(self) -> None:
+        """Confirm the local llama-server is reachable via its /health endpoint.
+        Raises LLMUnavailable if not. Loopback only — no token cost."""
+        import urllib.request
+
+        health = ENDPOINT.rsplit("/v1/", 1)[0] + "/health"
+        try:
+            with urllib.request.urlopen(health, timeout=5) as r:  # noqa: S310 (loopback)
+                if r.status != 200:
+                    raise LLMUnavailable(f"llama-server /health returned {r.status}")
+        except LLMUnavailable:
+            raise
+        except Exception as e:  # URLError, socket timeout, etc.
+            raise LLMUnavailable(f"llama-server unreachable at {health}: {e}") from e
+
     def build_payload(self, *, system: str, messages: list[dict], schema: dict,
                       max_tokens: int, temperature: float) -> dict:
         return {

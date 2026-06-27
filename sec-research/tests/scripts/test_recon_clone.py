@@ -27,6 +27,33 @@ def test_clone_gates_then_runs_and_captures_sha(tmp_path, monkeypatch):
     assert calls[0][:2] == ["git", "clone"]
 
 
+def test_clone_removes_stale_dest_before_cloning(tmp_path, monkeypatch):
+    """Regression (caught in first live GHSA run): a pre-existing clone dir must be
+    cleared before `git clone`, else git refuses the non-empty path and recon records a
+    false-empty result."""
+    from recon import clone as clonemod
+    monkeypatch.setattr(clonemod, "gate", lambda url: None)
+    # Pre-seed a stale clone with a leftover file.
+    stale = tmp_path / "acme-org-acme"
+    stale.mkdir(parents=True)
+    (stale / "leftover.txt").write_text("stale", encoding="utf-8")
+
+    seen_empty = {}
+    def runner(cmd, **kw):
+        if cmd[:2] == ["git", "clone"]:
+            dest = Path(cmd[-1])
+            seen_empty["existed_at_clone"] = dest.exists()  # should be False — cleaned first
+            dest.mkdir(parents=True, exist_ok=True)
+            return _FakeProc()
+        if "rev-parse" in cmd:
+            return _FakeProc(stdout="abc123\n")
+        return _FakeProc()
+    r = clonemod.clone_repo("github.com/acme-org/acme", tmp_path, runner=runner)
+    assert r.cloned is True
+    assert seen_empty["existed_at_clone"] is False
+    assert not (Path(r.clone_path) / "leftover.txt").exists()
+
+
 def test_clone_failure_sets_skipped_reason(tmp_path, monkeypatch):
     from recon import clone as clonemod
     monkeypatch.setattr(clonemod, "gate", lambda url: None)

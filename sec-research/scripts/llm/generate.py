@@ -43,6 +43,24 @@ def _advisory_fixed_version(item: dict, cve: str | None) -> str | None:
     return None
 
 
+# Models frequently emit evidence_seed using the *finding* vocabulary
+# (schema/evidence.schema.json field names) that the class playbook references, rather
+# than the *hypothesis* evidence_seed keys the pipeline reads. LLM output is a system
+# boundary, so normalize the known aliases onto the canonical keys once, here.
+_SEED_KEY_ALIASES = {
+    "cve_id_proposed_or_assigned": "candidate_cve_id",
+    "attack_vector": "attack_vector_hypothesis",
+}
+
+
+def _normalize_seed_keys(seed: dict) -> None:
+    """Map finding-vocabulary aliases onto canonical hypothesis evidence_seed keys
+    (only when the canonical key isn't already populated)."""
+    for alias, canonical in _SEED_KEY_ALIASES.items():
+        if alias in seed and not seed.get(canonical):
+            seed[canonical] = seed.pop(alias)
+
+
 def _resolve_fixed_version(item: dict, seed: dict) -> None:
     """Enforce server-controlled trust boundary for evidence_seed.fixed_version.
 
@@ -101,6 +119,7 @@ def generate_hypotheses(scopes: dict, recon: list, *, client: LLMClient | None =
             h["recon_ref"] = {"slug": slug,
                               "asset_identifier": item.get("asset", {}).get("identifier", ""),
                               "recon_ts": item.get("recon_ts", "")}
+            _normalize_seed_keys(h.setdefault("evidence_seed", {}))
             ok, errors = validate_hypothesis(h)
             if not ok:
                 ledger.append_event("hypothesis-invalid", slug=slug, errors=errors[:3])

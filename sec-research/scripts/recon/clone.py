@@ -3,6 +3,9 @@ subprocess (the subprocess-scope-gap mitigation). Only in-scope repos are cloned
 dependency source is not. Clone/size failures set skipped_reason and recon continues."""
 from __future__ import annotations
 
+import os
+import shutil
+import stat
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
@@ -10,6 +13,18 @@ from pathlib import Path
 from recon._http import gate
 
 CLONE_SIZE_CAP_MB = 500
+
+
+def _force_rmtree(path: Path) -> None:
+    """Remove a directory tree, clearing read-only bits (Windows git packfiles are
+    read-only, so a plain rmtree fails on them)."""
+    def _onexc(func, p, _exc):
+        try:
+            os.chmod(p, stat.S_IWRITE)
+            func(p)
+        except OSError:
+            pass
+    shutil.rmtree(path, onexc=_onexc)
 
 
 @dataclass(frozen=True)
@@ -42,6 +57,10 @@ def clone_repo(repo_identifier: str, dest_root: Path, *,
     gate(url)  # raises ScopeViolation if blocked — propagates uncaught
 
     dest_root.mkdir(parents=True, exist_ok=True)
+    # Idempotent re-runs: a stale clone (e.g. from a prior interrupted run) would make
+    # `git clone` refuse a non-empty destination and silently record a false-empty recon.
+    if dest.exists():
+        _force_rmtree(dest)
     proc = runner(["git", "clone", "--depth", "1", url, str(dest)],
                   capture_output=True, text=True)
     if getattr(proc, "returncode", 1) != 0:

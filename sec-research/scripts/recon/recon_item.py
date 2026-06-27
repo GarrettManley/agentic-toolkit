@@ -16,8 +16,18 @@ _SCHEMA_PATH = Path(__file__).resolve().parents[2] / "schema" / "recon_item.sche
 _SCHEMA = json.loads(_SCHEMA_PATH.read_text(encoding="utf-8"))
 
 
+def _safe_asset_filename(asset_id: str) -> str:
+    """Flatten an asset identifier into a single filesystem-safe filename stem.
+
+    Repo/ecosystem asset ids contain path separators (e.g. a GHSA repo asset is
+    ``github.com/isaacs/minimatch``); embedding them raw produced unintended nested
+    directories that were never created. Flatten ``/``, ``\\`` and ``:`` so the closure
+    jsonl is always a single file under dep-graph/."""
+    return asset_id.replace("\\", "/").replace("/", "__").replace(":", "_")
+
+
 def _closure_path(slug: str, asset_id: str) -> str:
-    return f"runtime/recon/{slug}/dep-graph/{asset_id}.closure.jsonl"
+    return f"runtime/recon/{slug}/dep-graph/{_safe_asset_filename(asset_id)}.closure.jsonl"
 
 
 def build_recon_item(slug, asset, metadata, closure, clone_result, advisories,
@@ -68,7 +78,7 @@ def write_program_recon(slug, items, closures, recon_root: Path) -> Path:
         if not closure.deps:
             continue
         lines = "\n".join(json.dumps(asdict(d)) for d in closure.deps)
-        (prog_dir / "dep-graph" / f"{asset_id}.closure.jsonl").write_text(
+        (prog_dir / "dep-graph" / f"{_safe_asset_filename(asset_id)}.closure.jsonl").write_text(
             lines + "\n", encoding="utf-8")
     recon_json = prog_dir / "recon.json"
     recon_json.write_text(json.dumps(items, indent=2), encoding="utf-8")

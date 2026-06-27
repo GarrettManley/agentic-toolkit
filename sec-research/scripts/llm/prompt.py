@@ -22,8 +22,11 @@ SYSTEM = (
     "host, or URL.\n"
     "- Every hypothesis must list the playbook signals it matched in signals_matched; "
     "if no positive signal genuinely matches, emit no hypothesis.\n"
-    "- Prefer zero hypotheses over a speculative one. Do not invent CVE ids, versions, "
-    "or file paths; leave a field absent rather than guessing.\n"
+    "- Prefer zero hypotheses over a speculative one. Do not INVENT CVE ids, versions, or "
+    "file paths. But COPYING a value already present in the recon DATA is required, not "
+    "guessing: when a hypothesis confirms a known advisory, you MUST set "
+    "evidence_seed.candidate_cve_id to the exact `cve` string of the matching "
+    "known_advisories entry. Leave a field absent only when no value for it exists in the DATA.\n"
     "- Output strictly conforms to the provided schema."
 )
 
@@ -50,6 +53,10 @@ def build_prompt(recon_item: dict, playbooks: list[Playbook]) -> tuple[str, list
         "using only techniques whose positive signals genuinely match.\n\n"
         f"{_fence('RECON ITEM (DATA)', recon_json)}\n\n"
         f"{_fence('CLASS PLAYBOOKS (DATA)', playbook_text)}\n\n"
+        "For a known-advisory-confirmation hypothesis: choose each known_advisories entry "
+        "whose affected_range includes the recon item's resolved_version, and set that "
+        "hypothesis's evidence_seed.candidate_cve_id to the entry's exact `cve` value "
+        "(copied verbatim from the DATA above). Emit one hypothesis per such advisory.\n\n"
         "Return an object {\"hypotheses\": [...]} conforming to the schema. "
         "Use program_slug = the recon item's slug. Emit [] if nothing matches."
     )

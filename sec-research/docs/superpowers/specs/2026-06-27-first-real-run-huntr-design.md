@@ -1,8 +1,8 @@
 # Design: First Real End-to-End Run (sec-research × huntr.com)
 
 **Trace ID**: trace-20260627-001 (integration/validation epic, not a new stage)
-**Status**: DEFERRED — blocked on a prerequisite. Adversarial review (`*.review.md`) found the run cannot produce a genuine outcome until LLM PoC authoring exists; that prerequisite is now `2026-06-27-llm-poc-authoring-design.md` (tracker hb-ane). Revisit this spec (and re-review it against the findings file) once hb-ane lands.
-**Status (original)**: Draft
+**Status**: ACTIVE — prerequisites landed (commit `7013e6a`, 2026-06-27): LLM PoC authoring (hb-ane, `2026-06-27-llm-poc-authoring-design.md`) and the verdict-trust fix (hb-be9, §3 below) are both merged. §3's `derive_verdict` ERROR-vs-REFUTED disambiguation is confirmed live in `runtime/verdicts/huntr-npm-minimatch/verdicts.json`. Remaining work is the supervised driver + run journal and the run itself; see implementation plan `~/.claude/plans/writing-plans-let-s-write-a-glimmering-salamander.md`.
+**Status (history)**: DEFERRED (blocked on hb-ane) → Draft
 **Charter**: `docs/CHARTER.md` (§Stages — exercises the full Stage 1–6 pipeline against real data for the first time)
 **Predecessors**: Stages 1–6 wired and live-proven on the minimatch known-CVE fixture (Stage 4 Docker activation 2026-06-26, trackers hb-ctr + hb-s2c)
 **Tracker**: hb-322 (depends on / blocked by hb-be9)

@@ -36,6 +36,12 @@ class LLMClient(Protocol):
                       max_tokens: int = 4096, temperature: float = 0.0,
                       timeout: float = 120.0, from_fixture: str | None = None) -> ChatResponse: ...
 
+    def preflight(self) -> None:
+        """Fail loud if the provider is misconfigured or unreachable, without spending
+        tokens. Raises LLMConfigError (misconfig, e.g. no key) or LLMUnavailable
+        (provider down). Returns None on success."""
+        ...
+
 
 def select_client(provider: str | None = None) -> LLMClient:
     name = (provider or os.environ.get("SECRESEARCH_LLM_PROVIDER") or DEFAULT_PROVIDER).lower()

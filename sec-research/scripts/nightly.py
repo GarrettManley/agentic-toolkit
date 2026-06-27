@@ -21,7 +21,9 @@ failure in the briefing.
 """
 from __future__ import annotations
 
+import argparse
 import json
+import os
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -30,6 +32,12 @@ HOOKS_DIR = Path(__file__).resolve().parent.parent / "hooks"
 sys.path.insert(0, str(HOOKS_DIR))
 SCRIPTS_DIR = Path(__file__).resolve().parent
 sys.path.insert(0, str(SCRIPTS_DIR))
+# Workspace root, so absolute `scripts.verify.model`-style imports used by some stage
+# modules (e.g. triage/dedup.py) resolve when run as a script — not just under pytest,
+# which already puts the root on the path. Both `verify.*` and `scripts.verify.*` then
+# resolve as namespace packages, mirroring the test environment.
+WORKSPACE_ROOT = SCRIPTS_DIR.parent
+sys.path.insert(0, str(WORKSPACE_ROOT))
 
 from lib.paths import (  # noqa: E402
     PROGRAMS_DIR, RUNTIME_RECON_DIR, RUNTIME_BRIEFINGS_DIR, RUNTIME_SCHEDULED_RUNS,
@@ -37,8 +45,11 @@ from lib.paths import (  # noqa: E402
 )
 from lib.scope_match import load_all_scopes  # noqa: E402
 from lib import ledger  # noqa: E402
+from lib.journal import RunJournal  # noqa: E402
 from recon_program import run_recon  # noqa: E402
 from llm.generate import generate_hypotheses  # noqa: E402
+from llm.client import select_client  # noqa: E402
+from sandbox.doctor import sandbox_doctor  # noqa: E402
 from verify.harness import verify_hypotheses  # noqa: E402
 from verify.model import Verdict, EvidenceCapture  # noqa: E402
 from triage.dedup import triage_verdicts  # noqa: E402
@@ -176,7 +187,8 @@ Pipeline: Stages 3-6 wired; sandbox+verify harness proven live on real Docker (2
     return briefing_path
 
 
-def main() -> int:
+def run_unattended() -> int:
+    """Default nightly path: run the whole pipeline end-to-end with no halts (cron)."""
     started_at = _utc_now_iso()
     print(f"=== nightly.py started at {started_at} ===")
 
@@ -225,6 +237,148 @@ def main() -> int:
         }) + "\n")
 
     return 0
+
+
+# --------------------------------------------------------------------------- #
+# Supervised driver (hb-322): same pipeline, stage-gated with inspection halts  #
+# and an incremental run journal. Reuses the stage_* functions above verbatim —  #
+# no new pipeline logic.                                                         #
+# --------------------------------------------------------------------------- #
+
+SUPERVISED_STAGES = ["recon", "hypothesize", "verify", "triage", "draft"]
+
+
+def _preflight(*, provider: str | None = None) -> list[str]:
+    """Fail-loud readiness check before a supervised run. Confirms the LLM provider is
+    configured/reachable (token-free) and the docker sandbox is up, so a misconfigured
+    provider aborts loudly instead of silently yielding zero hypotheses (a false null).
+
+    Raises LLMConfigError / LLMUnavailable (provider) or RuntimeError (sandbox)."""
+    select_client(provider).preflight()
+    ok, msgs = sandbox_doctor()
+    if not ok:
+        raise RuntimeError("sandbox preflight failed: " + "; ".join(msgs))
+    return msgs
+
+
+def _pause_for_inspection(stage: str, summary: str) -> bool:
+    """Print a checkpoint summary and block for an operator decision. Returns True to
+    continue, False to abort. Overridable in tests; EOF (non-interactive) aborts safely."""
+    print(f"\n--- CHECKPOINT: {stage} ---\n{summary}")
+    try:
+        resp = input(f"Continue past {stage}? [y/N] ").strip().lower()
+    except EOFError:
+        return False
+    return resp in ("y", "yes")
+
+
+def run_supervised(*, until: str | None = None, auto_yes: bool = False,
+                   provider: str | None = None, journals_dir: Path | None = None) -> int:
+    """Drive the pipeline one stage at a time, halting for inspection between stages and
+    recording each checkpoint to a run journal. ``until`` stops after the named stage;
+    ``auto_yes`` skips the interactive halts (still journals)."""
+    started_at = _utc_now_iso()
+    today = _today()
+    print(f"=== nightly.py --supervised started at {started_at} ===")
+
+    # Bridge --provider to the env var that every stage's select_client() reads — the
+    # stage functions (hypothesis, and the verify stage's LLM PoC authoring) each resolve
+    # their own client from SECRESEARCH_LLM_PROVIDER, so a bare param wouldn't reach them.
+    if provider:
+        os.environ["SECRESEARCH_LLM_PROVIDER"] = provider
+
+    _preflight(provider=provider)  # aborts loudly on misconfig
+
+    scopes = load_all_scopes()
+    if not scopes:
+        print("No program scopes loaded. Load one first, e.g.:\n"
+              "  python scripts/fetch_program.py --venue huntr --identifier <owner>/<pkg>",
+              file=sys.stderr)
+        return 2
+
+    slug = next(iter(scopes))
+    journal = RunJournal(slug, date=today, journals_dir=journals_dir)
+    journal.start(program_reason=f"Supervised run over loaded scope(s): {', '.join(scopes)}")
+
+    def _halt(stage: str, summary: str) -> bool:
+        journal.checkpoint(stage, outcome="reached", detail=summary)
+        return True if auto_yes else _pause_for_inspection(stage, summary)
+
+    def _stop(reason: str) -> int:
+        journal.finish(outcome=reason)
+        print(f"Journal: {journal.path}")
+        return 0
+
+    # Stage 3 — recon
+    recon = stage_recon(scopes)
+    if not _halt("recon", f"recon items: {len(recon)} -> {RUNTIME_RECON_DIR}"):
+        return _stop("aborted at recon")
+    if until == "recon":
+        return _stop("stopped after recon (--until)")
+
+    # Stage 4b — hypothesis
+    hypotheses = stage_hypothesize(scopes, recon)
+    if not _halt("hypothesize", f"hypotheses generated: {len(hypotheses)}"):
+        return _stop("aborted at hypothesize")
+    if until == "hypothesize":
+        return _stop("stopped after hypothesize (--until)")
+
+    # Stage 4c — verify
+    verified = stage_verify(hypotheses)
+    n_ok = sum(1 for v in verified if v.get("verified"))
+    if not _halt("verify", f"verdicts: {len(verified)} ({n_ok} verified)"):
+        return _stop("aborted at verify")
+    if until == "verify":
+        return _stop("stopped after verify (--until)")
+
+    # Stage 5 — triage (collect novel per slug; no drafting yet)
+    now_ts = _utc_now_iso()
+    by_slug: dict[str, list] = {}
+    for vd in verified:
+        by_slug.setdefault(vd.get("program_slug", ""), []).append(vd)
+    novel_by_slug = {
+        slug_key: stage_triage([_verdict_from_dict(vd) for vd in vd_list], slug_key, now=now_ts)
+        for slug_key, vd_list in by_slug.items()
+    }
+    novel_total = sum(len(v) for v in novel_by_slug.values())
+    if not _halt("triage", f"novel after dedup: {novel_total}"):
+        return _stop("aborted at triage")
+    if until == "triage":
+        return _stop("stopped after triage (--until)")
+
+    # Stage 6 — draft
+    all_drafts: list[str] = []
+    for slug_key, novel in novel_by_slug.items():
+        all_drafts.extend(stage_draft_findings(novel, slug_key, today=today))
+    _halt("draft", f"findings drafted: {len(all_drafts)} ({', '.join(all_drafts) or 'none'})")
+
+    briefing = stage_briefing(scopes, recon, hypotheses, verified, all_drafts)
+    outcome = (f"DRAFT path — {len(all_drafts)} finding(s): {', '.join(all_drafts)}"
+               if all_drafts
+               else "NULL result — no novel confirmed finding; see verdicts for the audit trail")
+    journal.finish(outcome=outcome)
+    print(f"Briefing: {briefing}\nJournal: {journal.path}\nOutcome: {outcome}")
+    return 0
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(
+        description="sec-research pipeline driver (unattended nightly, or supervised run)")
+    parser.add_argument("--supervised", action="store_true",
+                        help="run stage-by-stage with inspection halts and a run journal")
+    parser.add_argument("--until", choices=SUPERVISED_STAGES, default=None,
+                        help="(supervised) stop after this stage; e.g. --until recon for a dry run")
+    parser.add_argument("--yes", action="store_true",
+                        help="(supervised) skip interactive halts; still writes the journal")
+    parser.add_argument("--provider", default=None,
+                        help="LLM provider override (claude|llama); default from env")
+    args = parser.parse_args(argv)
+
+    if (args.until or args.yes or args.provider) and not args.supervised:
+        parser.error("--until/--yes/--provider require --supervised")
+    if args.supervised:
+        return run_supervised(until=args.until, auto_yes=args.yes, provider=args.provider)
+    return run_unattended()
 
 
 if __name__ == "__main__":

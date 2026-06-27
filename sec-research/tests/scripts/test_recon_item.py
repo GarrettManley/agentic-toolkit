@@ -81,3 +81,21 @@ def test_write_program_recon_emits_json_and_closure(tmp_path):
     assert len(closure_lines) >= 1
     dep = json.loads(closure_lines[0])
     assert dep["name"] == "lodash"
+
+
+def test_write_program_recon_handles_repo_asset_id_with_slashes(tmp_path):
+    """Regression (caught in first live GHSA run): a repo asset id like
+    'github.com/isaacs/minimatch' must flatten to a single closure file, not create
+    unintended nested dirs (which crashed write_text with FileNotFoundError)."""
+    from recon.recon_item import build_recon_item, write_program_recon, _safe_asset_filename
+    asset_id = "github.com/isaacs/minimatch"
+    item = build_recon_item(
+        "ghsa-isaacs-minimatch",
+        {"asset_type": "repo", "identifier": asset_id, "ecosystem": None},
+        None, _closure(), None, [], extra_flags=[], ts="2026-06-27T00:00:00Z")
+    out = write_program_recon("ghsa-isaacs-minimatch", [item], {asset_id: _closure()}, tmp_path)
+    assert out.exists()
+    expected = tmp_path / "ghsa-isaacs-minimatch" / "dep-graph" / "github.com__isaacs__minimatch.closure.jsonl"
+    assert expected.exists()
+    # The recorded path in recon.json must match the file actually written.
+    assert item["transitive_closure"]["path"].endswith(_safe_asset_filename(asset_id) + ".closure.jsonl")
