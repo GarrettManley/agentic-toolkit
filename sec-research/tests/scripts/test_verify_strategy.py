@@ -205,3 +205,40 @@ def test_select_strategy_unknown_clears_env(monkeypatch):
     monkeypatch.setenv("SECRESEARCH_POC_STRATEGY", "templated")
     with pytest.raises(ValueError, match="completely_unknown"):
         select_strategy("completely_unknown")
+
+
+# ---------------------------------------------------------------------------
+# PocPlan differential fields
+# ---------------------------------------------------------------------------
+
+def test_pocplan_differential_fields_default_none():
+    plan = PocPlan(
+        ecosystem="npm", install_cmd=["npm", "install", "x@1"], install_hosts=["r"],
+        trigger_cmd=["node", "t.js"], expected_trigger_exit=0, expected_trigger_sha256="a",
+        files={"t.js": "x"}, template_id="t",
+    )
+    assert plan.fixed_install_cmd is None
+    assert plan.expected_refuted_exit is None
+    assert plan.expected_refuted_sha256 is None
+    assert plan.is_differential is False
+
+
+def test_pocplan_is_differential_true_when_all_set():
+    plan = PocPlan(
+        ecosystem="npm", install_cmd=["npm", "install", "x@1"], install_hosts=["r"],
+        trigger_cmd=["node", "t.js"], expected_trigger_exit=0, expected_trigger_sha256="a",
+        files={"t.js": "x"}, template_id="t",
+        fixed_install_cmd=["npm", "install", "x@2"], expected_refuted_exit=1,
+        expected_refuted_sha256="b",
+    )
+    assert plan.is_differential is True
+
+
+def test_pocplan_is_differential_false_when_partial():
+    plan = PocPlan(
+        ecosystem="npm", install_cmd=["npm", "install", "x@1"], install_hosts=["r"],
+        trigger_cmd=["node", "t.js"], expected_trigger_exit=0, expected_trigger_sha256="a",
+        files={"t.js": "x"}, template_id="t",
+        fixed_install_cmd=["npm", "install", "x@2"],  # missing the refuted signature
+    )
+    assert plan.is_differential is False

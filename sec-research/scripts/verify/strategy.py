@@ -59,6 +59,27 @@ class PocPlan:
     """Identifier of the template that produced this plan, e.g.
     "npm__minimatch__CVE-2022-3517". Used for tracing and verdict annotation."""
 
+    fixed_install_cmd: list[str] | None = None
+    """Install command for the FIXED version, used by the differential drive.
+    None for legacy single-run plans."""
+
+    expected_refuted_exit: int | None = None
+    """Expected exit code from the trigger when run against the FIXED version."""
+
+    expected_refuted_sha256: str | None = None
+    """Expected sha256 of the trigger's stdout when run against the FIXED version
+    (the constant 'patched' sentinel). None for legacy single-run plans."""
+
+    @property
+    def is_differential(self) -> bool:
+        """True iff this plan carries a full fixed-version refuted signature so the
+        harness can run the differential trust oracle."""
+        return (
+            self.fixed_install_cmd is not None
+            and self.expected_refuted_exit is not None
+            and self.expected_refuted_sha256 is not None
+        )
+
 
 # ---------------------------------------------------------------------------
 # SeedIncomplete — raised when required evidence_seed fields are missing
@@ -100,8 +121,12 @@ class PocStrategy(Protocol):
         """Return True if this strategy can build a plan for the given hypothesis."""
         ...
 
-    def build_plan(self, hypothesis: dict) -> PocPlan:
+    def build_plan(self, hypothesis: dict, repair_context: dict | None = None) -> PocPlan:
         """Build and return a PocPlan for the hypothesis.
+
+        Args:
+            repair_context: Optional feedback from a prior failed differential run
+                (used only by repair-capable strategies; ignored by others).
 
         Raises:
             SeedIncomplete: if required evidence_seed fields are missing or blank.
