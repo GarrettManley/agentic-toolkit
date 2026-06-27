@@ -1,0 +1,13 @@
+{
+  "hypothesis_id": "HYP-EVAL-MINIMATCH",
+  "program_slug": "huntr-npm-minimatch",
+  "vuln_class": "dependency-cve",
+  "target": { "identifier": "minimatch", "version_or_revision": "3.0.4" },
+  "evidence_seed": {
+    "package_ecosystem": "npm",
+    "package_name": "minimatch",
+    "affected_versions_range": "<3.0.5",
+    "candidate_cve_id": "CVE-2022-3517",
+    "fixed_version": "3.0.5"
+  }
+}

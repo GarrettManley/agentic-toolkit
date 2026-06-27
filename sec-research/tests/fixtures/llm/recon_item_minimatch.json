@@ -1,0 +1,17 @@
+{
+  "slug": "huntr-npm-minimatch",
+  "asset": { "asset_type": "package", "identifier": "minimatch", "ecosystem": "npm" },
+  "resolved_version": "3.0.4",
+  "recon_ts": "2026-06-27T08:00:00Z",
+  "known_advisories": [
+    {
+      "id": "GHSA-f8q6-p94x-37v3",
+      "cve": "CVE-2022-3517",
+      "affected_range": "<3.0.5",
+      "fixed": "3.0.5",
+      "package": "minimatch",
+      "severity": "high",
+      "title": "ReDoS in minimatch"
+    }
+  ]
+}
