@@ -1,20 +1,23 @@
 """huntr.com program scope fetcher.
 
-huntr exposes no public scope API, so we scrape the public program page
-https://huntr.com/repos/<owner>/<pkg> and read its embedded __NEXT_DATA__ JSON.
+huntr exposes no public scope API (api.huntr.com does not resolve), so we confirm
+a program exists by fetching its public repo page https://huntr.com/repos/<owner>/
+<pkg>. As of 2026-06-30 huntr runs the Next.js App Router: the page is a client-
+rendered shell whose server HTML carries NO structured repo metadata (no old
+Next.js data blob, no ecosystem/display_name/repository_url JSON). The shell also
+returns HTTP 200 for nonexistent repos, so the status code cannot signal existence.
+The reliable server-rendered signal is the <head> og:url canonical meta, which a
+real repo renders to its own URL and the 404 page omits entirely. We therefore:
+  - confirm existence via og:url present AND == the requested repos/<owner>/<pkg>;
+  - take ecosystem from the GitHub manifest probe (the page is always silent now);
+  - use the f"{owner} - {pkg}" default for display_name.
+Note: the manifest probe assumes the huntr <owner>/<pkg> maps to github.com/<owner>/
+<pkg> (true for the v1 npm targets; revisit for fork/rename — see hb-dzu part 2).
 Tests feed canned page bodies via from_fixture; production fetches live (gated by
-_http). Ecosystem is read from the page when present, else inferred by probing the
-linked GitHub repo manifest. The capture date is recorded in rules.notes.
-
-⚠️  RECONCILE NOTE: The __NEXT_DATA__ key path
-    props → pageProps → repo → {owner, name, ecosystem, repository_url, display_name}
-    is the *assumed* Next.js shape inferred from the brief. Verify against a real
-    huntr page capture before enabling live production use. Fixture tests assert
-    the mapping logic, not real-world page fidelity.
+_http). Fixtures carry the real <head> shapes from live captures (hb-dzu).
 """
 from __future__ import annotations
 
-import json
 import re
 
 from fetchers import _http
@@ -25,25 +28,28 @@ from fetchers._common import (
     utc_now_iso,
 )
 
-_NEXT_DATA_RE = re.compile(
-    r'<script[^>]*id="__NEXT_DATA__"[^>]*>(.*?)</script>', re.DOTALL
+# Canonical-URL meta, server-rendered in <head>; content is the exact repo URL.
+# Order-robust: huntr currently emits property-before-content, but match either
+# ordering so an attribute reorder upstream does not silently fail the live gate.
+_OG_URL_RE = re.compile(
+    r'<meta\b(?=[^>]*\bproperty=["\']og:url["\'])(?=[^>]*\bcontent=["\']([^"\']+)["\'])',
+    re.IGNORECASE,
 )
 
 
-def _parse_repo(html: str) -> dict | None:
-    """Return the repo object from the embedded JSON, or None if unparseable.
+def _parse_og_url(html: str) -> str | None:
+    """Return the <head> og:url canonical content (trailing slash stripped), or
+    None if the page renders no og:url meta.
 
-    RECONCILE these keys with a real huntr capture before trusting in production.
+    A real repo renders og:url to its own URL; huntr's 404 page (also served with
+    HTTP 200) omits og:url entirely. The caller compares the returned value to the
+    requested URL — keeping the raw value here lets it distinguish "absent" (404)
+    from "present but mismatched" (a real repo whose page shape drifted).
     """
-    m = _NEXT_DATA_RE.search(html)
+    m = _OG_URL_RE.search(html)
     if not m:
         return None
-    try:
-        blob = json.loads(m.group(1).strip())
-    except json.JSONDecodeError:
-        return None
-    repo = blob.get("props", {}).get("pageProps", {}).get("repo")
-    return repo if isinstance(repo, dict) else None
+    return m.group(1).strip().rstrip("/")
 
 
 def fetch(identifier: str, *, from_fixture=None, manifest_fixture=None) -> FetchResult:
@@ -53,12 +59,12 @@ def fetch(identifier: str, *, from_fixture=None, manifest_fixture=None) -> Fetch
         identifier: "<owner>/<pkg>" as it appears in the huntr URL path.
         from_fixture: Path to a canned HTML file; skips the live HTTP call.
         manifest_fixture: Path to a canned GitHub contents JSON file; skips
-            the live gh-api manifest probe when ecosystem is absent from the page.
+            the live gh-api manifest probe used to infer the ecosystem.
 
     Returns:
         FetchResult with ok=True and schema-valid data on success; ok=False
-        with a parse warning on a bad/garbage page; ok=False with an identifier
-        warning when no "/" is present in the identifier. Never raises.
+        with a warning when the page does not confirm the repo (404/wrong shape)
+        or the identifier lacks a "/". Never raises.
     """
     if "/" not in identifier:
         return FetchResult(
@@ -77,26 +83,35 @@ def fetch(identifier: str, *, from_fixture=None, manifest_fixture=None) -> Fetch
     except _http.HttpError as e:
         return FetchResult(ok=False, slug=slug, data=None, warnings=[str(e)])
 
-    repo = _parse_repo(html)
-    if repo is None:
+    # Confirm existence via the <head> og:url canonical meta. Distinguish "no
+    # og:url" (404 / not a repo page) from "og:url present but mismatched" (a real
+    # repo whose page shape drifted) — collapsing them would misreport a drifted
+    # in-policy program as nonexistent and silently fail the gate it was built for.
+    og_url = _parse_og_url(html)
+    if og_url != url.rstrip("/"):
+        if og_url is None:
+            detail = "no og:url in <head> (page is a 404 or not a huntr repo page)"
+        else:
+            detail = (
+                f"og:url present but did not match: got {og_url!r}, expected "
+                f"{url.rstrip('/')!r} — possible huntr page-shape drift, not "
+                "necessarily a missing repo"
+            )
         return FetchResult(
-            ok=False,
-            slug=slug,
-            data=None,
-            warnings=["could not parse huntr page shape (no __NEXT_DATA__ repo blob)"],
+            ok=False, slug=slug, data=None,
+            warnings=[f"could not confirm huntr page: {detail}"],
         )
 
     warnings: list[str] = []
-    ecosystem = repo.get("ecosystem") or None  # treat empty string as absent
-
-    # Probe the manifest only when the page is silent AND we are allowed to do live
-    # work (fixture mode does no network unless an explicit manifest_fixture is supplied).
-    if not ecosystem and (manifest_fixture is not None or from_fixture is None):
+    # The App Router page carries no ecosystem; probe the manifest whenever we are
+    # allowed to do live work (fixture mode probes only with an explicit manifest_fixture).
+    ecosystem = None
+    if manifest_fixture is not None or from_fixture is None:
         ecosystem, eco_warn = infer_ecosystem_from_manifest(
             owner, pkg, contents_fixture=manifest_fixture
         )
         warnings += eco_warn
-    elif not ecosystem:
+    else:
         warnings.append(
             "ecosystem not on page and probe skipped (fixture mode); ecosystem omitted"
         )
@@ -119,7 +134,7 @@ def fetch(identifier: str, *, from_fixture=None, manifest_fixture=None) -> Fetch
         "venue_program_id": identifier,
         "loaded_at": now,
         "loaded_from": url,
-        "display_name": repo.get("display_name") or f"{owner} — {pkg}",
+        "display_name": f"{owner} — {pkg}",
         "in_scope": [pkg_entry, repo_entry],
         "out_of_scope": [],
         "rules": {

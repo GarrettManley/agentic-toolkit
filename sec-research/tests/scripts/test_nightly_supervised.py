@@ -175,7 +175,7 @@ def test_run_journal_incremental(tmp_path):
     j.start(program_reason="picked x because in-scope + tractable")
     assert j.path.exists()
     j.checkpoint("recon", outcome="reached", detail="recon items: 3")
-    j.note("hb-dzu: __NEXT_DATA__ shape matched fixture; no reconcile needed")
+    j.note("hb-dzu: reconciled huntr to App Router og:url existence check; ecosystem via manifest probe")
     j.finish(outcome="NULL result")
 
     text = j.path.read_text("utf-8")
