@@ -11,6 +11,16 @@ Import resolution for RUNTIME_DIR:
   ``from lib.paths import RUNTIME_DIR`` resolves because hooks/lib/paths.py
   defines RUNTIME_DIR. This is the same approach used by scripts/llm/generate.py
   (line 17: ``from lib.paths import RUNTIME_DIR``). No local derivation needed.
+
+Trust assumptions (hb-40u R1): the differential oracle proves a trigger discriminates
+the AFFECTED from the FIXED version — NOT that it did so by exercising the
+vulnerability. A trigger that reads the installed version/metadata (e.g.
+``require('pkg/package.json').version``) would discriminate without proving anything,
+yielding a false 'verified'. This residual assumption is accepted, not enforced in
+code: a static detector was evaluated (hb-40u) and rejected — it fails open on trigger
+naming and would false-positive on the legitimate version-parsing vulnerability class.
+The controls are the soft prompt-forbid (poc_prompt.SYSTEM) and the load-bearing human
+submission gate (invariant 3): no finding is submitted on an oracle verdict alone.
 """
 from __future__ import annotations
 
@@ -322,6 +332,8 @@ def verify_hypotheses(
             continue
 
         # ---- legacy single-run path (templated non-differential plans) ----
+        # NOTE: uses the weaker single-run oracle; currently unreachable — both registered
+        # strategies emit differential plans (a non-differential template would re-activate it).
         # ScopeViolation from _drive_phased MUST propagate uncaught (constraint C1).
         # Do NOT add except Exception or except ScopeViolation here.
         try:

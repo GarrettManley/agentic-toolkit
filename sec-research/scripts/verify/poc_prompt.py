@@ -83,5 +83,7 @@ def build_poc_prompt(
             f"{_fence('PRIOR ATTEMPT FEEDBACK (DATA)', json.dumps(repair_context, indent=2, sort_keys=True))}\n"
             "Your previous PoC did not pass the differential oracle. Revise so the trigger "
             "fires ONLY on the affected version."
+            " Discriminate by exercising the vulnerable behaviour, never by reading the "
+            "installed version or package.json — a version check is not a proof."
         )
     return SYSTEM, [{"role": "user", "content": user}]
