@@ -160,7 +160,7 @@ oracle** (Docker; affected 3.0.4 vs fixed 3.0.5), scoring `verified/refuted/erro
 | Model | verified | refuted | error | skipped | rate |
 |-------|----------|---------|-------|---------|------|
 | qwen2.5-coder-7b-Q4_K_M | 0 | 0 | 5 | 0 | **0.00** |
-| deepseek-r1-7b-Q4_K_M | — | — | — | — | **blocked** (harness crash) |
+| deepseek-r1-7b-Q4_K_M | 0 | 0 | 5 | 0 | **0.00** (after hb-dfu harness fix) |
 
 **qwen — model-quality failure, not infra.** The oracle ran cleanly (4 phases: install+trigger on
 both versions, exit 0, no timeout). The verdict is `error / "differential: affected-indeterminate"`
@@ -172,10 +172,15 @@ produce **identical** output (same `stdout_sha256`) → no discrimination → th
 `error`. Other trials emitted unparseable PoC JSON (`hypothesis-parse-error`). Both are PoC-authoring
 failures: the 7B does not construct a working differential ReDoS PoC.
 
-**deepseek — blocked by a pre-existing harness bug.** The eval crashed on trial 0 with
-`FileNotFoundError: …/work/HYP-EVAL-MINIMATCH-0-affected/minimatch/package.json` (uncaught in the
-sandbox/verify path, which this work did not modify) — a robustness gap triggered by deepseek's
-PoC-plan shape that kills the eval process, so deepseek could not be measured.
+**deepseek — initially blocked by a harness bug, then measured 0/5 after the fix.** The first probe
+crashed on trial 0 with `FileNotFoundError: …/work/HYP-EVAL-MINIMATCH-0-affected/minimatch/package.json`
+— `verify.harness` wrote untrusted model-authored file *names* to the host workdir with no parent-dir
+creation and no path validation (deepseek keyed a file at the nested path `minimatch/package.json`).
+Fixed under **hb-dfu** (`_materialize`: validate each name resolves strictly inside the workdir,
+create parents for safe nested names, and convert any unsafe name / write failure to a per-trial
+`error` verdict instead of crashing the batch — also closing a latent path-traversal write from
+untrusted output). Re-probed: deepseek-r1-7b scores **0/5 verified**, matching qwen — a **second tier
+independently confirms** local PoC-authoring is not viable.
 
 **Verdict: local 7B PoC-authoring is NOT viable.** Constructing a working differential PoC (malicious
 backtracking input + timeout-based detection) is past the tier. **Recommendation:** the nightly loop

@@ -92,6 +92,27 @@ def _reason_for(vstr: str, trigger_ev: EvidenceCapture, plan: PocPlan) -> str:
 # _drive_phased — two-phase install→trigger driver
 # ---------------------------------------------------------------------------
 
+def _materialize(W: Path, files: dict[str, str]) -> None:
+    """Write plan files into workdir ``W`` before install.
+
+    Both NAMES and CONTENT are UNTRUSTED model output written to the host filesystem. Each name
+    must resolve to a path strictly inside ``W`` — absolute paths and ``..`` traversal are rejected,
+    never written. Parent dirs are created for safe nested names (a model may key a file as
+    ``pkg/package.json``). Any unsafe name, OS write failure, OR uncodable content (a lone surrogate
+    raises UnicodeError, not OSError) raises ``SandboxError`` so the caller records a per-trial
+    *error verdict* instead of crashing the whole batch (hb-dfu)."""
+    W_resolved = W.resolve()
+    for name, content in files.items():
+        dest = (W / name).resolve()
+        if W_resolved not in dest.parents:        # escapes the workdir (abs path or .. traversal)
+            raise SandboxError(f"unsafe poc file path: {name!r}")
+        try:
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            dest.write_text(content, encoding="utf-8")
+        except (OSError, UnicodeError) as e:      # UnicodeError: uncodable untrusted model content
+            raise SandboxError(f"failed to materialize {name!r}: {e}") from e
+
+
 def _drive_phased(
     plan: PocPlan,
     hypothesis_id: str,
@@ -141,8 +162,7 @@ def _drive_phased(
     W.mkdir(parents=True, exist_ok=True)
 
     # Materialize plan files into the workdir before install.
-    for name, content in plan.files.items():
-        (W / name).write_text(content, encoding="utf-8")
+    _materialize(W, plan.files)
 
     # -----------------------------------------------------------------------
     # Phase 1: install

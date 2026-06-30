@@ -264,6 +264,65 @@ def _make_diff_plan():
     )
 
 
+def test_materializes_nested_file_paths(tmp_path, monkeypatch):
+    """A plan file keyed at a nested path (e.g. a model that emits 'pkg/package.json') is written,
+    parent dirs created — previously this raised FileNotFoundError and crashed the whole batch (hb-dfu)."""
+    from dataclasses import replace
+    import verify.harness as h
+    import sandbox.runner as r
+    monkeypatch.setattr(r, "check_http", lambda url, *, bootstrap_hosts: None)
+
+    plan = replace(_make_plan(), files={"trigger.js": "x", "pkg/package.json": "{}\n"})
+    h._drive_phased(plan, "hyp-nest", "slug-nest", runner=_capture_runner([]), verdict_root=tmp_path)
+    W = tmp_path / "slug-nest" / "work" / "hyp-nest"
+    assert (W / "pkg" / "package.json").read_text(encoding="utf-8") == "{}\n"
+
+
+def test_rejects_path_traversal_file_name(tmp_path, monkeypatch):
+    """An untrusted model file name escaping the workdir is rejected as SandboxError (-> error
+    verdict), and nothing is written outside W."""
+    from dataclasses import replace
+    import verify.harness as h
+    import sandbox.runner as r
+    from sandbox.runner import SandboxError
+    monkeypatch.setattr(r, "check_http", lambda url, *, bootstrap_hosts: None)
+
+    plan = replace(_make_plan(), files={"../escape.js": "owned"})
+    with pytest.raises(SandboxError):
+        h._drive_phased(plan, "hyp-trav", "slug-trav", runner=_capture_runner([]), verdict_root=tmp_path)
+    assert not (tmp_path / "slug-trav" / "work" / "escape.js").exists()
+    assert not (tmp_path / "slug-trav" / "escape.js").exists()
+
+
+def test_rejects_absolute_file_name(tmp_path, monkeypatch):
+    """An absolute model file name is rejected (cannot write outside the workdir)."""
+    from dataclasses import replace
+    import verify.harness as h
+    import sandbox.runner as r
+    from sandbox.runner import SandboxError
+    monkeypatch.setattr(r, "check_http", lambda url, *, bootstrap_hosts: None)
+
+    abs_name = str(tmp_path / "pwned.js")
+    plan = replace(_make_plan(), files={abs_name: "x"})
+    with pytest.raises(SandboxError):
+        h._drive_phased(plan, "hyp-abs", "slug-abs", runner=_capture_runner([]), verdict_root=tmp_path)
+    assert not (tmp_path / "pwned.js").exists()
+
+
+def test_rejects_uncodable_file_content(tmp_path, monkeypatch):
+    """Untrusted model file CONTENT with a lone surrogate (UnicodeEncodeError on the utf-8 write,
+    a ValueError not OSError) must become a SandboxError -> error verdict, not a batch crash (hb-dfu)."""
+    from dataclasses import replace
+    import verify.harness as h
+    import sandbox.runner as r
+    from sandbox.runner import SandboxError
+    monkeypatch.setattr(r, "check_http", lambda url, *, bootstrap_hosts: None)
+
+    plan = replace(_make_plan(), files={"trigger.js": "ok\udce2bad"})  # lone surrogate, uncodable utf-8
+    with pytest.raises(SandboxError):
+        h._drive_phased(plan, "hyp-uni", "slug-uni", runner=_capture_runner([]), verdict_root=tmp_path)
+
+
 def test_drive_differential_runs_four_phases_distinct_workdirs(tmp_path, monkeypatch):
     import verify.harness as h
     import sandbox.runner as r
