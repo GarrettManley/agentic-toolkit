@@ -575,7 +575,7 @@ _FIX_TRIGGER_PATCHED = _ev(phase="trigger", exit_code=1, sha=_MISMATCH_SHA)
 def test_differential_verified(monkeypatch):
     ledger_cap = _LedgerCapture()
     monkeypatch.setattr(_harness, "ledger", type("L", (), {"append_event": staticmethod(ledger_cap)})())
-    strategy = _FakeStrategy(supports=True, plan=_make_diff_plan())
+    strategy = _RepairStrategy(first=_make_diff_plan(), second=_make_diff_plan())
 
     def fake_diff(plan, hid, slug, *, runner, verdict_root):
         return _INSTALL_EV, _TRIGGER_EV_VERIFIED, _INSTALL_EV, _FIX_TRIGGER_PATCHED
@@ -584,6 +584,7 @@ def test_differential_verified(monkeypatch):
     results = _harness.verify_hypotheses([_hyp()], strategy=strategy)
     assert results[0]["verdict"] == VERDICT_VERIFIED
     assert results[0]["verified"] is True
+    assert strategy.build_calls == 1  # verified on first try -> no repair re-author
 
 
 def test_differential_no_discrimination_triggers_one_repair_then_verifies(monkeypatch):

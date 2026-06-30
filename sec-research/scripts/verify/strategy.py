@@ -73,7 +73,12 @@ class PocPlan:
     @property
     def is_differential(self) -> bool:
         """True iff this plan carries a full fixed-version refuted signature so the
-        harness can run the differential trust oracle."""
+        harness can run the differential trust oracle.
+
+        Note: a True result does NOT require the refuted signature to differ from the
+        verified one — a degenerate (identical-signature) plan is still 'differential'
+        here and is rejected downstream by the oracle's degenerate-signature guard.
+        """
         return (
             self.fixed_install_cmd is not None
             and self.expected_refuted_exit is not None

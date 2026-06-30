@@ -258,6 +258,14 @@ def test_differential_timeout_is_error():
     assert derive_differential_verdict(affected, fixed, plan) == (VERDICT_ERROR, "timeout")
 
 
+def test_differential_fixed_side_timeout_is_error():
+    from verify.model import derive_differential_verdict, VERDICT_ERROR
+    plan = _diff_plan()
+    affected = _trigger(exit_code=0, sha="confirmed")
+    fixed = _trigger(timed_out=True)
+    assert derive_differential_verdict(affected, fixed, plan) == (VERDICT_ERROR, "timeout")
+
+
 def test_differential_degenerate_signatures_never_verified():
     """C1: if verified and refuted signatures are identical, the oracle must fail closed
     (VERDICT_ERROR / 'degenerate-signature') — never grant verified."""
