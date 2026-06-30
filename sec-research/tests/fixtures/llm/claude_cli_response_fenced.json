@@ -1,0 +1,47 @@
+[
+  {
+    "type": "system",
+    "subtype": "init",
+    "cwd": "C:\\Users\\Garre\\Workspace\\sec-research",
+    "session_id": "spike-fixture-fenced",
+    "model": "claude-sonnet-5"
+  },
+  {
+    "type": "rate_limit_event",
+    "rate_limit_info": {
+      "status": "allowed",
+      "resetsAt": 1782857400,
+      "rateLimitType": "five_hour",
+      "overageStatus": "rejected",
+      "overageDisabledReason": "org_level_disabled",
+      "isUsingOverage": false
+    },
+    "session_id": "spike-fixture-fenced"
+  },
+  {
+    "type": "result",
+    "subtype": "success",
+    "is_error": false,
+    "api_error_status": null,
+    "num_turns": 1,
+    "result": "```json\n{\"files\": {\"trigger.js\": \"x\"}, \"trigger_cmd\": [\"node\", \"trigger.js\"], \"sentinel_confirmed\": \"A\", \"expected_confirmed_exit\": 0, \"sentinel_patched\": \"B\", \"expected_patched_exit\": 1, \"reasoning\": \"r\"}\n```",
+    "stop_reason": "end_turn",
+    "session_id": "spike-fixture-fenced",
+    "total_cost_usd": 0.001,
+    "usage": {
+      "input_tokens": 180,
+      "cache_creation_input_tokens": 0,
+      "cache_read_input_tokens": 0,
+      "output_tokens": 60
+    },
+    "modelUsage": {
+      "claude-sonnet-5": {
+        "inputTokens": 180,
+        "outputTokens": 60,
+        "costUSD": 0.001
+      }
+    },
+    "permission_denials": [],
+    "terminal_reason": "completed"
+  }
+]

