@@ -127,6 +127,67 @@ def test_until_recon_stops_before_hypothesize(monkeypatch, tmp_path):
     assert "stopped after recon (--until)" in journal
 
 
+def test_hypothesize_stage_surfaces_llm_failures_loudly(monkeypatch, tmp_path, capsys):
+    """A transient LLM failure during hypothesize must show up in stderr AND in the
+    journal's checkpoint outcome -- live, at the checkpoint itself, not just in the
+    end-of-run briefing (Task 2 already covers that for the unattended path)."""
+    from lib import ledger as ledger_mod
+    monkeypatch.setattr(ledger_mod, "LEDGER_PATH", tmp_path / "ledger.jsonl")
+
+    nightly = _patch_common(monkeypatch, scopes={"huntr-npm-x": {"venue": "huntr"}})
+    monkeypatch.setattr(nightly, "stage_recon", lambda scopes: [{"asset": "x"}])
+
+    def _hypothesize_with_failure(scopes, recon):
+        ledger_mod.append_event("hypothesis-llm-unavailable", slug="huntr-npm-x", asset="left-pad")
+        return []
+    monkeypatch.setattr(nightly, "stage_hypothesize", _hypothesize_with_failure)
+    monkeypatch.setattr(nightly, "stage_verify", lambda hyps: [])
+    monkeypatch.setattr(nightly, "stage_triage", lambda verdicts, slug, *, now: [])
+    monkeypatch.setattr(nightly, "stage_draft_findings", lambda novel, slug, *, today: [])
+
+    rc = nightly.run_supervised(auto_yes=True, journals_dir=tmp_path)
+    assert rc == 0
+
+    journal_files = [p for p in tmp_path.iterdir() if p.suffix == ".md"]
+    journal = journal_files[0].read_text("utf-8")
+    assert "reached-with-warnings" in journal
+    assert "hypothesis-llm-unavailable@left-pad" in journal
+
+    captured = capsys.readouterr()
+    assert "WARNING" in captured.err
+    assert "hypothesis-llm-unavailable@left-pad" in captured.err
+
+
+def test_hypothesize_stage_silent_on_reasoned_drops_only(monkeypatch, tmp_path, capsys):
+    """A run whose only ledger events are reasoned drops (e.g. out-of-scope) must NOT
+    trigger the warning -- it's a legitimate by-design null, not a masked failure."""
+    from lib import ledger as ledger_mod
+    monkeypatch.setattr(ledger_mod, "LEDGER_PATH", tmp_path / "ledger.jsonl")
+
+    nightly = _patch_common(monkeypatch, scopes={"huntr-npm-x": {"venue": "huntr"}})
+    monkeypatch.setattr(nightly, "stage_recon", lambda scopes: [{"asset": "x"}])
+
+    def _hypothesize_with_reasoned_drop(scopes, recon):
+        ledger_mod.append_event("hypothesis-out-of-scope", slug="huntr-npm-x", target="y", resolved="z")
+        return []
+    monkeypatch.setattr(nightly, "stage_hypothesize", _hypothesize_with_reasoned_drop)
+    monkeypatch.setattr(nightly, "stage_verify", lambda hyps: [])
+    monkeypatch.setattr(nightly, "stage_triage", lambda verdicts, slug, *, now: [])
+    monkeypatch.setattr(nightly, "stage_draft_findings", lambda novel, slug, *, today: [])
+
+    rc = nightly.run_supervised(auto_yes=True, journals_dir=tmp_path)
+    assert rc == 0
+
+    journal_files = [p for p in tmp_path.iterdir() if p.suffix == ".md"]
+    journal = journal_files[0].read_text("utf-8")
+    assert "reached-with-warnings" not in journal
+    assert "## Checkpoint — hypothesize" in journal
+    assert "\n- Outcome: reached\n" in journal
+
+    captured = capsys.readouterr()
+    assert "WARNING" not in captured.err
+
+
 def test_full_run_zero_novel_is_null_result(monkeypatch, tmp_path):
     nightly = _patch_common(monkeypatch, scopes={"huntr-npm-x": {"venue": "huntr"}})
     monkeypatch.setattr(nightly, "stage_recon", lambda scopes: [{"asset": "x"}])

@@ -359,8 +359,8 @@ def run_supervised(*, until: str | None = None, auto_yes: bool = False,
     journal = RunJournal(slug, date=today, journals_dir=journals_dir)
     journal.start(program_reason=f"Supervised run over loaded scope(s): {', '.join(scopes)}")
 
-    def _halt(stage: str, summary: str) -> bool:
-        journal.checkpoint(stage, outcome="reached", detail=summary)
+    def _halt(stage: str, summary: str, *, outcome: str = "reached") -> bool:
+        journal.checkpoint(stage, outcome=outcome, detail=summary)
         return True if auto_yes else _pause_for_inspection(stage, summary)
 
     def _stop(reason: str) -> int:
@@ -378,7 +378,20 @@ def run_supervised(*, until: str | None = None, auto_yes: bool = False,
 
     # Stage 4b — hypothesis
     hypotheses = stage_hypothesize(scopes, recon)
-    if not _halt("hypothesize", f"hypotheses generated: {len(hypotheses)}"):
+    hyp_failures = _hypothesize_failures_since(ledger_count_before_run)
+    hyp_summary = f"hypotheses generated: {len(hypotheses)}"
+    hyp_outcome = "reached"
+    if hyp_failures:
+        failure_desc = ", ".join(
+            f"{e.get('event_type')}@{_failure_identifier(e)} ({e['entry_id']})"
+            for e in hyp_failures
+        )
+        warning = (f"WARNING: {len(hyp_failures)} hypothesize-stage LLM failure(s) "
+                   f"(transient, not a reasoned drop): {failure_desc}")
+        print(f"[nightly] {warning}", file=sys.stderr)
+        hyp_summary += f"\n\n{warning}"
+        hyp_outcome = "reached-with-warnings"
+    if not _halt("hypothesize", hyp_summary, outcome=hyp_outcome):
         return _stop("aborted at hypothesize")
     if until == "hypothesize":
         return _stop("stopped after hypothesize (--until)")
