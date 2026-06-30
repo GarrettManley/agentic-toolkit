@@ -134,13 +134,20 @@ If any answer is "no," edit Task 2 Step 3's code block (the field-access paths i
 
 The no-I/O seams: `build_env`, `build_argv`, `build_prompt`, `parse_stdout`, and helpers. Fully unit-testable without the real binary.
 
+**REVISED post-Task-1-spike (the Step 7 checkpoint firing for real — implement the corrected shape below, not a flat single-object envelope):** Task 1's empirical spike (`.superpowers/sdd/task-1-report.md` + the committed fixtures) found three load-bearing deviations from this plan's original assumption, already folded into the code below:
+1. **stdout is a JSON array of session events** (`system`/`assistant`/`rate_limit_event`/`result`/...), not one object. The result data is the LAST array element where `type == "result"`. `parse_stdout` now takes `events` (a list, or a bare dict for hand-built test convenience) and extracts that element via a new `_find_event` helper.
+2. **`model` is not a key on the result event** — only on `system`/`assistant` events and inside `result.modelUsage`. The existing `.get("model", self.model)` fallback is already safe (no `KeyError`); it just always reports the requested model string rather than a CLI-confirmed one. Accepted as-is.
+3. **A structured `rate_limit_event` with `rate_limit_info.status`** rides alongside every result — a stronger pool-exhaustion signal than `_classify_failure`'s text-keyword guessing (which only fires on non-zero exit). `parse_stdout` checks for it first and raises `LLMConfigError` fail-closed if present and not `"allowed"`.
+
+Also confirmed, no code change needed: 2 of 3 raw/unframed spike prompts came back as prose refusals with `is_error: false`/`subtype: "success"` — a clean-looking envelope can still carry zero JSON. `_extract_json`'s existing "no JSON object found" path already handles this independently of `is_error`/`subtype` — already correct, kept as written. The real caller (`LLMPocStrategy.build_plan`) always supplies the production `poc_prompt.py` `SYSTEM` framing via `build_prompt`'s `system` param; the spike's bare/unframed prompt was a deliberate test-only choice to probe the raw envelope, not a flaw in `build_prompt`.
+
 **Files:**
 - Create: `scripts/llm/providers/claude_cli.py`
 - Test: `tests/scripts/test_llm_client.py`
 
 **Interfaces:**
 - Consumes: `from llm.client import ChatResponse, LLMConfigError, LLMUnavailable` (`client.py:14-28`); `POC_AUTHOR_SCHEMA` (`verify/poc_prompt.py:14`) in tests.
-- Produces: `class ClaudeCliClient` with `provider = "claude-cli"`, `__init__(self, *, model=None, runner=None)`, methods `build_env() -> dict`, `build_argv() -> list[str]`, `build_prompt(*, system, messages, schema) -> str`, `parse_stdout(envelope: dict, *, schema: dict) -> ChatResponse`. Task 3 adds `complete_json` and `preflight`.
+- Produces: `class ClaudeCliClient` with `provider = "claude-cli"`, `__init__(self, *, model=None, runner=None)`, methods `build_env() -> dict`, `build_argv() -> list[str]`, `build_prompt(*, system, messages, schema) -> str`, `parse_stdout(events: list[dict] | dict, *, schema: dict) -> ChatResponse`. Task 3 adds `complete_json` and `preflight`.
 
 - [ ] **Step 1: Write failing tests** (append to `tests/scripts/test_llm_client.py`; add `from verify.poc_prompt import POC_AUTHOR_SCHEMA` near the top imports — the `FIX` fixture-path constant used below is already defined at the top of this file, `FIX = Path(__file__).resolve().parents[1] / "fixtures" / "llm"`; no new definition needed)
 
@@ -191,9 +198,12 @@ def test_cli_parse_stdout_strips_markdown_fences():
 
 
 def test_cli_parse_stdout_rejects_missing_required_keys():
+    # "type": "result" is required so _find_event actually locates this as the
+    # result event — omitting it would fail for the wrong reason ("no result
+    # event found") instead of exercising _require_keys.
     from llm.providers.claude_cli import ClaudeCliClient
     from llm.client import LLMUnavailable
-    bad = {"subtype": "success", "result": '{"files": {}}'}
+    bad = {"type": "result", "subtype": "success", "is_error": False, "result": '{"files": {}}'}
     with pytest.raises(LLMUnavailable):
         ClaudeCliClient().parse_stdout(bad, schema=POC_AUTHOR_SCHEMA)
 
@@ -202,8 +212,44 @@ def test_cli_parse_stdout_rejects_error_envelope():
     from llm.providers.claude_cli import ClaudeCliClient
     from llm.client import LLMUnavailable
     with pytest.raises(LLMUnavailable):
-        ClaudeCliClient().parse_stdout({"is_error": True, "subtype": "error_max_turns",
-                                        "result": ""}, schema=POC_AUTHOR_SCHEMA)
+        ClaudeCliClient().parse_stdout({"type": "result", "is_error": True,
+                                        "subtype": "error_max_turns", "result": ""},
+                                       schema=POC_AUTHOR_SCHEMA)
+
+
+def test_cli_parse_stdout_extracts_result_event_from_array():
+    # Confirms array-unwrapping: a multi-event list (system/assistant/rate_limit_event/
+    # result, mirroring the real claude -p shape found by Task 1's spike) is handled by
+    # finding the LAST element with type=="result", ignoring the sibling events.
+    from llm.providers.claude_cli import ClaudeCliClient
+    events = [
+        {"type": "system", "subtype": "init", "model": "claude-sonnet-5"},
+        {"type": "rate_limit_event", "rate_limit_info": {"status": "allowed"}},
+        {"type": "result", "subtype": "success", "is_error": False,
+         "result": '{"files": {}, "trigger_cmd": ["x"], "sentinel_confirmed": "A", '
+                   '"expected_confirmed_exit": 0, "sentinel_patched": "B", '
+                   '"expected_patched_exit": 1, "reasoning": "r"}'},
+    ]
+    resp = ClaudeCliClient().parse_stdout(events, schema=POC_AUTHOR_SCHEMA)
+    assert resp.provider == "claude-cli"
+
+
+def test_cli_parse_stdout_raises_on_non_allowed_rate_limit():
+    # Structured signal from Task 1's spike: a rate_limit_event with status != "allowed"
+    # is a stronger pool-exhaustion signal than _classify_failure's keyword guessing, and
+    # can in principle ride along an exit-0 envelope (never observed live — no quota was
+    # burned to confirm — but checked proactively since it's cheap and additive).
+    from llm.providers.claude_cli import ClaudeCliClient
+    from llm.client import LLMConfigError
+    events = [
+        {"type": "rate_limit_event", "rate_limit_info": {"status": "rejected"}},
+        {"type": "result", "subtype": "success", "is_error": False,
+         "result": '{"files": {}, "trigger_cmd": ["x"], "sentinel_confirmed": "A", '
+                   '"expected_confirmed_exit": 0, "sentinel_patched": "B", '
+                   '"expected_patched_exit": 1, "reasoning": "r"}'},
+    ]
+    with pytest.raises(LLMConfigError):
+        ClaudeCliClient().parse_stdout(events, schema=POC_AUTHOR_SCHEMA)
 
 
 def test_cli_default_runner_resolves_binary_via_which(monkeypatch):
@@ -298,6 +344,17 @@ def _require_keys(obj, schema: dict) -> None:
         raise LLMUnavailable(f"claude CLI JSON missing required keys: {missing}")
 
 
+def _find_event(events, type_name: str) -> dict | None:
+    # `claude -p --output-format json` emits a JSON ARRAY of session events
+    # (system/assistant/rate_limit_event/result/...), confirmed empirically in
+    # Task 1's spike — not a single envelope object as originally assumed. Accept
+    # a bare dict too (wrapped as a 1-element list) for hand-built test convenience.
+    if isinstance(events, dict):
+        events = [events]
+    matches = [e for e in events if isinstance(e, dict) and e.get("type") == type_name]
+    return matches[-1] if matches else None
+
+
 def _classify_failure(proc) -> Exception:
     blob = ((proc.stdout or "") + " " + (proc.stderr or "")).lower()
     if any(t in blob for t in _POOL_TOKENS):
@@ -332,7 +389,18 @@ class ClaudeCliClient:
             f"object.\nJSON Schema:\n{json.dumps(schema)}"
         )
 
-    def parse_stdout(self, envelope: dict, *, schema: dict) -> ChatResponse:
+    def parse_stdout(self, events, *, schema: dict) -> ChatResponse:
+        rate_limit = _find_event(events, "rate_limit_event")
+        if rate_limit is not None:
+            status = (rate_limit.get("rate_limit_info") or {}).get("status")
+            if status not in (None, "allowed"):
+                raise LLMConfigError(
+                    f"claude CLI: rate_limit_info.status={status!r} (not 'allowed'). "
+                    "NOT spilling to the metered API. Top up the pool or wait for the "
+                    "monthly reset.")
+        envelope = _find_event(events, "result")
+        if envelope is None:
+            raise LLMUnavailable("claude CLI output had no 'result' event")
         if envelope.get("is_error") or envelope.get("subtype") not in (None, "success"):
             raise LLMUnavailable(
                 f"claude CLI returned error envelope: subtype={envelope.get('subtype')!r}")
@@ -353,7 +421,7 @@ class ClaudeCliClient:
 - [ ] **Step 4: Run to verify they pass**
 
 Run: `pytest tests/scripts/test_llm_client.py -k cli -v`
-Expected: PASS (8 tests).
+Expected: PASS (9 tests).
 
 - [ ] **Step 5: Commit**
 
@@ -379,12 +447,17 @@ The live path: run the subprocess (or replay a fixture), map failures fail-close
 
 ```python
 def _ok_envelope_stdout():
+    # Real claude -p stdout is a JSON ARRAY of session events (Task 1's spike finding) —
+    # the result data is the LAST element with type=="result", not the whole stdout value.
     import json as _j
-    return _j.dumps({"subtype": "success", "is_error": False, "total_cost_usd": 0.001,
-                     "result": _j.dumps({"files": {}, "trigger_cmd": ["x"],
-                                         "sentinel_confirmed": "A", "expected_confirmed_exit": 0,
-                                         "sentinel_patched": "B", "expected_patched_exit": 1,
-                                         "reasoning": "r"})})
+    return _j.dumps([
+        {"type": "rate_limit_event", "rate_limit_info": {"status": "allowed"}},
+        {"type": "result", "subtype": "success", "is_error": False, "total_cost_usd": 0.001,
+         "result": _j.dumps({"files": {}, "trigger_cmd": ["x"],
+                             "sentinel_confirmed": "A", "expected_confirmed_exit": 0,
+                             "sentinel_patched": "B", "expected_patched_exit": 1,
+                             "reasoning": "r"})},
+    ])
 
 
 def test_cli_complete_json_from_fixture():
@@ -506,7 +579,7 @@ Expected: FAIL — `AttributeError: 'ClaudeCliClient' object has no attribute 'c
 - [ ] **Step 4: Run to verify they pass**
 
 Run: `pytest tests/scripts/test_llm_client.py -k cli -v`
-Expected: PASS (all `cli` tests, 14).
+Expected: PASS (all `cli` tests, 15).
 
 - [ ] **Step 5: Commit**
 
