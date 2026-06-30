@@ -180,11 +180,21 @@ def stage_draft_findings(novel: list, slug: str, *, today: str) -> list[str]:
     return [r.trace_id for r in results]
 
 
-def stage_briefing(scopes: dict, recon: list, hypotheses: list, verified: list, drafts: list) -> Path:
-    """Always-on. Writes runtime/briefings/<date>.md with summary."""
+def stage_briefing(scopes: dict, recon: list, hypotheses: list, verified: list, drafts: list,
+                   *, ledger_count_before_run: int = 0) -> Path:
+    """Always-on. Writes runtime/briefings/<date>.md with summary.
+
+    ``ledger_count_before_run`` (a ledger.read_all() length snapshot taken before stage_recon)
+    surfaces hb-a2w's hypothesize-stage transient-failure detection for BOTH entry points --
+    run_unattended (cron, no journal at all -- this briefing is the only artifact a human is
+    guaranteed to read) and run_supervised (which also gets a live stderr/journal warning at
+    its hypothesize checkpoint; see the Stage 4b block in run_supervised).
+    """
     today = _today()
     briefing_path = RUNTIME_BRIEFINGS_DIR / f"{today}.md"
     RUNTIME_BRIEFINGS_DIR.mkdir(parents=True, exist_ok=True)
+
+    hyp_failures = _hypothesize_failures_since(ledger_count_before_run)
 
     body = f"""# Morning Briefing — {today}
 
@@ -209,7 +219,22 @@ Pipeline: Stages 3-6 wired; sandbox+verify harness proven live on real Docker (2
 - A run produces findings only when a program scope is loaded AND hypotheses verify novel
   (known-CVE verdicts dedup to true-negatives by design).
 - Next: autonomous discovery of a novel finding against a real loaded program.
+"""
 
+    if hyp_failures:
+        failure_desc = ", ".join(
+            f"{e.get('event_type')}@{_failure_identifier(e)} ({e['entry_id']})"
+            for e in hyp_failures
+        )
+        body += f"""
+## Hypothesize-stage failures ({len(hyp_failures)})
+This run logged {len(hyp_failures)} transient LLM failure(s) during hypothesis generation
+(LLM-unavailable or unparseable response) -- NOT reasoned zero-hypotheses drops. Any null
+result above may be partly or wholly a masked failure rather than a genuine reasoned
+decision: {failure_desc}
+"""
+
+    body += f"""
 ## Ledger health
 - Total entries: {len(ledger.read_all())}
 - Recent: see `submissions/ledger.jsonl`
@@ -226,6 +251,7 @@ def run_unattended() -> int:
 
     scopes = load_all_scopes()
     print(f"Loaded {len(scopes)} program scope(s)")
+    ledger_count_before_run = len(ledger.read_all())
 
     refresh_log = stage_refresh_scopes(scopes)
     disclosed_log = stage_refresh_disclosed(scopes)
@@ -250,7 +276,8 @@ def run_unattended() -> int:
         all_drafts.extend(stage_draft_findings(novel, slug_key, today=today))
 
     drafts = all_drafts
-    briefing = stage_briefing(scopes, recon, hypotheses, verified, drafts)
+    briefing = stage_briefing(scopes, recon, hypotheses, verified, drafts,
+                              ledger_count_before_run=ledger_count_before_run)
 
     finished_at = _utc_now_iso()
     print(f"Briefing written: {briefing}")
@@ -342,6 +369,7 @@ def run_supervised(*, until: str | None = None, auto_yes: bool = False,
         return 0
 
     # Stage 3 — recon
+    ledger_count_before_run = len(ledger.read_all())
     recon = stage_recon(scopes)
     if not _halt("recon", f"recon items: {len(recon)} -> {RUNTIME_RECON_DIR}"):
         return _stop("aborted at recon")
@@ -384,7 +412,8 @@ def run_supervised(*, until: str | None = None, auto_yes: bool = False,
         all_drafts.extend(stage_draft_findings(novel, slug_key, today=today))
     _halt("draft", f"findings drafted: {len(all_drafts)} ({', '.join(all_drafts) or 'none'})")
 
-    briefing = stage_briefing(scopes, recon, hypotheses, verified, all_drafts)
+    briefing = stage_briefing(scopes, recon, hypotheses, verified, all_drafts,
+                              ledger_count_before_run=ledger_count_before_run)
     outcome = (f"DRAFT path — {len(all_drafts)} finding(s): {', '.join(all_drafts)}"
                if all_drafts
                else "NULL result — no novel confirmed finding; see verdicts for the audit trail")

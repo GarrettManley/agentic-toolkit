@@ -256,3 +256,62 @@ def test_run_journal_start_clobbers(tmp_path):
     text = j.path.read_text("utf-8")
     assert "second" in text
     assert "Checkpoint — recon" not in text
+
+
+# --------------------------------------------------------------------------- #
+# Briefing-level failure surfacing (hb-a2w) -- covers BOTH run_unattended and
+# run_supervised, since both call stage_briefing.
+# --------------------------------------------------------------------------- #
+
+def test_stage_briefing_flags_hypothesize_failures(monkeypatch, tmp_path):
+    import nightly
+    from lib import ledger as ledger_mod
+    monkeypatch.setattr(ledger_mod, "LEDGER_PATH", tmp_path / "ledger.jsonl")
+    monkeypatch.setattr(nightly, "RUNTIME_BRIEFINGS_DIR", tmp_path)
+
+    before = len(ledger_mod.read_all())
+    ledger_mod.append_event("hypothesis-llm-unavailable", slug="huntr-npm-x", asset="left-pad")
+
+    path = nightly.stage_briefing({}, [], [], [], [], ledger_count_before_run=before)
+    text = path.read_text("utf-8")
+    assert "Hypothesize-stage failures (1)" in text
+    assert "hypothesis-llm-unavailable@left-pad" in text
+
+
+def test_stage_briefing_silent_when_no_failures(monkeypatch, tmp_path):
+    import nightly
+    from lib import ledger as ledger_mod
+    monkeypatch.setattr(ledger_mod, "LEDGER_PATH", tmp_path / "ledger.jsonl")
+    monkeypatch.setattr(nightly, "RUNTIME_BRIEFINGS_DIR", tmp_path)
+
+    before = len(ledger_mod.read_all())
+    ledger_mod.append_event("hypothesis-out-of-scope", slug="huntr-npm-x", target="t", resolved="r")
+
+    path = nightly.stage_briefing({}, [], [], [], [], ledger_count_before_run=before)
+    text = path.read_text("utf-8")
+    assert "Hypothesize-stage failures" not in text
+
+
+def test_run_unattended_threads_ledger_marker_to_briefing(monkeypatch, tmp_path):
+    """The cron path (run_unattended) has no journal at all -- the briefing is the only
+    artifact a human reads after an unattended run, so it must carry this signal."""
+    import nightly
+    from lib import ledger as ledger_mod
+    monkeypatch.setattr(ledger_mod, "LEDGER_PATH", tmp_path / "ledger.jsonl")
+    monkeypatch.setattr(nightly, "RUNTIME_BRIEFINGS_DIR", tmp_path)
+    monkeypatch.setattr(nightly, "RUNTIME_SCHEDULED_RUNS", tmp_path / "scheduled-runs.jsonl")
+    monkeypatch.setattr(nightly, "load_all_scopes", lambda: {})
+    monkeypatch.setattr(nightly, "stage_recon", lambda scopes: [])
+
+    def _hypothesize_with_failure(scopes, recon):
+        ledger_mod.append_event("hypothesis-llm-unavailable", slug="huntr-npm-x", asset="left-pad")
+        return []
+    monkeypatch.setattr(nightly, "stage_hypothesize", _hypothesize_with_failure)
+    monkeypatch.setattr(nightly, "stage_verify", lambda hyps: [])
+
+    rc = nightly.run_unattended()
+    assert rc == 0
+    briefing_files = [p for p in tmp_path.iterdir() if p.suffix == ".md"]
+    text = briefing_files[0].read_text("utf-8")
+    assert "Hypothesize-stage failures (1)" in text
+    assert "hypothesis-llm-unavailable@left-pad" in text
