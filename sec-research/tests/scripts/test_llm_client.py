@@ -101,6 +101,17 @@ def test_cli_build_argv_headless_json_single_turn():
     assert argv[argv.index("--model") + 1] == "sonnet"
 
 
+def test_cli_build_argv_disables_tools():
+    # Without --tools "", a production prompt can lead the model to invoke a tool (e.g.
+    # ToolSearch) instead of answering directly, burning the single allowed turn with no
+    # final text result -> non-zero exit (subtype "error_max_turns"). Discovered live on
+    # the first hb-322 run. This adapter is a pure JSON-completion call with no use for
+    # tool access.
+    from llm.providers.claude_cli import ClaudeCliClient
+    argv = ClaudeCliClient().build_argv()
+    assert argv[argv.index("--tools") + 1] == ""
+
+
 def test_cli_build_prompt_embeds_system_user_and_schema():
     from llm.providers.claude_cli import ClaudeCliClient
     p = ClaudeCliClient().build_prompt(system="SYS", messages=[{"role": "user", "content": "DOIT"}],
@@ -250,6 +261,55 @@ def test_cli_complete_json_pool_exhausted_fails_closed():
         return subprocess.CompletedProcess(argv, 1, stdout="", stderr="Credit balance is too low")
 
     with pytest.raises(LLMConfigError):
+        ClaudeCliClient(runner=fake).complete_json(
+            system="s", messages=[{"role": "user", "content": "x"}], schema=POC_AUTHOR_SCHEMA)
+
+
+def test_cli_complete_json_pool_exhausted_via_structured_rate_limit_event():
+    # The authoritative signal: a rate_limit_event with non-"allowed" status in stdout,
+    # even with a totally clean/empty stderr.
+    import json as _j
+    import subprocess
+    from llm.providers.claude_cli import ClaudeCliClient
+    from llm.client import LLMConfigError
+
+    def fake(argv, *, input, env, timeout):
+        stdout = _j.dumps([
+            {"type": "rate_limit_event", "rate_limit_info": {"status": "rejected"}},
+            {"type": "result", "subtype": "error_max_turns", "is_error": True, "result": ""},
+        ])
+        return subprocess.CompletedProcess(argv, 1, stdout=stdout, stderr="")
+
+    with pytest.raises(LLMConfigError):
+        ClaudeCliClient(runner=fake).complete_json(
+            system="s", messages=[{"role": "user", "content": "x"}], schema=POC_AUTHOR_SCHEMA)
+
+
+def test_cli_complete_json_does_not_misclassify_session_metadata_as_pool_exhaustion():
+    # Regression guard: real claude -p stdout (even on a non-zero exit) carries the full
+    # session-init event, listing every tool/MCP-server/plugin name in the CALLING
+    # session — which can contain a _POOL_TOKENS substring purely by coincidence (e.g. an
+    # MCP server literally named "...Credit Karma" matches the "credit" token). This was
+    # an actual false positive on the first live hb-322 run: an unrelated error_max_turns
+    # failure was misclassified as pool-exhausted because stdout was searched wholesale.
+    # _classify_failure must NOT keyword-match stdout — only the structured rate_limit_event
+    # (tested above) or stderr (tested in pool_exhausted_fails_closed) are valid signals.
+    import json as _j
+    import subprocess
+    from llm.providers.claude_cli import ClaudeCliClient
+    from llm.client import LLMUnavailable
+
+    def fake(argv, *, input, env, timeout):
+        stdout = _j.dumps([
+            {"type": "system", "subtype": "init",
+             "mcp_servers": [{"name": "claude.ai Intuit Credit Karma", "status": "connected"}]},
+            {"type": "rate_limit_event", "rate_limit_info": {"status": "allowed"}},
+            {"type": "result", "subtype": "error_max_turns", "is_error": True, "result": "",
+             "errors": ["Reached maximum number of turns (1)"]},
+        ])
+        return subprocess.CompletedProcess(argv, 1, stdout=stdout, stderr="")
+
+    with pytest.raises(LLMUnavailable):
         ClaudeCliClient(runner=fake).complete_json(
             system="s", messages=[{"role": "user", "content": "x"}], schema=POC_AUTHOR_SCHEMA)
 

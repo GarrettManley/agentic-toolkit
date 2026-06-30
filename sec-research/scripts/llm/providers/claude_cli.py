@@ -75,8 +75,29 @@ def _find_event(events, type_name: str) -> dict | None:
 
 
 def _classify_failure(proc) -> Exception:
-    blob = ((proc.stdout or "") + " " + (proc.stderr or "")).lower()
-    if any(t in blob for t in _POOL_TOKENS):
+    # Prefer the structured rate_limit_event signal over keyword matching. stdout on ANY
+    # non-zero exit still contains the full session-init event (every tool name, MCP server
+    # name, plugin name in the calling session) — keyword-searching that blob produced a
+    # real false positive: an MCP server literally named "...Credit Karma" matched the
+    # "credit" token, misclassifying an unrelated error_max_turns failure as pool-exhausted.
+    # Discovered empirically on the first live hb-322 run. Only fall back to keyword-matching
+    # stderr (the actual CLI error channel, far smaller and not session-metadata-polluted) —
+    # never stdout.
+    try:
+        events = json.loads(proc.stdout or "")
+    except json.JSONDecodeError:
+        events = None
+    if events is not None:
+        rate_limit = _find_event(events, "rate_limit_event")
+        if rate_limit is not None:
+            status = (rate_limit.get("rate_limit_info") or {}).get("status")
+            if status not in (None, "allowed"):
+                return LLMConfigError(
+                    f"claude CLI: rate_limit_info.status={status!r} (not 'allowed'). "
+                    "NOT spilling to the metered API. Top up the pool or wait for the "
+                    f"monthly reset. exit={proc.returncode}")
+    stderr_blob = (proc.stderr or "").lower()
+    if any(t in stderr_blob for t in _POOL_TOKENS):
         return LLMConfigError(
             "claude CLI: programmatic credit pool appears exhausted or rate-limited. "
             "NOT spilling to the metered API. Top up the pool or wait for the monthly "
@@ -96,8 +117,14 @@ class ClaudeCliClient:
         return {k: v for k, v in os.environ.items() if k not in _STRIP_ENV}
 
     def build_argv(self) -> list[str]:
+        # --tools "" disables all tool access. Without it, a real production prompt can
+        # lead the model to invoke a tool (e.g. ToolSearch) instead of answering directly;
+        # that consumes the single allowed turn with no final text result, and the CLI
+        # exits non-zero with subtype "error_max_turns" — discovered empirically on the
+        # first live hb-322 run. This adapter is a pure JSON-completion call; it has no
+        # use for tool access and disabling it removes the failure mode entirely.
         return [CLI_BIN, "-p", "--output-format", "json",
-                "--max-turns", "1", "--model", self.model]
+                "--max-turns", "1", "--model", self.model, "--tools", ""]
 
     def build_prompt(self, *, system: str, messages: list[dict], schema: dict) -> str:
         user = "\n\n".join(m["content"] for m in messages if m.get("role") == "user")
