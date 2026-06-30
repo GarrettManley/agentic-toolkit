@@ -84,7 +84,19 @@ def test_generate_drops_out_of_scope_target(scoped, tmp_path):
     client = FakeClient([{"hypotheses": [_model_hypothesis(identifier="evil-pkg")]}])
     out = generate_hypotheses(scoped, [_recon_item()], client=client,
                               hyp_root=tmp_path, now=NOW)
-    assert out == []  # targeted a package not in scope -> hard drop
+    assert out == []  # target (evil-pkg) is neither the recon asset nor in scope -> hard drop
+
+
+def test_generate_drops_target_diverging_from_recon_asset(scoped, tmp_path):
+    """A dependency-cve hypothesis whose target.identifier differs from the recon item's asset is
+    dropped (hypothesis-target-divergence) even when that target is independently IN SCOPE — the
+    finding must be filed under the asset the recon-stamped seed/PoC actually tests, not a sibling.
+    left-pad is in the scope fixture, so the old same-slug scope gate would NOT have caught this."""
+    from llm.generate import generate_hypotheses
+    client = FakeClient([{"hypotheses": [_model_hypothesis(identifier="left-pad")]}])
+    out = generate_hypotheses(scoped, [_recon_item()], client=client,  # recon item is lodash
+                              hyp_root=tmp_path, now=NOW)
+    assert out == []
 
 
 def test_generate_empty_playbooks_is_noop(scoped, tmp_path):

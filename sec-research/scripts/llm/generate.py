@@ -151,12 +151,22 @@ def generate_hypotheses(scopes: dict, recon: list, *, client: LLMClient | None =
                               "asset_identifier": item.get("asset", {}).get("identifier", ""),
                               "recon_ts": item.get("recon_ts", "")}
             _normalize_authored(h, item)
-            if h.get("vuln_class") == "dependency-cve" and not (h.get("target") or {}).get("version_or_revision"):
+            if h.get("vuln_class") == "dependency-cve":
+                tgt = h.get("target") or {}
+                asset_id = (item.get("asset") or {}).get("identifier")
+                # The recon-stamped seed (package_name/version) describes THIS recon asset, so the
+                # finding's target must be it too. A model targeting a sibling package — even one in
+                # scope — would file the finding under a target the PoC never tests. Drop with a trace.
+                if asset_id and tgt.get("identifier") != asset_id:
+                    ledger.append_event("hypothesis-target-divergence", slug=slug,
+                                        target=tgt.get("identifier"), recon_asset=asset_id)
+                    continue
                 # Recon could not supply an install version; a dependency-cve PoC is impossible.
                 # Drop with a trace rather than persist an accepted-but-un-PoC-able hypothesis.
-                ledger.append_event("hypothesis-version-unresolved", slug=slug,
-                                    target=(h.get("target") or {}).get("identifier"))
-                continue
+                if not tgt.get("version_or_revision"):
+                    ledger.append_event("hypothesis-version-unresolved", slug=slug,
+                                        target=tgt.get("identifier"))
+                    continue
             ok, errors = validate_hypothesis(h)
             if not ok:
                 ledger.append_event("hypothesis-invalid", slug=slug, errors=errors[:3])
