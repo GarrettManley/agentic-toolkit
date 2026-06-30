@@ -82,6 +82,38 @@ def _today() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
 
+HYPOTHESIZE_FAILURE_EVENTS = {"hypothesis-llm-unavailable", "hypothesis-parse-error"}
+
+
+def _hypothesize_failures_since(before_count: int) -> list[dict]:
+    """Ledger entries appended since `before_count` whose event_type is a transient/infra
+    hypothesize-stage failure (LLM unreachable or its response unparseable) -- NOT a reasoned
+    drop (out-of-scope/invalid/target-divergence/version-unresolved), which stays silent by
+    design.
+
+    A 'clean' zero-hypotheses outcome is only defensible if every per-item drop was a reasoned
+    decision; a transient failure produces the exact same terminal shape. hb-322's first live
+    run discovered this masking pattern for real (see
+    docs/superpowers/research/2026-06-30-hb-322-first-real-run.md) -- this is the generalized
+    fix for the swallow-and-continue architecture in generate_hypotheses, covering both the
+    unattended cron path and the supervised path's live checkpoint.
+    """
+    return [e for e in ledger.read_all()[before_count:]
+            if e.get("event_type") in HYPOTHESIZE_FAILURE_EVENTS]
+
+
+def _failure_identifier(event: dict) -> str:
+    """Best available per-recon-item identifier for a hypothesize-stage failure event.
+
+    `slug` on these events is the program-level scope slug (set once per program; see
+    scripts/recon/recon_item.py), constant across every recon item/asset in the run -- NOT a
+    per-item identifier. `asset` (captured for hypothesis-llm-unavailable, see generate.py)
+    names the actual failing recon item and must be preferred when present; fall back to
+    `slug` only for event types that don't capture it (hypothesis-parse-error).
+    """
+    return event.get("asset") or event["slug"]
+
+
 def stage_refresh_scopes(scopes: dict) -> list[str]:
     """STUB (Stage 2). For Stage 1, just lists currently-loaded scopes."""
     return [f"scope already loaded: {slug}" for slug in scopes]

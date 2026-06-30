@@ -42,6 +42,62 @@ def test_until_choices_validated():
 
 
 # --------------------------------------------------------------------------- #
+# Hypothesize-stage failure detection (hb-a2w)
+# --------------------------------------------------------------------------- #
+
+def test_hypothesize_failures_since_filters_to_transient_failure_types(monkeypatch, tmp_path):
+    """Only the two infra/transient event types count as failures; the four reasoned-drop
+    types (out-of-scope/invalid/divergence/version-unresolved) must be ignored."""
+    import nightly
+    from lib import ledger as ledger_mod
+    monkeypatch.setattr(ledger_mod, "LEDGER_PATH", tmp_path / "ledger.jsonl")
+
+    before = len(ledger_mod.read_all())
+    ledger_mod.append_event("hypothesis-out-of-scope", slug="a", target="t", resolved="r")
+    ledger_mod.append_event("hypothesis-llm-unavailable", slug="prog-x", asset="pkg-b")
+    ledger_mod.append_event("hypothesis-invalid", slug="c", errors=[])
+    ledger_mod.append_event("hypothesis-parse-error", slug="prog-x")
+    ledger_mod.append_event("hypothesis-version-unresolved", slug="e", target="t")
+    ledger_mod.append_event("hypothesis-target-divergence", slug="f", target="t", recon_asset="r")
+
+    failures = nightly._hypothesize_failures_since(before)
+    assert [e["event_type"] for e in failures] == [
+        "hypothesis-llm-unavailable", "hypothesis-parse-error",
+    ]
+    assert [e["slug"] for e in failures] == ["prog-x", "prog-x"]
+
+
+def test_hypothesize_failures_since_ignores_entries_before_the_marker(monkeypatch, tmp_path):
+    """Entries logged before `before_count` (e.g. from an earlier run) must not be
+    re-reported on a later call."""
+    import nightly
+    from lib import ledger as ledger_mod
+    monkeypatch.setattr(ledger_mod, "LEDGER_PATH", tmp_path / "ledger.jsonl")
+
+    ledger_mod.append_event("hypothesis-llm-unavailable", slug="prog-old", asset="pkg-old")
+    marker = len(ledger_mod.read_all())
+    ledger_mod.append_event("hypothesis-llm-unavailable", slug="prog-old", asset="pkg-new")
+
+    failures = nightly._hypothesize_failures_since(marker)
+    assert [e["asset"] for e in failures] == ["pkg-new"]
+
+
+def test_failure_identifier_prefers_asset_over_program_slug():
+    """`slug` is the program-level scope slug (constant across every recon item in a run) --
+    NOT a per-item identifier. `asset` (when the event captured it) is the real per-item
+    identifier and must be preferred."""
+    import nightly
+
+    assert nightly._failure_identifier(
+        {"event_type": "hypothesis-llm-unavailable", "slug": "huntr-npm-x", "asset": "left-pad"}
+    ) == "left-pad"
+    # hypothesis-parse-error never captures `asset` (see generate.py) -- fall back to slug.
+    assert nightly._failure_identifier(
+        {"event_type": "hypothesis-parse-error", "slug": "huntr-npm-x"}
+    ) == "huntr-npm-x"
+
+
+# --------------------------------------------------------------------------- #
 # Supervised flow
 # --------------------------------------------------------------------------- #
 
