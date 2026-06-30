@@ -2,7 +2,15 @@
 
 **Tracker:** hb-322 (P1, sec-research's first real end-to-end run vs huntr.com, supervised, trustworthy outcome).
 
-## Terminal outcome
+**Correction note:** this document's first version claimed a trustworthy null based on two
+runs that were, in fact, **masked LLM failures** — caught by the final whole-branch code
+review, which flagged that the "trustworthy null" claim wasn't evidenced against the
+ledger. Investigating that flag surfaced a real bug (see below) that this corrected version
+documents alongside the genuinely-validated re-run. The lesson stands on its own: a "clean"
+journal checkpoint is not sufficient evidence of a reasoned model decision — the ledger's
+absence of `hypothesis-llm-unavailable`/`hypothesis-parse-error` events is the actual proof.
+
+## Terminal outcome (final, ledger-verified)
 
 **(c) Defensible evidence-backed null**, full hypothesis audit trail, journal at
 `runtime/journals/2026-06-30-huntr-isaacs-minimatch.md`:
@@ -16,7 +24,16 @@ Checkpoint — draft:       reached, findings drafted: 0 (none)
 Result: NULL result — no novel confirmed finding; see verdicts for the audit trail
 ```
 
-## Why the null is trustworthy, not a gap
+**Ledger verification (the actual evidence the null is trustworthy):** queried
+`submissions/ledger.jsonl` for all entries with `slug == "huntr-isaacs-minimatch"` logged
+after this run's start (`2026-06-30T20:36:10Z`) — **zero entries**. No
+`hypothesis-llm-unavailable`, no `hypothesis-parse-error`, no `hypothesis-target-divergence`,
+no `hypothesis-invalid`. This rules out every silent-drop path in
+`generate_hypotheses` (`llm/generate.py:134-185`); the `0` hypotheses reflects a genuine
+model decision (`{"hypotheses": []}`, confirmed verbatim via direct reproduction below),
+not a swallowed failure.
+
+## Why the null is trustworthy
 
 Recon resolved `minimatch@10.2.5` and surfaced 9 `known_advisories` from the lockfile scan
 — but every one of them targets a **transitive** dependency (`brace-expansion`, `tar`,
@@ -25,10 +42,10 @@ Recon resolved `minimatch@10.2.5` and surfaced 9 `known_advisories` from the loc
 (`dependency-cve/known-advisory-confirmation`) explicitly scopes v1 to the **direct**
 asset (negative signal: "The advisory targets a different package than the asset
 (transitive-only; v1 targets the direct asset)"). The model — running through the new
-`claude-cli` provider — correctly declined to mis-target a transitive advisory onto
-`minimatch`, producing zero hypotheses rather than a fabricated finding. This is the
-evidence-grounded behavior `sec-research/CLAUDE.md` requires, confirmed working under a
-real external target rather than a fixture.
+`claude-cli` provider, with MCP/tool access fully disabled (see bugs below) — correctly
+declined to mis-target a transitive advisory onto `minimatch`, producing a genuine
+`{"hypotheses": []}` rather than a fabricated finding. This is the evidence-grounded
+behavior `sec-research/CLAUDE.md` requires, confirmed working under a real external target.
 
 ## Provider validation: what this run did and did not exercise
 
@@ -43,36 +60,38 @@ real external target rather than a fixture.
   hb-322 needed Claude in the first place (hb-26v: local 7B PoC authoring is non-viable).
   With 0 hypotheses, there was nothing to verify, so the differential-oracle/PoC-authoring
   path through `claude-cli` was never invoked. **The deeper question — does `claude-cli`
-  reliably author discriminating PoCs — remains untested by this run.** This is a real,
-  residual gap, not a closed question; the next real run against a program with a genuine
-  direct-asset known-CVE (or the next iteration of this one, once huntr surfaces a real
-  minimatch CVE) is the actual validation point for that path.
+  reliably author discriminating PoCs — remains untested by this run.** Filed on the
+  follow-up bead (hb-5i3) as the actual validation point for the next real run.
 
-## Two live-discovered bugs, fixed mid-run (commit `5fed247`)
+## Three live-discovered bugs, fixed mid-run
 
-The first two real attempts failed with `LLMConfigError: programmatic credit pool appears
-exhausted or rate-limited` — investigated and found to be a **false positive**, not real
-pool exhaustion (`claude -p` direct calls succeeded fine throughout, `rate_limit_info.status`
-was `"allowed"` every time it was checked):
+The first attempts failed or silently produced masked nulls. All three are now covered by
+regression tests; full suite 439 passed, 6 skipped, post-fix.
 
-1. **Tool-use turn exhaustion.** Without `--tools ""`, the model invoked `ToolSearch`
-   instead of answering directly with JSON, against the real (larger, production)
-   hypothesis-generation prompt — burning the single allowed turn (`--max-turns 1`) with
-   no final text result, exiting non-zero with `subtype: "error_max_turns"`. Fixed by
-   adding `--tools ""` to `build_argv()` — this adapter is a pure JSON-completion call
-   with no legitimate use for tool access.
-2. **Unsound failure classification.** `_classify_failure` keyword-searched the *entire*
-   stdout blob (which on any non-zero exit still carries the full session-init event —
-   every tool, MCP server, and plugin name in the *calling* session). An MCP server
-   literally named `"...Intuit Credit Karma"` matched the `"credit"` keyword, misclassifying
-   the unrelated `error_max_turns` failure as pool-exhaustion. Fixed: check the structured
-   `rate_limit_event.rate_limit_info.status` first (the reliable signal Task 1's spike
-   surfaced), fall back to keyword-matching `stderr` only — never `stdout`.
-
-Both fixes are covered by new regression tests (`test_cli_build_argv_disables_tools`,
-`test_cli_complete_json_pool_exhausted_via_structured_rate_limit_event`,
-`test_cli_complete_json_does_not_misclassify_session_metadata_as_pool_exhaustion`). Full
-suite: 438 passed, 6 skipped, post-fix.
+1. **Tool-use turn exhaustion (commit `5fed247`).** Without `--tools ""`, the model
+   invoked a built-in tool (`ToolSearch`) instead of answering directly with JSON against
+   the real production prompt — burning the single allowed turn (`--max-turns 1`) with no
+   final text result, exiting non-zero with `subtype: "error_max_turns"`. Fixed by adding
+   `--tools ""` to `build_argv()`.
+2. **Unsound failure classification (commit `5fed247`).** `_classify_failure`
+   keyword-searched the *entire* stdout blob (which on any non-zero exit still carries the
+   full session-init event — every tool, MCP server, and plugin name in the *calling*
+   session). An MCP server literally named `"...Intuit Credit Karma"` matched the
+   `"credit"` keyword, misclassifying the unrelated `error_max_turns` failure as
+   pool-exhaustion. Fixed: check the structured `rate_limit_event.rate_limit_info.status`
+   first, fall back to keyword-matching `stderr` only — never `stdout`.
+3. **Inherited MCP servers (commit `a0f5b8b`, found via the final code review's flag).**
+   `--tools ""` only disables the *built-in* tool set — `claude -p` still inherits every
+   MCP server the **calling session** has connected (Gmail, Spotify, Google Drive, ...).
+   Even after fix #1, the model invoked an inherited MCP tool (Spotify "Search"), which
+   hit a transient Cloudflare 502 on `mcp-proxy.anthropic.com`, again burning the single
+   turn → `error_max_turns`. This time `generate_hypotheses`' per-item `LLMUnavailable`
+   catch (`generate.py:134-137`) silently swallowed it as a "clean" zero-hypotheses
+   result — the ledger showed `hypothesis-llm-unavailable` for both affected runs, which
+   is exactly the masking the final review's documentation-gap finding asked to rule out.
+   Fixed by adding `--strict-mcp-config` (with no `--mcp-config`) to `build_argv()`,
+   dropping every inherited MCP server. Confirmed via direct reproduction: the call now
+   returns a clean `subtype: "success"`, `result: '{"hypotheses": []}'`.
 
 ## Worktree base-staleness (unrelated but blocking, fixed mid-run)
 
@@ -86,16 +105,17 @@ pre-fix `__NEXT_DATA__` parse error until the worktree was rebased onto local `m
 `nightly.py` does not surface the adapter's per-call `cost=$…` log line in its terminal
 output (no logging handler configured) — a usability gap worth a follow-up, separate from
 hb-322. Based on directly-observed envelope costs during live debugging (cold-cache calls
-~$0.20–0.24 each, this workspace's `sec-research/CLAUDE.md` auto-load dominating the cache-
-creation cost), across roughly a dozen real `claude -p` invocations this session (Task 1's
-spike, ad hoc debugging calls, the two pre-fix failed attempts, and the final clean
-Step 3 + Step 4 runs), **total spend is approximately $2–3** — comfortably inside the
-$20/month Pro-tier programmatic credit pool, with no out-of-pocket spill (verified
-`ANTHROPIC_API_KEY` absent throughout via repeated positive checks).
+~$0.16–0.24 each, this workspace's `sec-research/CLAUDE.md` auto-load dominating the
+cache-creation cost), across roughly 15 real `claude -p` invocations this session (Task 1's
+spike, ad hoc debugging calls, three pre-fix failed/masked attempts, and the final two
+clean Step 3 + Step 4 runs), **total spend is approximately $2.50–3.50** — comfortably
+inside the $20/month Pro-tier programmatic credit pool, with no out-of-pocket spill
+(verified `ANTHROPIC_API_KEY` absent throughout via repeated positive checks).
 
 ## Disposition
 
 hb-322's DoD is met: a trustworthy outcome was reached (defensible evidence-backed null
-with full audit trail), via the real `claude-cli` provider, against a real loaded huntr
-program. Closing the bead (Task 7 Step 1) — with the PoC-authoring validation gap above
-filed as context for future runs, not a blocker to closure.
+with full audit trail, now ledger-verified against masking) via the real `claude-cli`
+provider, against a real loaded huntr program. The bead is closed — with the PoC-authoring
+validation gap and the masking-detection lesson both filed as context (hb-5i3 and this
+document) for the next real run.
