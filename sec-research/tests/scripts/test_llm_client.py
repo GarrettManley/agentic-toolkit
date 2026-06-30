@@ -281,3 +281,14 @@ def test_cli_preflight_passes_when_version_ok(monkeypatch):
     monkeypatch.setattr(claude_cli.shutil, "which", lambda _: "/usr/bin/claude")
     ok = lambda argv, *, input, env, timeout: subprocess.CompletedProcess(argv, 0, "2.0.0", "")
     claude_cli.ClaudeCliClient(runner=ok).preflight()  # no raise
+
+
+def test_select_client_claude_cli_arg():
+    from llm.client import select_client
+    assert select_client("claude-cli").provider == "claude-cli"
+
+
+def test_select_client_claude_cli_env(monkeypatch):
+    monkeypatch.setenv("SECRESEARCH_LLM_PROVIDER", "claude-cli")
+    from llm.client import select_client
+    assert select_client().provider == "claude-cli"

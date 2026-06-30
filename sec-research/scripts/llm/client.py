@@ -51,4 +51,7 @@ def select_client(provider: str | None = None) -> LLMClient:
     if name == "llama":
         from llm.providers.llama import LlamaServerClient
         return LlamaServerClient()
-    raise LLMConfigError(f"unknown LLM provider {name!r} (expected 'claude' or 'llama')")
+    if name == "claude-cli":
+        from llm.providers.claude_cli import ClaudeCliClient
+        return ClaudeCliClient()
+    raise LLMConfigError(f"unknown LLM provider {name!r} (expected 'claude', 'claude-cli', or 'llama')")
