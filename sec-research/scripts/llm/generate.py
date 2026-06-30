@@ -49,6 +49,7 @@ def _advisory_fixed_version(item: dict, cve: str | None) -> str | None:
 # boundary, so normalize the known aliases onto the canonical keys once, here.
 _SEED_KEY_ALIASES = {
     "cve_id_proposed_or_assigned": "candidate_cve_id",
+    "cve_id": "candidate_cve_id",
     "attack_vector": "attack_vector_hypothesis",
 }
 
@@ -59,6 +60,36 @@ def _normalize_seed_keys(seed: dict) -> None:
     for alias, canonical in _SEED_KEY_ALIASES.items():
         if alias in seed and not seed.get(canonical):
             seed[canonical] = seed.pop(alias)
+
+
+def _stamp_or_drop(obj: dict, key: str, value) -> None:
+    """Server-stamp a recon-ground-truth field, or DROP any model-supplied value when recon
+    cannot supply one — so an untrusted model value never rides through (cf. _resolve_fixed_version)."""
+    if value:
+        obj[key] = value
+    else:
+        obj.pop(key, None)
+
+
+def _normalize_authored(h: dict, item: dict) -> None:
+    """Align a model-authored hypothesis with the seed-completeness gate at the system
+    boundary. Seed-key aliases are backfill-only. For ``dependency-cve``, the seed's package
+    identity and the install version are RECON GROUND TRUTH: package_ecosystem/package_name
+    feed ``npm install`` (verify/llm_strategy.py) and the install version pins the differential
+    target, so each is stamped from recon or DROPPED — never a model value riding through (a
+    dropped field then fails the support gate rather than installing an unverified package).
+    candidate_cve_id stays model-authored (the hypothesis's claim, cross-checked by
+    _resolve_fixed_version). NOTE: target.identifier (the scope/dedup key) is intentionally left
+    model-authored and scope-checked downstream; pinning it to the recon asset to close the
+    latent seed-vs-target divergence is a tracked follow-up (would otherwise moot the scope gate)."""
+    seed = h.setdefault("evidence_seed", {})
+    _normalize_seed_keys(seed)
+    if h.get("vuln_class") != "dependency-cve":
+        return
+    asset = item.get("asset", {}) or {}
+    _stamp_or_drop(seed, "package_ecosystem", asset.get("ecosystem"))
+    _stamp_or_drop(seed, "package_name", asset.get("identifier"))
+    _stamp_or_drop(h.setdefault("target", {}), "version_or_revision", item.get("resolved_version"))
 
 
 def _resolve_fixed_version(item: dict, seed: dict) -> None:
@@ -119,7 +150,13 @@ def generate_hypotheses(scopes: dict, recon: list, *, client: LLMClient | None =
             h["recon_ref"] = {"slug": slug,
                               "asset_identifier": item.get("asset", {}).get("identifier", ""),
                               "recon_ts": item.get("recon_ts", "")}
-            _normalize_seed_keys(h.setdefault("evidence_seed", {}))
+            _normalize_authored(h, item)
+            if h.get("vuln_class") == "dependency-cve" and not (h.get("target") or {}).get("version_or_revision"):
+                # Recon could not supply an install version; a dependency-cve PoC is impossible.
+                # Drop with a trace rather than persist an accepted-but-un-PoC-able hypothesis.
+                ledger.append_event("hypothesis-version-unresolved", slug=slug,
+                                    target=(h.get("target") or {}).get("identifier"))
+                continue
             ok, errors = validate_hypothesis(h)
             if not ok:
                 ledger.append_event("hypothesis-invalid", slug=slug, errors=errors[:3])

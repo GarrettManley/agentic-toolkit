@@ -35,7 +35,7 @@ for _p in (str(_SCRIPTS_DIR), str(_SCRIPTS_DIR.parent / "hooks")):
         sys.path.insert(0, _p)
 
 from llm.client import LLMClient, LLMUnavailable  # noqa: E402
-from llm.generate import _normalize_seed_keys  # noqa: E402
+from llm.generate import _normalize_authored, _resolve_fixed_version  # noqa: E402
 from llm.playbook import PLAYBOOKS_DIR, load_playbooks, select_playbooks  # noqa: E402
 from llm.prompt import build_prompt  # noqa: E402
 from llm.schema import load_schema, model_item_schema, wrapper_schema  # noqa: E402
@@ -97,13 +97,17 @@ def score_track_a(recon_item: dict, *, client: LLMClient, trials: int,
             continue
         trial_ok = False
         for h in hyps:
-            _normalize_seed_keys(h.setdefault("evidence_seed", {}))
+            _normalize_authored(h, recon_item)
             if not (h.get("evidence_seed") or {}):
                 empty_seed += 1
             if list(item_validator.iter_errors(h)):
                 invalid += 1
                 continue
-            if seed_complete(h):
+            # Model the real Stage 4c support gate end-to-end: fixed_version is stamped only when
+            # candidate_cve_id corroborates a recon advisory, so a hallucinated CVE (seed-complete
+            # but uncorroborated) is correctly NOT counted complete.
+            _resolve_fixed_version(recon_item, h["evidence_seed"])
+            if seed_complete(h) and (h["evidence_seed"].get("fixed_version") or "").strip():
                 trial_ok = True
         if trial_ok:
             complete += 1

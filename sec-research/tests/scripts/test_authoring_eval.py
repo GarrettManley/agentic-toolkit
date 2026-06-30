@@ -94,14 +94,18 @@ def test_seed_complete_rejects_non_dependency_cve():
     assert seed_complete(good) is False
 
 
-def test_score_track_a_buckets_good_and_empty_seed():
+def test_score_track_a_complete_vs_missing_model_cve():
+    """After _normalize_authored, a dependency-cve trial gets package identity backfilled from
+    recon (so an empty model seed is no longer 'empty_seed'), but it stays INCOMPLETE when the
+    model omits candidate_cve_id — the one seed field that is its own judgment, never backfilled."""
     recon = json.loads((FIX / "recon_item_minimatch.json").read_text(encoding="utf-8"))
     good = _model_output()
-    empty = _model_output(evidence_seed={})
-    client = _FakeClient([_wrap([good]), _wrap([empty])])
+    no_cve = _model_output(evidence_seed={})   # model authored no candidate_cve_id
+    client = _FakeClient([_wrap([good]), _wrap([no_cve])])
     res = score_track_a(recon, client=client, trials=2)
-    assert res.complete == 1
-    assert res.empty_seed == 1
+    assert res.complete == 1            # only the trial carrying a model-authored CVE
+    assert res.rate == 0.5
+    assert res.empty_seed == 0          # recon backfills package identity -> seed is not empty
     assert res.rate == 0.5
 
 
@@ -136,3 +140,38 @@ def test_score_track_b_counts_refuted_when_affected_silenced(monkeypatch):
                         runner=_diff_runner(confirmed="SAFE\n", patched="SAFE\n"))
     assert res.refuted == 1
     assert res.verified == 0
+
+
+def test_track_a_scores_captured_qwen_shape_as_complete():
+    """Captured qwen/phi4 live shape: only candidate_cve_id in the seed, ecosystem in target,
+    no target.version_or_revision. The recon-aware normalization (_normalize_authored) must
+    make it seed-complete (the hb-0vq fix) — and via the SAME function production uses, so the
+    eval stays an honest proxy."""
+    captured = json.dumps({"hypotheses": [{
+        "program_slug": "huntr-npm-minimatch",
+        "target": {"asset_type": "package", "identifier": "minimatch", "ecosystem": "npm"},
+        "vuln_class": "dependency-cve",
+        "source_playbook": {"vuln_class": "dependency-cve", "technique": "known-advisory-confirmation"},
+        "rationale": "minimatch 3.0.4 is within the <3.0.5 range affected by CVE-2022-3517 (ReDoS).",
+        "confidence": 1.0, "signals_matched": ["known advisory matches resolved version"],
+        "evidence_seed": {"candidate_cve_id": "CVE-2022-3517"}}]})
+    recon = json.loads((FIX / "recon_item_minimatch.json").read_text(encoding="utf-8"))
+    res = score_track_a(recon, client=_FakeClient([captured, captured]), trials=2)
+    assert res.complete == 2 and res.rate == 1.0
+
+
+def test_track_a_rejects_hallucinated_cve():
+    """A seed-complete-shaped output whose candidate_cve_id matches NO recon advisory must NOT
+    count as complete: production's support gate needs fixed_version, which _resolve_fixed_version
+    stamps only on advisory corroboration. Guards against rewarding CVE hallucination."""
+    captured = json.dumps({"hypotheses": [{
+        "program_slug": "huntr-npm-minimatch",
+        "target": {"asset_type": "package", "identifier": "minimatch", "ecosystem": "npm"},
+        "vuln_class": "dependency-cve",
+        "source_playbook": {"vuln_class": "dependency-cve", "technique": "known-advisory-confirmation"},
+        "rationale": "minimatch 3.0.4 is within the <3.0.5 range affected by CVE-2099-0000 (fabricated).",
+        "confidence": 1.0, "signals_matched": ["fabricated advisory, no recon corroboration"],
+        "evidence_seed": {"candidate_cve_id": "CVE-2099-0000"}}]})
+    recon = json.loads((FIX / "recon_item_minimatch.json").read_text(encoding="utf-8"))
+    res = score_track_a(recon, client=_FakeClient([captured, captured]), trials=2)
+    assert res.complete == 0 and res.rate == 0.0

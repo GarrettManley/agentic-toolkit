@@ -121,6 +121,33 @@ hb-322 (P1) is unaffected for its immediate run — Claude authoring carries it.
 **strengthens the "local later" half**: local authoring is a small fix away from viable, so
 the nightly loop's token-free/API-independent path is within reach, not abandoned.
 
+## Fix landed (2026-06-30) — live-confirmed 0.00 → 1.00
+
+The seed-field alignment fix (`_normalize_authored`, shared by `generate_hypotheses` + the
+eval) landed per `docs/superpowers/plans/2026-06-30-hb-0vq-seed-field-alignment-fix.md`. A live
+Track-A re-measure (`runtime/eval/2026-06-30-postfix/`, 20 trials/model) confirms the offline
+proof generalizes to real model output:
+
+| Model | seed-complete (pre-fix) | seed-complete (post-fix, live) |
+|-------|-------------------------|--------------------------------|
+| qwen2.5-coder-7b-Q4_K_M | 0/20 (0.00) | **20/20 (1.00)** |
+| deepseek-r1-7b-Q4_K_M | 0/20 (0.00) | **20/20 (1.00)** |
+| gemma-4-E4B-it-Q4_K_M | 0/20 (0.00) | **20/20 (1.00)** |
+| phi4-mini-Q4_K_M | 0/20 (0.00) | **20/20 (1.00)** |
+| gemma3-4b-Q4_K_M | skipped (load) | skipped (load) |
+
+**80/80 trials seed-complete.** Adversarial code review hardened the fix beyond the headline:
+the eval's Track-A gate now also runs `_resolve_fixed_version` and requires `fixed_version`, so it
+models the real Stage-4c support gate and **rejects hallucinated CVEs** (a seed-complete-shaped
+output with an uncorroborated `candidate_cve_id` scores incomplete) — the 1.00 above means the
+models authored the *corroborated* CVE-2022-3517, not merely a CVE-shaped string. Package identity
+and install version are stamped-or-dropped from recon (never a model value reaching `npm install`),
+and an unresolvable install version is dropped with a `hypothesis-version-unresolved` ledger trace.
+
+**Verdict (final): local 7B/4B authoring is VIABLE** for seed-complete dependency-cve hypotheses.
+hb-0vq resolved. Follow-ups: live Track B (PoC-authoring through the oracle), and pinning
+`target.identifier` from recon (latent seed-vs-target divergence).
+
 ## Reproduce
 
 ```powershell

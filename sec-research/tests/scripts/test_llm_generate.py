@@ -157,3 +157,13 @@ def test_generate_drops_unparseable_response(scoped, tmp_path):
     out = generate_hypotheses(scoped, [_recon_item()], client=client,
                               hyp_root=tmp_path, now=NOW)
     assert out == []
+
+
+def test_generate_drops_dependency_cve_with_unresolved_version(scoped, tmp_path):
+    """When recon cannot supply resolved_version, a dependency-cve PoC has no install target, so
+    the hypothesis is dropped with a hypothesis-version-unresolved trace, not persisted PoC-dead."""
+    from llm.generate import generate_hypotheses
+    item = {k: v for k, v in _recon_item().items() if k != "resolved_version"}
+    client = FakeClient([{"hypotheses": [_model_hypothesis()]}])
+    out = generate_hypotheses(scoped, [item], client=client, hyp_root=tmp_path, now=NOW)
+    assert out == []
