@@ -198,3 +198,86 @@ def test_cli_default_runner_resolves_binary_via_which(monkeypatch):
     monkeypatch.setattr(claude_cli.subprocess, "run", fake_run)
     claude_cli._default_runner(["claude", "-p"], input="x", env={}, timeout=5)
     assert seen["argv"][0] == r"C:\resolved\claude.cmd"
+
+
+def _ok_envelope_stdout():
+    # Real claude -p stdout is a JSON ARRAY of session events (Task 1's spike finding) —
+    # the result data is the LAST element with type=="result", not the whole stdout value.
+    import json as _j
+    return _j.dumps([
+        {"type": "rate_limit_event", "rate_limit_info": {"status": "allowed"}},
+        {"type": "result", "subtype": "success", "is_error": False, "total_cost_usd": 0.001,
+         "result": _j.dumps({"files": {}, "trigger_cmd": ["x"],
+                             "sentinel_confirmed": "A", "expected_confirmed_exit": 0,
+                             "sentinel_patched": "B", "expected_patched_exit": 1,
+                             "reasoning": "r"})},
+    ])
+
+
+def test_cli_complete_json_from_fixture():
+    import json
+    from llm.providers.claude_cli import ClaudeCliClient
+    resp = ClaudeCliClient().complete_json(
+        system="s", messages=[{"role": "user", "content": "x"}],
+        schema=POC_AUTHOR_SCHEMA, from_fixture=str(FIX / "claude_cli_response.json"))
+    assert resp.provider == "claude-cli"
+    assert json.loads(resp.text)["expected_patched_exit"] == 0
+
+
+def test_cli_complete_json_subprocess_omits_key_and_pipes_prompt(monkeypatch):
+    import subprocess
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-fake123")
+    seen = {}
+
+    def fake(argv, *, input, env, timeout):
+        seen["env"], seen["input"], seen["argv"] = env, input, argv
+        return subprocess.CompletedProcess(argv, 0, stdout=_ok_envelope_stdout(), stderr="")
+
+    from llm.providers.claude_cli import ClaudeCliClient
+    resp = ClaudeCliClient(runner=fake).complete_json(
+        system="SYS", messages=[{"role": "user", "content": "HELLO"}], schema=POC_AUTHOR_SCHEMA)
+    assert "ANTHROPIC_API_KEY" not in seen["env"]
+    assert "HELLO" in seen["input"] and "SYS" in seen["input"]
+    assert resp.provider == "claude-cli"
+
+
+def test_cli_complete_json_pool_exhausted_fails_closed():
+    import subprocess
+    from llm.providers.claude_cli import ClaudeCliClient
+    from llm.client import LLMConfigError
+
+    def fake(argv, *, input, env, timeout):
+        return subprocess.CompletedProcess(argv, 1, stdout="", stderr="Credit balance is too low")
+
+    with pytest.raises(LLMConfigError):
+        ClaudeCliClient(runner=fake).complete_json(
+            system="s", messages=[{"role": "user", "content": "x"}], schema=POC_AUTHOR_SCHEMA)
+
+
+def test_cli_complete_json_transient_failure_is_unavailable():
+    import subprocess
+    from llm.providers.claude_cli import ClaudeCliClient
+    from llm.client import LLMUnavailable
+
+    def fake(argv, *, input, env, timeout):
+        return subprocess.CompletedProcess(argv, 1, stdout="", stderr="network error")
+
+    with pytest.raises(LLMUnavailable):
+        ClaudeCliClient(runner=fake).complete_json(
+            system="s", messages=[{"role": "user", "content": "x"}], schema=POC_AUTHOR_SCHEMA)
+
+
+def test_cli_preflight_raises_when_binary_missing(monkeypatch):
+    from llm.providers import claude_cli
+    from llm.client import LLMConfigError
+    monkeypatch.setattr(claude_cli.shutil, "which", lambda _: None)
+    with pytest.raises(LLMConfigError):
+        claude_cli.ClaudeCliClient().preflight()
+
+
+def test_cli_preflight_passes_when_version_ok(monkeypatch):
+    import subprocess
+    from llm.providers import claude_cli
+    monkeypatch.setattr(claude_cli.shutil, "which", lambda _: "/usr/bin/claude")
+    ok = lambda argv, *, input, env, timeout: subprocess.CompletedProcess(argv, 0, "2.0.0", "")
+    claude_cli.ClaudeCliClient(runner=ok).preflight()  # no raise

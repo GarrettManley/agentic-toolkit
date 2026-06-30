@@ -135,3 +135,41 @@ class ClaudeCliClient:
                             model=envelope.get("model", self.model),
                             finish_reason=envelope.get("subtype"),
                             usage=envelope.get("usage"))
+
+    def complete_json(self, *, system: str, messages: list[dict], schema: dict,
+                      max_tokens: int = 4096, temperature: float = 0.0,
+                      timeout: float = 120.0, from_fixture: str | None = None) -> ChatResponse:
+        # max_tokens / temperature are accepted for LLMClient parity; `claude -p`
+        # does not expose them, so they are intentionally unused here.
+        if from_fixture is not None:
+            envelope = json.loads(Path(from_fixture).read_text(encoding="utf-8"))
+            return self.parse_stdout(envelope, schema=schema)
+        prompt = self.build_prompt(system=system, messages=messages, schema=schema)
+        try:
+            proc = self._runner(self.build_argv(), input=prompt,
+                                env=self.build_env(), timeout=timeout)
+        except subprocess.TimeoutExpired as e:
+            raise LLMUnavailable(f"claude CLI timed out after {timeout}s") from e
+        except FileNotFoundError as e:
+            raise LLMConfigError(f"claude CLI not found ({CLI_BIN!r} not on PATH)") from e
+        if proc.returncode != 0:
+            raise _classify_failure(proc)
+        try:
+            envelope = json.loads(proc.stdout)
+        except json.JSONDecodeError as e:
+            raise LLMUnavailable(
+                f"claude CLI stdout was not JSON: {e}; stderr={(proc.stderr or '')[:300]}") from e
+        return self.parse_stdout(envelope, schema=schema)
+
+    def preflight(self) -> None:
+        """Token-free readiness check: confirm the `claude` CLI is on PATH and runnable.
+        Does NOT validate auth (that would spend the pool); a missing/auth-broken CLI
+        surfaces on the first real call, fail-closed."""
+        if shutil.which(CLI_BIN) is None:
+            raise LLMConfigError(f"claude CLI not found: {CLI_BIN!r} not on PATH")
+        try:
+            proc = self._runner([CLI_BIN, "--version"], input="", env=self.build_env(), timeout=15)
+        except Exception as e:
+            raise LLMUnavailable(f"claude CLI --version failed: {e}") from e
+        if proc.returncode != 0:
+            raise LLMUnavailable(f"claude CLI --version exit={proc.returncode}")
