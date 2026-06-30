@@ -112,6 +112,19 @@ def test_cli_build_argv_disables_tools():
     assert argv[argv.index("--tools") + 1] == ""
 
 
+def test_cli_build_argv_disables_inherited_mcp_servers():
+    # --tools "" alone only disables the BUILT-IN tool set; claude -p still inherits every
+    # MCP server the CALLING session has connected (Gmail, Spotify, Drive, ...) unless
+    # --strict-mcp-config is also passed (with no --mcp-config, this drops them all). The
+    # first two live hb-322 runs hit this: the model invoked an inherited MCP tool, the
+    # MCP call hit a transient 502, and the turn was burned -> error_max_turns, silently
+    # masked downstream as a clean "zero hypotheses" result.
+    from llm.providers.claude_cli import ClaudeCliClient
+    argv = ClaudeCliClient().build_argv()
+    assert "--strict-mcp-config" in argv
+    assert "--mcp-config" not in argv
+
+
 def test_cli_build_prompt_embeds_system_user_and_schema():
     from llm.providers.claude_cli import ClaudeCliClient
     p = ClaudeCliClient().build_prompt(system="SYS", messages=[{"role": "user", "content": "DOIT"}],

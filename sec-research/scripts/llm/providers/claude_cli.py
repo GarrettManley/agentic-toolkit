@@ -117,14 +117,20 @@ class ClaudeCliClient:
         return {k: v for k, v in os.environ.items() if k not in _STRIP_ENV}
 
     def build_argv(self) -> list[str]:
-        # --tools "" disables all tool access. Without it, a real production prompt can
-        # lead the model to invoke a tool (e.g. ToolSearch) instead of answering directly;
-        # that consumes the single allowed turn with no final text result, and the CLI
-        # exits non-zero with subtype "error_max_turns" — discovered empirically on the
-        # first live hb-322 run. This adapter is a pure JSON-completion call; it has no
-        # use for tool access and disabling it removes the failure mode entirely.
-        return [CLI_BIN, "-p", "--output-format", "json",
-                "--max-turns", "1", "--model", self.model, "--tools", ""]
+        # --tools "" disables the BUILT-IN tool set (Bash, Edit, Read, ToolSearch, ...).
+        # --strict-mcp-config (with no --mcp-config) additionally drops every MCP server
+        # the *calling* session has connected (Gmail, Spotify, Drive, ...) — without it,
+        # claude -p still inherits them, and the model can invoke one instead of answering
+        # directly. Both were needed: --tools "" alone still left an MCP tool (Spotify
+        # Search) reachable, which the model invoked, hit a transient Cloudflare 502 on
+        # mcp-proxy.anthropic.com, and burned the single allowed turn -> non-zero exit
+        # (subtype "error_max_turns") with no final text result. Discovered empirically
+        # across the first two live hb-322 runs, both silently masked as a clean "zero
+        # hypotheses" outcome by generate_hypotheses' per-item LLMUnavailable catch. This
+        # adapter is a pure JSON-completion call; it has no use for any tool, built-in or
+        # MCP, and removing both eliminates the failure mode entirely.
+        return [CLI_BIN, "-p", "--output-format", "json", "--max-turns", "1",
+                "--model", self.model, "--tools", "", "--strict-mcp-config"]
 
     def build_prompt(self, *, system: str, messages: list[dict], schema: dict) -> str:
         user = "\n\n".join(m["content"] for m in messages if m.get("role") == "user")
