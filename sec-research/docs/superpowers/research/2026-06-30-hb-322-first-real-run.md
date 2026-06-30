@@ -26,11 +26,12 @@ Result: NULL result — no novel confirmed finding; see verdicts for the audit t
 
 **Ledger verification (the actual evidence the null is trustworthy):** queried
 `submissions/ledger.jsonl` for all entries with `slug == "huntr-isaacs-minimatch"` logged
-after this run's start (`2026-06-30T20:36:10Z`) — **zero entries**. No
-`hypothesis-llm-unavailable`, no `hypothesis-parse-error`, no `hypothesis-target-divergence`,
-no `hypothesis-invalid`. This rules out every silent-drop path in
-`generate_hypotheses` (`llm/generate.py:134-185`); the `0` hypotheses reflects a genuine
-model decision (`{"hypotheses": []}`, confirmed verbatim via direct reproduction below),
+after this run's start (`2026-06-30T20:36:10Z`) — **zero entries**. `generate_hypotheses`
+(`llm/generate.py:134-185`) has six silent-drop paths (`hypothesis-llm-unavailable`,
+`hypothesis-parse-error`, `hypothesis-target-divergence`, `hypothesis-version-unresolved`,
+`hypothesis-invalid`, `hypothesis-out-of-scope`), each logging to this ledger before
+`continue`ing; zero entries of any of the six rules out every one. The `0` hypotheses
+reflects a genuine model decision (`{"hypotheses": []}`, confirmed verbatim via direct reproduction below),
 not a swallowed failure.
 
 ## Why the null is trustworthy
