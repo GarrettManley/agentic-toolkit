@@ -148,6 +148,42 @@ and an unresolvable install version is dropped with a `hypothesis-version-unreso
 hb-0vq resolved. Follow-ups: live Track B (PoC-authoring through the oracle), and pinning
 `target.identifier` from recon (latent seed-vs-target divergence).
 
+## Track B — PoC-authoring is NOT viable at the 7B tier (hb-26v, 2026-06-30)
+
+Seed-completeness (Track A) is necessary but not sufficient: the nightly loop also needs the model
+to author a **working differential PoC**. Track B (`score_track_b`) holds the seed-complete
+minimatch/CVE-2022-3517 hypothesis constant and runs the model's PoC through the **real differential
+oracle** (Docker; affected 3.0.4 vs fixed 3.0.5), scoring `verified/refuted/error/skipped`.
+
+**Proof** (`runtime/eval/2026-06-30-trackb/`, llama provider, 5 trials):
+
+| Model | verified | refuted | error | skipped | rate |
+|-------|----------|---------|-------|---------|------|
+| qwen2.5-coder-7b-Q4_K_M | 0 | 0 | 5 | 0 | **0.00** |
+| deepseek-r1-7b-Q4_K_M | — | — | — | — | **blocked** (harness crash) |
+
+**qwen — model-quality failure, not infra.** The oracle ran cleanly (4 phases: install+trigger on
+both versions, exit 0, no timeout). The verdict is `error / "differential: affected-indeterminate"`
+because the authored PoC does not discriminate. Captured PoC:
+`minimatch.match(['a/b'], '**/b')` in a try/catch, `expected_confirmed_exit: 1`. Two defects: (1) it
+detects ReDoS via a **thrown exception**, but CVE-2022-3517 is a regex-DoS that **hangs/times out**,
+it does not throw; (2) the input does not induce catastrophic backtracking. So affected and fixed
+produce **identical** output (same `stdout_sha256`) → no discrimination → the oracle correctly returns
+`error`. Other trials emitted unparseable PoC JSON (`hypothesis-parse-error`). Both are PoC-authoring
+failures: the 7B does not construct a working differential ReDoS PoC.
+
+**deepseek — blocked by a pre-existing harness bug.** The eval crashed on trial 0 with
+`FileNotFoundError: …/work/HYP-EVAL-MINIMATCH-0-affected/minimatch/package.json` (uncaught in the
+sandbox/verify path, which this work did not modify) — a robustness gap triggered by deepseek's
+PoC-plan shape that kills the eval process, so deepseek could not be measured.
+
+**Verdict: local 7B PoC-authoring is NOT viable.** Constructing a working differential PoC (malicious
+backtracking input + timeout-based detection) is past the tier. **Recommendation:** the nightly loop
+is **local seed-authoring (viable, this commit) + Claude PoC-authoring** — Claude stays the PoC author
+until a stronger local model is in reach. Follow-ups: (1) fix the sandbox `FileNotFoundError` crash
+(harden the differential harness) and re-probe deepseek; (2) optional prompt-hardening for local PoC
+shape. hb-26v item 1 resolved (not-viable, evidence-backed).
+
 ## Reproduce
 
 ```powershell
