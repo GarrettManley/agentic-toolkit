@@ -83,6 +83,7 @@ submission:
 | `user_agent_required` | string | All HTTP requests must use this User-Agent |
 | `no_dast_against_prod` | bool | If true, PT-1 blocks DAST patterns against production hostnames |
 | `embargo_period_days` | int | Default disclosure timeline; informs `sign_approval.py` review prompt |
+| `unattended_eligible` | bool | If true, the unattended nightly-cron path (`nightly.py` with no `--supervised` flag) may process this scope to full draft-finding completion. Absent or false: the scope is skipped by cron (still fully usable via `nightly.py --supervised`). Defaults to NOT eligible so a freshly-loaded scope stays supervised-only until a human explicitly sets this to `true` by hand-editing `scope.yaml`. |
 
 ## `submission` fields
 

@@ -63,6 +63,10 @@
         "no_dast_against_prod": {
           "type": "boolean"
         },
+        "unattended_eligible": {
+          "type": "boolean",
+          "description": "If true, the unattended nightly-cron path (run_unattended) may process this scope to full draft-finding completion. Absent or false: the scope is skipped by cron (still fully usable via `nightly.py --supervised`, which is unaffected by this flag). Defaults to NOT eligible so a freshly-loaded scope stays supervised-only until a human explicitly sets this to true by hand-editing scope.yaml."
+        },
         "embargo_period_days": {
           "type": "integer",
           "minimum": 0

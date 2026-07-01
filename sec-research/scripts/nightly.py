@@ -124,6 +124,31 @@ def stage_refresh_disclosed(scopes: dict) -> list[str]:
     return [f"disclosed-cache refresh skipped (Stage 2): {slug}" for slug in scopes]
 
 
+def _filter_unattended_eligible(scopes: dict) -> tuple[dict, list[str]]:
+    """Only scopes explicitly marked rules.unattended_eligible=true are processed by the
+    unattended nightly-cron path. A freshly-loaded scope (rules.unattended_eligible
+    absent or false) is skipped here until a human hand-edits its scope.yaml to set
+    rules.unattended_eligible: true -- this is what makes a supervised run's implicit
+    "no submission in this step" boundary real rather than merely stated; without it,
+    the already-registered nightly cron would silently reprocess a fresh scope to full
+    draft-finding completion on the very next scheduled run. See
+    docs/superpowers/specs/2026-07-01-discovery-loop-validation-design.md §2.3.
+
+    run_supervised() is NOT filtered by this flag -- an explicit --supervised
+    invocation IS the human supervision itself, regardless of the flag's value.
+
+    Returns (eligible_scopes, skipped_slugs).
+    """
+    eligible: dict = {}
+    skipped: list[str] = []
+    for slug, scope in scopes.items():
+        if (scope.get("rules") or {}).get("unattended_eligible") is True:
+            eligible[slug] = scope
+        else:
+            skipped.append(slug)
+    return eligible, skipped
+
+
 def stage_recon(scopes: dict) -> list[dict]:
     """Stage 3 recon — per-asset known-vulnerability baseline."""
     return run_recon(scopes)
@@ -250,7 +275,14 @@ def run_unattended() -> int:
     print(f"=== nightly.py started at {started_at} ===")
 
     scopes = load_all_scopes()
-    print(f"Loaded {len(scopes)} program scope(s)")
+    total_loaded = len(scopes)
+    print(f"Loaded {total_loaded} program scope(s)")
+    scopes, skipped_slugs = _filter_unattended_eligible(scopes)
+    if skipped_slugs:
+        print(f"Skipping {len(skipped_slugs)} scope(s) not marked unattended-eligible: "
+              f"{', '.join(skipped_slugs)} (hand-edit programs/<slug>/scope.yaml's "
+              f"rules.unattended_eligible to true once a supervised session has "
+              f"reviewed them)")
     ledger_count_before_run = len(ledger.read_all())
 
     refresh_log = stage_refresh_scopes(scopes)
@@ -290,7 +322,9 @@ def run_unattended() -> int:
             "kind": "nightly",
             "started_at": started_at,
             "finished_at": finished_at,
-            "scopes_loaded": len(scopes),
+            "scopes_loaded": total_loaded,
+            "scopes_processed": len(scopes),
+            "scopes_skipped_not_unattended_eligible": skipped_slugs,
             "drafts_produced": len(drafts),
             "briefing_path": str(briefing),
         }) + "\n")
