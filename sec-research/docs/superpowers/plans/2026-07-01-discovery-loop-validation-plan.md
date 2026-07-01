@@ -40,7 +40,7 @@
 
 `sign_approval.py` and `sign_override.py` both define `--test-mode-confirm`, which currently sets `confirmed = True` unconditionally with zero hook coverage anywhere (confirmed: no rule in `hooks/{pretooluse,posttooluse,stop,userpromptsubmit}.py` matches invocations of either script). A token minted this way is indistinguishable from a genuine human-approved one. Fix: gate the flag behind `PYTEST_CURRENT_TEST` (set automatically by pytest in the process environment, and inherited automatically by any `subprocess.run(cmd, ...)` call that doesn't override `env=` — which is exactly how the existing tests in `tests/hooks/test_override_singleuse.py` invoke these scripts, so they need zero changes).
 
-- [ ] **Step 1: Write the failing test for the gate function**
+- [x] **Step 1: Write the failing test for the gate function**
 
 Create `sec-research/tests/hooks/test_test_mode_gate.py`:
 
@@ -63,12 +63,12 @@ def test_returns_true_with_pytest_marker(monkeypatch):
     assert test_mode_confirm_allowed() is True
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd sec-research && pytest tests/hooks/test_test_mode_gate.py -v`
 Expected: FAIL with `ModuleNotFoundError: No module named 'lib.test_mode_gate'`
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 Create `sec-research/hooks/lib/test_mode_gate.py`:
 
@@ -95,12 +95,12 @@ def test_mode_confirm_allowed() -> bool:
     return bool(os.environ.get("PYTEST_CURRENT_TEST"))
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `cd sec-research && pytest tests/hooks/test_test_mode_gate.py -v`
 Expected: PASS (2 passed)
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 cd sec-research
@@ -108,7 +108,7 @@ git add hooks/lib/test_mode_gate.py tests/hooks/test_test_mode_gate.py
 git commit -m "feat(sec-research): add shared --test-mode-confirm environment gate"
 ```
 
-- [ ] **Step 6: Write the failing regression test for sign_override.py**
+- [x] **Step 6: Write the failing regression test for sign_override.py**
 
 Create `sec-research/tests/scripts/test_sign_override_test_mode_gate.py`:
 
@@ -163,12 +163,12 @@ def test_test_mode_confirm_still_works_under_pytest(override_key_setup, clean_ov
     assert "Token signed and written" in result.stdout
 ```
 
-- [ ] **Step 7: Run test to verify it fails**
+- [x] **Step 7: Run test to verify it fails**
 
 Run: `cd sec-research && pytest tests/scripts/test_sign_override_test_mode_gate.py -v`
 Expected: FAIL on `test_test_mode_confirm_refused_outside_pytest` (returncode is currently 0, no refusal message) — `test_test_mode_confirm_still_works_under_pytest` already passes (unmodified behavior).
 
-- [ ] **Step 8: Implement the fix in sign_override.py**
+- [x] **Step 8: Implement the fix in sign_override.py**
 
 Modify `sec-research/scripts/sign_override.py`. Add the import near the top (after the existing `lib` imports at line 25):
 
@@ -200,12 +200,12 @@ with:
         confirmed = True
 ```
 
-- [ ] **Step 9: Run tests to verify they pass, plus the existing suite for regressions**
+- [x] **Step 9: Run tests to verify they pass, plus the existing suite for regressions**
 
 Run: `cd sec-research && pytest tests/scripts/test_sign_override_test_mode_gate.py tests/hooks/test_override_singleuse.py -v`
 Expected: all PASS (2 + 5 = 7 passed — `test_override_singleuse.py` has 5 test functions) — `test_override_singleuse.py`'s existing tests must be unaffected.
 
-- [ ] **Step 10: Commit**
+- [x] **Step 10: Commit**
 
 ```bash
 cd sec-research
@@ -213,7 +213,7 @@ git add scripts/sign_override.py tests/scripts/test_sign_override_test_mode_gate
 git commit -m "fix(sec-research): sign_override.py refuses --test-mode-confirm outside pytest"
 ```
 
-- [ ] **Step 11: Write the failing regression test for sign_approval.py**
+- [x] **Step 11: Write the failing regression test for sign_approval.py**
 
 Create `sec-research/tests/scripts/test_sign_approval_test_mode_gate.py`. This drafts a real, schema-valid finding via the existing drafter (reusing `scripts/draft/drafter.py`, the same pattern `tests/scripts/test_draft_drafter.py` uses) so `sign_approval.py`'s pre-checks pass, then calls `sign_approval.main()` in-process (monkeypatching `sys.argv` and the module's `FINDINGS_DIR`) so `monkeypatch.delenv` can control `PYTEST_CURRENT_TEST` visibility directly — no subprocess needed here, since the gate function is a pure `os.environ` read that works identically in-process.
 
@@ -321,12 +321,12 @@ def test_test_mode_confirm_still_works_under_pytest(override_key_setup, clean_ov
     assert list(tokens_dir.glob("apv-*.json"))
 ```
 
-- [ ] **Step 12: Run test to verify it fails**
+- [x] **Step 12: Run test to verify it fails**
 
 Run: `cd sec-research && pytest tests/scripts/test_sign_approval_test_mode_gate.py -v`
 Expected: `test_test_mode_confirm_refused_outside_pytest` FAILS (returncode 0, token gets written — the bypass is still live before Step 13); `test_test_mode_confirm_still_works_under_pytest` already PASSES (unmodified behavior).
 
-- [ ] **Step 13: Implement the fix in sign_approval.py**
+- [x] **Step 13: Implement the fix in sign_approval.py**
 
 Modify `sec-research/scripts/sign_approval.py`. Add the import after the existing `lib` imports at line 29:
 
@@ -359,17 +359,17 @@ with:
         confirmed = True
 ```
 
-- [ ] **Step 14: Run test to verify it passes**
+- [x] **Step 14: Run test to verify it passes**
 
 Run: `cd sec-research && pytest tests/scripts/test_sign_approval_test_mode_gate.py -v`
 Expected: PASS (2 passed)
 
-- [ ] **Step 15: Run the full existing suite for this area to confirm no regressions**
+- [x] **Step 15: Run the full existing suite for this area to confirm no regressions**
 
 Run: `cd sec-research && pytest tests/hooks/ tests/scripts/test_sign_approval_test_mode_gate.py tests/scripts/test_sign_override_test_mode_gate.py tests/scripts/test_draft_drafter.py -v`
 Expected: all PASS, zero failures.
 
-- [ ] **Step 16: Commit**
+- [x] **Step 16: Commit**
 
 ```bash
 cd sec-research
@@ -393,7 +393,7 @@ invocation never contains `--test-mode-confirm` in that text (pytest's own inter
 false-positive-block the real test suite while still hard-blocking any direct
 Bash-issued attempt to use the flag outside of it.
 
-- [ ] **Step 17: Write the failing test for the hook**
+- [x] **Step 17: Write the failing test for the hook**
 
 Create `sec-research/tests/hooks/test_pt2_test_mode_bypass.py`:
 
@@ -489,12 +489,12 @@ def test_cwd_relative_invocation_with_flag_is_blocked():
     assert result is not None
 ```
 
-- [ ] **Step 18: Run test to verify it fails**
+- [x] **Step 18: Run test to verify it fails**
 
 Run: `cd sec-research && pytest tests/hooks/test_pt2_test_mode_bypass.py -v`
 Expected: FAIL with `AttributeError: module 'pretooluse' has no attribute 'check_pt2_test_mode_bypass'`
 
-- [ ] **Step 19: Implement the hook check**
+- [x] **Step 19: Implement the hook check**
 
 Modify `sec-research/hooks/pretooluse.py`. Add after the existing `SUBMIT_SCRIPT_PATTERNS`/`_command_invokes_submit_py` block (currently lines 36-44), before `_approval_token_provided`:
 
@@ -563,12 +563,12 @@ Then wire it into the dispatch tuple in `main()` (currently line 342):
     for check in (check_pt1_scope, check_pt2_submission, check_pt2_test_mode_bypass, check_pt3_path, check_pt4_fab_refs, check_pt5_sandbox, check_pt6_secrets):
 ```
 
-- [ ] **Step 20: Run test to verify it passes**
+- [x] **Step 20: Run test to verify it passes**
 
 Run: `cd sec-research && pytest tests/hooks/test_pt2_test_mode_bypass.py -v`
 Expected: PASS (7 passed)
 
-- [ ] **Step 21: Run the full hooks test suite for regressions, then commit**
+- [x] **Step 21: Run the full hooks test suite for regressions, then commit**
 
 Run: `cd sec-research && pytest tests/hooks/ -v`
 Expected: all PASS, zero failures (the new check is additive to the existing dispatch tuple and only matches a narrow, specific command shape).
@@ -651,7 +651,7 @@ No commit needed for this task — `runtime/` is gitignored by design (raw eval 
 
 `run_unattended()` (the already-registered, daily-3am `sec-research-nightly` scheduled task) and `run_supervised()` currently call identical stage functions with no distinction — nothing stops the cron path from silently reprocessing a freshly-loaded scope to full draft-finding completion on the very next scheduled run, with zero human checkpoint. `programs/` is currently empty, so this is a clean, non-breaking schema addition (no migration needed for existing scope files).
 
-- [ ] **Step 1: Write the failing test for the schema field**
+- [x] **Step 1: Write the failing test for the schema field**
 
 Add to `sec-research/schema/program.schema.json`'s `rules.properties` object (after `no_dast_against_prod`, before `embargo_period_days`) is the target of Step 3 below; first write the test that exercises it end-to-end via `nightly.py`'s filter (schema validation itself is already covered generically by `tests/schemas/test_schemas_self_validate.py`, which needs no changes since we're only adding an optional property).
 
@@ -731,12 +731,12 @@ def test_run_unattended_only_processes_eligible_scopes(monkeypatch, tmp_path):
     assert list(seen_scopes.keys()) == ["reviewed-target"]
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd sec-research && pytest tests/scripts/test_nightly_unattended_eligible.py -v`
 Expected: FAIL with `AttributeError: module 'nightly' has no attribute '_filter_unattended_eligible'`
 
-- [ ] **Step 3: Add the schema field**
+- [x] **Step 3: Add the schema field**
 
 Modify `sec-research/schema/program.schema.json`. In the `rules.properties` object, after the `no_dast_against_prod` property (before `embargo_period_days`), add:
 
@@ -747,7 +747,7 @@ Modify `sec-research/schema/program.schema.json`. In the `rules.properties` obje
         },
 ```
 
-- [ ] **Step 4: Implement the filter and wire it into `run_unattended()`**
+- [x] **Step 4: Implement the filter and wire it into `run_unattended()`**
 
 Modify `sec-research/scripts/nightly.py`. Add the new function after `stage_refresh_disclosed` (around line 125), before `stage_recon`:
 
@@ -817,17 +817,17 @@ And update the run-record write near the end of `run_unattended()` (currently li
         }) + "\n")
 ```
 
-- [ ] **Step 5: Run tests to verify they pass**
+- [x] **Step 5: Run tests to verify they pass**
 
 Run: `cd sec-research && pytest tests/scripts/test_nightly_unattended_eligible.py tests/schemas/test_schemas_self_validate.py -v`
 Expected: all PASS.
 
-- [ ] **Step 6: Run the full existing nightly test suite for regressions**
+- [x] **Step 6: Run the full existing nightly test suite for regressions**
 
 Run: `cd sec-research && pytest tests/scripts/test_nightly_supervised.py tests/scripts/test_nightly_stage4b.py tests/scripts/test_nightly_stage5_6.py tests/scripts/test_nightly_stage_verify.py -v`
 Expected: all PASS, zero failures — `run_supervised()` is untouched by this change.
 
-- [ ] **Step 7: Update `docs/SCOPE_SCHEMA.md`**
+- [x] **Step 7: Update `docs/SCOPE_SCHEMA.md`**
 
 Modify `sec-research/docs/SCOPE_SCHEMA.md`. Find the `rules.*` table that documents each existing rules field individually (`ai_assistance_allowed`, `ai_disclosure_required`, `rate_limit_per_min`, `user_agent_required`, `no_dast_against_prod`, `embargo_period_days`) and add a row for the new field, matching that table's existing format:
 
@@ -835,7 +835,7 @@ Modify `sec-research/docs/SCOPE_SCHEMA.md`. Find the `rules.*` table that docume
 | `unattended_eligible` | boolean | No | If true, the unattended nightly-cron path (`nightly.py` with no `--supervised` flag) may process this scope to full draft-finding completion. Absent or false: the scope is skipped by cron (still fully usable via `nightly.py --supervised`). Defaults to NOT eligible so a freshly-loaded scope stays supervised-only until a human explicitly sets this to `true` by hand-editing `scope.yaml`. |
 ```
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 cd sec-research
@@ -953,7 +953,7 @@ No source commit needed (the run journal lives under gitignored `runtime/`). App
 
 `huntr.com` has no public API (`scripts/fetchers/huntr.py`'s own docstring confirms `api.huntr.com` does not resolve) — its fetched scope already self-declares `submission.protocol: "manual-form"`. `--venue huntr` should dispatch through the exact same function `--venue manual-form` already uses. The existing status-derivation line (`new_status = "submitted-manual" if args.venue == "manual-form" else "submitted"`) is keyed on the venue string, not on which dispatch function ran — naively adding a `elif args.venue == "huntr":` branch that calls `_dispatch_manual_form` while keeping `venue="huntr"` would fall to the `else` branch and stamp a false, fully-confirmed `"submitted"` status. Fix: extract the dispatch selection and status derivation into two small, directly-testable pure functions.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `sec-research/tests/scripts/test_submit_huntr_dispatch.py`:
 
@@ -1094,12 +1094,12 @@ def test_main_huntr_end_to_end_yields_submitted_manual_status(
     assert succeeded["outcome"] == "submitted-manual"
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd sec-research && pytest tests/scripts/test_submit_huntr_dispatch.py -v`
 Expected: FAIL with `AttributeError: module 'submit' has no attribute '_select_dispatcher'` (the new `test_main_huntr_end_to_end_...` test also fails here, for the same reason — `_select_dispatcher` doesn't exist yet).
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 Modify `sec-research/scripts/submit.py`. First, update the module docstring (lines 1-11) — huntr moves out of the stubbed list:
 
@@ -1182,17 +1182,17 @@ with:
         _update_finding_status(finding_dir, new_status, venue_response=info)
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `cd sec-research && pytest tests/scripts/test_submit_huntr_dispatch.py -v`
 Expected: PASS (8 passed)
 
-- [ ] **Step 5: Run the broader test suite for regressions**
+- [x] **Step 5: Run the broader test suite for regressions**
 
 Run: `cd sec-research && pytest tests/ -q`
 Expected: all tests pass (matches the ledger-verified `470 passed, 6 skipped` baseline from the `hb-7hf` landing, plus this plan's new tests — an increased pass count, zero new failures).
 
-- [ ] **Step 6: Update `docs/SUBMISSION_GATE.md`**
+- [x] **Step 6: Update `docs/SUBMISSION_GATE.md`**
 
 Modify `sec-research/docs/SUBMISSION_GATE.md`. Move `huntr` out of the "Stage 7 — Will be filled in (currently stubbed)" table into the "Stage 1 — Full implementations" table, as an alias row:
 
@@ -1202,7 +1202,7 @@ Modify `sec-research/docs/SUBMISSION_GATE.md`. Move `huntr` out of the "Stage 7 
 
 and remove the `huntr` row from the Stage 7 stub table below it.
 
-- [ ] **Step 7: Update `sec-research/CLAUDE.md`**
+- [x] **Step 7: Update `sec-research/CLAUDE.md`**
 
 Modify `sec-research/CLAUDE.md`'s "Stage 1 vs Stages 2-7" section (auto-loaded every session in this workspace). Find the sentence "Still pending: venue-specific submission integrations beyond GHSA + manual-form (Stage 7)" and update it to reflect huntr now being wired:
 
@@ -1215,7 +1215,7 @@ end-to-end...
 
 (Preserve the rest of that sentence and paragraph verbatim; only the "Still pending" clause changes.)
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 cd sec-research
