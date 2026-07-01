@@ -239,14 +239,27 @@ for _p in (_WORKSPACE_ROOT, _SCRIPTS):
 
 @pytest.fixture(autouse=True)
 def _isolate_ledger(monkeypatch):
-    """draft_findings() appends a real "draft-created" ledger event; capture it instead
-    of writing to the real, git-tracked submissions/ledger.jsonl (same pattern as
-    tests/scripts/test_draft_drafter.py's own _isolate_ledger fixture)."""
-    import scripts.draft.drafter as d
-    class _Cap:
-        def __init__(self): self.events = []
-        def append_event(self, et, **f): self.events.append((et, f)); return {}
-    monkeypatch.setattr(d, "ledger", _Cap(), raising=False)
+    """draft_findings() and sign_approval.main() each append real ledger events
+    ("draft-created", "approval-issued"); capture them instead of polluting the real
+    (gitignored, but locally persistent) submissions/ledger.jsonl.
+
+    Patch the canonical lib.ledger module itself, not a module-local `ledger` name --
+    this test's sys.path makes scripts/draft/drafter.py importable under two distinct
+    module identities (`scripts.draft.drafter` and `draft.drafter`; Python treats these
+    as separate module objects, each with its own `ledger` attribute binding, so
+    patching only one leaves callers of the other unpatched), and sign_approval.py has
+    its own separate `from lib import ledger` binding on top of that -- patching
+    per-module bindings requires chasing every caller. lib.ledger itself has exactly
+    one resolvable location on this sys.path, so patching `append_event` there isolates
+    every caller uniformly regardless of which import spelling it used. (This is the
+    fix that survived task review during execution — the original per-module-binding
+    approach was necessary but not sufficient; see the plan's Execution Log.)"""
+    import lib.ledger as ledger_module
+    events: list[tuple[str, dict]] = []
+    def _fake_append_event(event_type, **fields):
+        events.append((event_type, fields))
+        return {}
+    monkeypatch.setattr(ledger_module, "append_event", _fake_append_event)
 
 
 def _draft_verified_finding(tmp_path: Path) -> str:
@@ -461,6 +474,19 @@ def test_flag_without_a_confirmation_script_is_not_blocked():
     )
     result = pretooluse.check_pt2_test_mode_bypass(event)
     assert result is None
+
+
+def test_cwd_relative_invocation_with_flag_is_blocked():
+    """The bare-filename patterns' reason for existing: invoking the script by bare
+    filename after cd'ing into scripts/ must not slip past the path-qualified
+    patterns alone. Caught in task review during execution — see Execution Log."""
+    import pretooluse
+    event = _bash_event(
+        "cd scripts && python sign_override.py --rule PT-1 --target x "
+        "--reason 'cwd-relative evasion attempt' --test-mode-confirm"
+    )
+    result = pretooluse.check_pt2_test_mode_bypass(event)
+    assert result is not None
 ```
 
 - [ ] **Step 18: Run test to verify it fails**
@@ -478,6 +504,13 @@ CONFIRMATION_SCRIPT_PATTERNS = [
     r"\bsec-research[\\/]scripts[\\/]sign_approval\.py\b",
     r"\bscripts[\\/]sign_override\.py\b",
     r"\bsec-research[\\/]scripts[\\/]sign_override\.py\b",
+    # Bare-filename fallback: catches `cd scripts && python sign_override.py ...`,
+    # where no path prefix precedes the filename. Safe against over-match because
+    # check_pt2_test_mode_bypass ALSO requires --test-mode-confirm in the same
+    # command string -- a bare filename mention alone (prose, `ls scripts/`) never
+    # blocks by itself. Caught in task review during execution — see Execution Log.
+    r"\bsign_approval\.py\b",
+    r"\bsign_override\.py\b",
 ]
 
 
@@ -533,7 +566,7 @@ Then wire it into the dispatch tuple in `main()` (currently line 342):
 - [ ] **Step 20: Run test to verify it passes**
 
 Run: `cd sec-research && pytest tests/hooks/test_pt2_test_mode_bypass.py -v`
-Expected: PASS (6 passed)
+Expected: PASS (7 passed)
 
 - [ ] **Step 21: Run the full hooks test suite for regressions, then commit**
 
@@ -1210,6 +1243,25 @@ Append entries here as Tasks 2 and 4 (the two operational, non-code tasks) actua
 this is the one concrete location both tasks' recording steps point at, per adversarial
 review (an unresolved "progress trail... or the retrospective" either/or was flagged and
 fixed to point here specifically).
+
+**Task 1 execution (task review findings, corrected in this plan text):** the task
+reviewer caught two real defects in Step 11's originally-drafted code. (1) `_isolate_ledger`
+imported `scripts.draft.drafter` while `_draft_verified_finding` imported `draft.drafter`
+— with both `WORKSPACE_ROOT` and `scripts/` on `sys.path`, these resolve to two distinct
+module objects, so the fixture patched the wrong one and every test run silently
+polluted the real (gitignored, not git-tracked as originally assumed)
+`submissions/ledger.jsonl` with fixture data. The fix dispatch's first attempt (repoint
+to `draft.drafter`) was necessary but **not sufficient** — `sign_approval.main()` leaks
+a separate `approval-issued` event via its own independent `lib.ledger` binding,
+invisible to a fixture scoped only to `drafter`. The fix subagent correctly widened the
+fix to patch `lib.ledger.append_event` directly (the one canonical shared object every
+caller resolves through, regardless of import spelling) — this is the version reflected
+above. (2) The new `CONFIRMATION_SCRIPT_PATTERNS` hook rule could be evaded via
+`cd scripts && python sign_override.py ... --test-mode-confirm` (bare filename, no
+path prefix); fixed by adding bare-filename pattern variants, safe against over-match
+because the hook also requires `--test-mode-confirm` in the same command string.
+Ledger-isolation fix independently verified: ran the fixture-owning test file twice,
+diffed `submissions/ledger.jsonl` before/after — byte-identical both times.
 
 **Task 2 (PoC-authoring reliability):** _not yet run — append the measured `track_b.rate`,
 trial breakdown, and whether it changes Task 4's risk posture here once Task 2 executes._
