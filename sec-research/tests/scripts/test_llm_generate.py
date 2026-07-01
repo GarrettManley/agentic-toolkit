@@ -57,6 +57,7 @@ def scoped(tmp_programs):
         "in_scope": [
             {"asset_type": "package", "identifier": "lodash", "ecosystem": "npm"},
             {"asset_type": "package", "identifier": "left-pad", "ecosystem": "npm"},
+            {"asset_type": "package", "identifier": "minimatch", "ecosystem": "npm"},
         ],
         "rules": {"ai_assistance_allowed": True, "ai_disclosure_required": False},
         "submission": {"protocol": "manual-form", "endpoint": "https://x"},
@@ -179,3 +180,26 @@ def test_generate_drops_dependency_cve_with_unresolved_version(scoped, tmp_path)
     client = FakeClient([{"hypotheses": [_model_hypothesis()]}])
     out = generate_hypotheses(scoped, [item], client=client, hyp_root=tmp_path, now=NOW)
     assert out == []
+
+
+def test_generate_stamps_package_name_from_relabeled_ghsa_asset(scoped, tmp_path):
+    """hb-7hf regression: a GHSA-sourced recon item relabeled by recon_program.py's fix
+    (asset_type='package', identifier=<npm pkg name>, ecosystem='npm') must have
+    _normalize_authored's package_name stamp read from asset['identifier'] ('minimatch'),
+    not any model-authored value — proving the fix reaches the generate.py boundary
+    _stamp_or_drop reads, not just select_playbooks. The model hypothesis below is
+    authored (via _model_hypothesis) with evidence_seed.package_name='lodash' — the
+    server-stamp must overwrite it with the recon asset's true identifier."""
+    from llm.generate import generate_hypotheses
+    item = {
+        "slug": "huntr-acme",
+        "asset": {"asset_type": "package", "identifier": "minimatch", "ecosystem": "npm"},
+        "resolved_version": "3.0.4", "recon_ts": "2026-06-22T08:00:00Z",
+        "known_advisories": [{"id": "GHSA-x", "cve": "CVE-2022-3517",
+                              "affected_range": "<3.0.5", "fixed": "3.0.5",
+                              "package": "minimatch"}],
+    }
+    client = FakeClient([{"hypotheses": [_model_hypothesis(identifier="minimatch")]}])
+    out = generate_hypotheses(scoped, [item], client=client, hyp_root=tmp_path, now=NOW)
+    assert len(out) == 1
+    assert out[0]["evidence_seed"]["package_name"] == "minimatch"

@@ -41,3 +41,28 @@ def test_select_playbooks_requires_advisory_for_dependency_cve():
                    "known_advisories": []}
     assert select_playbooks(with_adv, [pb]) == [pb]
     assert select_playbooks(without_adv, [pb]) == []
+
+
+def test_select_playbooks_eligible_after_ghsa_repo_asset_relabel():
+    """hb-7hf regression: before the fix, a GHSA-sourced recon item's asset stayed
+    asset_type='repo' with ecosystem=None forever, so this exact shape (which is what
+    scripts/recon_program.py now produces post-relabel) was structurally ineligible."""
+    from llm.playbook import parse_playbook, select_playbooks
+    pb = parse_playbook(REPO / "playbooks" / "dependency-cve" / "known-advisory-confirmation.md")
+    relabeled_ghsa_item = {
+        "asset": {"asset_type": "package", "identifier": "minimatch", "ecosystem": "npm"},
+        "known_advisories": [{"id": "GHSA-x"}],
+    }
+    assert select_playbooks(relabeled_ghsa_item, [pb]) == [pb]
+
+
+def test_select_playbooks_ineligible_for_unrelabeled_ghsa_repo_asset():
+    """The pre-fix shape (still asset_type='repo', ecosystem=None) correctly stays
+    ineligible — proves this is a targeted fix, not a gate removal."""
+    from llm.playbook import parse_playbook, select_playbooks
+    pb = parse_playbook(REPO / "playbooks" / "dependency-cve" / "known-advisory-confirmation.md")
+    unrelabeled_ghsa_item = {
+        "asset": {"asset_type": "repo", "identifier": "github.com/isaacs/minimatch", "ecosystem": None},
+        "known_advisories": [{"id": "GHSA-x"}],
+    }
+    assert select_playbooks(unrelabeled_ghsa_item, [pb]) == []
