@@ -27,6 +27,7 @@ sys.path.insert(0, str(HOOKS_DIR))
 from lib.paths import SUBMISSIONS_TOKENS_DIR, FINDINGS_DIR  # noqa: E402
 from lib.sign_verify import sign_token  # noqa: E402
 from lib import ledger  # noqa: E402
+from lib.test_mode_gate import test_mode_confirm_allowed  # noqa: E402
 
 VENUE_CHOICES = ["huntr", "ghsa", "ibb-h1", "h1", "bugcrowd", "intigriti", "direct-maintainer", "manual-form"]
 
@@ -131,6 +132,15 @@ def main() -> int:
     print("=" * 75)
 
     if args.test_mode_confirm:
+        if not test_mode_confirm_allowed():
+            print(
+                "ERROR: --test-mode-confirm is only honored when invoked under pytest "
+                "(PYTEST_CURRENT_TEST not set in the environment). This flag exists to "
+                "support automated tests, not to bypass the human confirmation step "
+                "outside of them.",
+                file=sys.stderr,
+            )
+            return 1
         confirmed = True
     else:
         try:
