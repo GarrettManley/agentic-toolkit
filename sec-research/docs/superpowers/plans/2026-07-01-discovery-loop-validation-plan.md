@@ -1241,13 +1241,34 @@ git commit -m "feat(sec-research): wire --venue huntr through the manual-form di
 
 ## Verification (whole-plan)
 
-- [ ] Full suite green: `cd sec-research && pytest tests/ -q` — record actual pass/skip counts and exit code. If the suite regresses at this late point (after five tasks' worth of commits have already landed), isolate the responsible commit via `git bisect` across this plan's own commit range, or re-run each task's own test file individually per its own Step N to narrow it down before investigating further.
-- [ ] Task 1's bypass fix does not regress `tests/hooks/test_override_singleuse.py` (explicitly re-run in Step 9/15), and the layered hook enforcement (Steps 17-21) does not false-positive-block a real `pytest ...` invocation (explicitly re-run in Step 21).
-- [ ] Task 2's report file exists at `runtime/eval/claude-cli-track-b.json` with a valid `track_b.rate` (any value); the result is recorded in the Execution Log below.
-- [ ] Task 3's filter is proven both at the unit level (`_filter_unattended_eligible`) and end-to-end (`run_unattended` only touches eligible scopes) — both covered in Step 5/6.
-- [ ] Task 4's target satisfies all four vetting-bar criteria (including the manual direct-vs-transitive check) before the supervised run is trusted as a real correctness proof, rejected candidate scopes are removed before the final run, `--provider claude-cli` is used (not `claude`), and the loaded scope is confirmed to remain `unattended_eligible != true` afterward (Step 4); the outcome is recorded in the Execution Log below.
-- [ ] Task 5's regression guard (`test_huntr_never_produces_bare_submitted_status`) passes, closing the exact bug found in adversarial review, and the new end-to-end `main()` test passes.
-- [ ] No task touches `ibb-h1`, `direct-maintainer`, `bugcrowd`, `intigriti`, or `hb-5i3` — confirm via one `git diff --stat` across this plan's full commit range (from before Task 1's first commit to after Task 5's last) that it touches only the files listed across all five tasks' **Files** blocks.
+**Scope note (2026-07-01 wrap-up):** this delivery covers Tasks 1, 3, 5 only — Tasks 2
+and 4 are explicitly DEFERRED (see their status notes above), so this checklist is
+verified against that reduced scope, not the full 5-task plan. The two Task-2/4-specific
+bullets below stay unchecked pending the follow-up session; everything else is checked
+with fresh evidence.
+
+- [x] Full suite green (Tasks 1/3/5 scope): `cd sec-research && pytest tests/ -q` →
+  **496 passed, 6 skipped, exit 0** (run 2026-07-01, commit e271c3f). Baseline was 470
+  passed/6 skipped before this delivery; +26 new tests across all three tasks plus the
+  two review-driven fix waves.
+- [x] Task 1's bypass fix does not regress `tests/hooks/test_override_singleuse.py`
+  (re-run in Step 9/15 — passed both times) — hook layered enforcement's Step 21
+  full-hooks-suite run also passed, no false-positive block of the real `pytest`
+  invocation.
+- [ ] Task 2's report file exists at `runtime/eval/claude-cli-track-b.json` — **deferred,
+  not run this session.**
+- [x] Task 3's filter is proven both at the unit level (`_filter_unattended_eligible`,
+  4 unit tests) and end-to-end (`test_run_unattended_only_processes_eligible_scopes`) —
+  task review independently traced the fail-safe default against the absent-`rules`-key
+  case, not just presence-with-default.
+- [ ] Task 4's target vetting + supervised run — **deferred, not run this session.**
+- [x] Task 5's regression guard (`test_huntr_never_produces_bare_submitted_status`)
+  passes, closing the exact bug found in adversarial review; the end-to-end `main()`
+  test passes with ledger-isolation independently re-verified (SHA-256 byte-identical
+  across 2 runs, per the final whole-branch reviewer).
+- [x] No task touches `ibb-h1`, `direct-maintainer`, `bugcrowd`, `intigriti`, or
+  `hb-5i3` — verified via `git diff --stat ca44d0b..HEAD -- sec-research/ | grep -iE
+  "ibb|direct.maintainer|bugcrowd|intigriti|5i3"` → zero matches (run 2026-07-01).
 
 ---
 
