@@ -583,6 +583,14 @@ git commit -m "feat(sec-research): hook-block direct --test-mode-confirm Bash in
 
 ## Task 2: PoC-authoring reliability validation (design §2.1)
 
+**STATUS: DEFERRED, not done — not silently dropped.** Tasks 1, 3, and 5 landed on
+2026-07-01 (9 commits, task-reviewed + final whole-branch reviewed). This task and
+Task 4 were deliberately held back: both spend real external cost (live `claude-cli`
+API + Docker sandbox cycles here) and were scoped from the start as a separate,
+human-supervised follow-up session, not part of the same automated dispatch as
+Tasks 1/3/5. Tracker: `hb-dzz` (remains open until this task and Task 4 land or are
+explicitly cut).
+
 **Files:**
 - Create: `sec-research/runtime/eval/claude-cli-track-b.json` (generated artifact, not source — `runtime/` is gitignored)
 - No source changes — `scripts/eval/authoring_eval.py` already implements `--track b`, provider-agnostic via `SECRESEARCH_LLM_PROVIDER`.
@@ -846,6 +854,12 @@ git commit -m "feat(sec-research): unattended cron skips scopes not marked unatt
 ---
 
 ## Task 4: Fresh-target pipeline-correctness proof (design §2.2)
+
+**STATUS: DEFERRED, not done — not silently dropped.** Same reasoning as Task 2's
+status note above: real external cost (network egress to a live bug-bounty program)
+and genuine live target-selection judgment make this a separate, human-supervised
+follow-up session. Task 3 (its dependency, below) is already landed, so this task is
+unblocked whenever that follow-up session runs. Tracker: `hb-dzz`.
 
 **Depends on Task 3** (its `_filter_unattended_eligible` must already be committed to the checkout the real `sec-research-nightly` 3am cron reads before this task loads a live scope — worktree/session drift could otherwise let a fresh scope sit unprotected between this task's fetch and Task 3 landing; do not start this task until Task 3 is complete and committed, matching Task 5's explicit dependency on Task 1).
 
