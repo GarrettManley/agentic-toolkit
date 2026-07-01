@@ -130,3 +130,29 @@ def test_build_recon_item_repo_identifier_defaults_to_metadata_when_omitted():
         CloneResult(cloned=True, clone_path="runtime/recon/huntr-acme/source/acme-org-acme", commit_sha="abc"),
         [], extra_flags=[], ts="2026-06-21T00:00:00Z")
     assert item["repo"]["identifier"] == "github.com/acme-org/acme"
+
+
+def test_build_recon_item_resolved_version_override():
+    from recon.recon_item import build_recon_item
+    from recon.clone import CloneResult
+    item = build_recon_item(
+        "ghsa-isaacs-minimatch",
+        {"asset_type": "package", "identifier": "minimatch", "ecosystem": "npm"},
+        None, _closure(),
+        CloneResult(cloned=True, clone_path="runtime/recon/ghsa-isaacs-minimatch/source/x", commit_sha="abc"),
+        [], extra_flags=[], ts="2026-07-01T00:00:00Z",
+        repo_identifier="github.com/isaacs/minimatch", resolved_version="3.0.4")
+    assert item["resolved_version"] == "3.0.4"
+
+
+def test_build_recon_item_resolved_version_defaults_to_metadata_when_omitted():
+    from recon.recon_item import build_recon_item
+    from recon.metadata import AssetMetadata
+    from recon.clone import CloneResult
+    item = build_recon_item(
+        "huntr-acme", {"asset_type": "package", "identifier": "acme", "ecosystem": "npm"},
+        AssetMetadata("acme", "npm", latest="4.2.1", repo_url="github.com/acme-org/acme"),
+        _closure(),
+        CloneResult(cloned=True, clone_path="runtime/recon/huntr-acme/source/acme-org-acme", commit_sha="abc"),
+        [], extra_flags=[], ts="2026-06-21T00:00:00Z")
+    assert item["resolved_version"] == "4.2.1"

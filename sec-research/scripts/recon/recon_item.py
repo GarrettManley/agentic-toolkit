@@ -31,7 +31,7 @@ def _closure_path(slug: str, asset_id: str) -> str:
 
 
 def build_recon_item(slug, asset, metadata, closure, clone_result, advisories,
-                     extra_flags, *, ts, repo_identifier=None):
+                     extra_flags, *, ts, repo_identifier=None, resolved_version=None):
     flags = list(extra_flags)
     if closure.no_lockfile:
         flags.append("no_lockfile")
@@ -52,7 +52,8 @@ def build_recon_item(slug, asset, metadata, closure, clone_result, advisories,
         "slug": slug,
         "asset": {"asset_type": asset["asset_type"], "identifier": asset["identifier"],
                   "ecosystem": asset.get("ecosystem")},
-        "resolved_version": (metadata.latest if metadata else None),
+        "resolved_version": (resolved_version if resolved_version is not None
+                             else (metadata.latest if metadata else None)),
         "repo": repo,
         "direct_deps": [asdict(d) for d in closure.direct],
         "transitive_closure": {
