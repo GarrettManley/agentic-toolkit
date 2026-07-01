@@ -1,8 +1,9 @@
 # Design: Discovery-Loop Validation & Stage 7 (huntr) Wiring
 
 **Trace ID**: trace-20260701-001 (integration/validation epic, not a new stage)
-**Status**: Draft — approved via brainstorming + 4-agent adversarial review (see companion
-`.review.md`); not yet planned or built.
+**Status**: Planned — design approved via brainstorming + 4-agent adversarial review (see
+companion `.review.md`); implementation plan written and adversarially reviewed (see
+`docs/superpowers/plans/2026-07-01-discovery-loop-validation-plan.md`); not yet built.
 **Charter**: `docs/CHARTER.md` (§Stages — closes the loop on the Stage 1-6 pipeline's one
 real live run, and fills in the first Stage 7 submission integration)
 **Predecessors**: `hb-322` (first real end-to-end run, 2026-06-30, closed — reached a
@@ -10,8 +11,8 @@ non-defensible null), `hb-be9` (verdict-trust fix, closed), `hb-26v` (Track B lo
 PoC-authoring probe, closed — established local PoC-authoring is non-viable), `hb-7hf`
 (GHSA repo-asset eligibility fix, closed 2026-07-01 — **not a dependency of this work**,
 see §1.1)
-**Tracker**: none yet — file a beads issue for this arc before planning (this workspace
-tracks sec-research work on the harness beads ledger, not GitHub issues)
+**Tracker**: `hb-dzz` (this workspace tracks sec-research work on the harness beads ledger,
+not GitHub issues)
 
 ---
 
@@ -213,6 +214,6 @@ mechanism is an implementation-plan decision.
 - §3: exact `--test-mode-confirm` gating mechanism (env-marker check inside the scripts,
   new hook rule, or both).
 - §3: exact status/outcome field derivation fix in `submit.py` (dispatch-function-keyed
-  vs. an explicit confirmed-by-human bit threaded from the dispatcher).
-- Tracker: file the beads issue(s) for this arc (likely one per step, or one umbrella
-  epic — plan-time decision) before writing-plans begins.
+  vs. an explicit confirmed-by-human bit threaded from the dispatcher). Resolved at plan
+  time: dispatch-function-keyed, via two small pure helper functions (see the plan).
+- Tracker: filed as `hb-dzz` (one umbrella epic for the arc).
