@@ -66,13 +66,13 @@ PT-2 hook validates that `--approval-token` references a valid signed token befo
 |-----------------|----------|
 | `manual-form` | Opens browser to program's submission URL; copies finding-body to clipboard; marks finding `submitted-manual` in frontmatter; appends ledger entry. Human pastes-in. |
 | `ghsa` | Uses `gh api` POST to repo's `/security-advisories` endpoint. Leverages existing `gh auth login` credential — no keyring entry needed. Captures venue-assigned advisory ID into finding frontmatter. |
+| `huntr` | Aliases to the `manual-form` behavior above (huntr.com has no public submission API — `scripts/fetchers/huntr.py` confirms `api.huntr.com` does not resolve). Ledger records `venue="huntr"` (not `manual-form`) for accurate per-venue audit history. |
 
 ### Stage 7 — Will be filled in (currently stubbed)
 
 | `--venue` value | Stage 1 stub behavior |
 |-----------------|----------------------|
-| `huntr` | Returns "Not implemented until Stage 7; use --venue manual-form for now" with exit code 2 |
-| `ibb-h1`, `h1` | Same |
+| `ibb-h1`, `h1` | Returns "Not implemented until Stage 7; use --venue manual-form for now" with exit code 2 |
 | `bugcrowd`, `intigriti` | Same |
 | `direct-maintainer` | Same |
 

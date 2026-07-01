@@ -5,7 +5,10 @@ PT-2 hook validates --token before this runs. This script dispatches per --venue
                          marks finding submitted-manual; exits with reminder.
   --venue ghsa         : uses `gh api` POST to repo's security-advisories endpoint
                          (full implementation in Stage 1).
-  --venue huntr|ibb-h1|h1|bugcrowd|intigriti|direct-maintainer : stubbed in Stage 1.
+  --venue huntr        : aliases to the manual-form dispatcher above (huntr has no
+                         public API to integrate against; ledger records venue="huntr"
+                         for accurate audit).
+  --venue ibb-h1|h1|bugcrowd|intigriti|direct-maintainer : stubbed in Stage 1.
 
 Every dispatch (full or stubbed) appends to submissions/ledger.jsonl.
 """
@@ -28,7 +31,7 @@ from lib.sign_verify import verify_token, is_expired  # noqa: E402
 from lib import ledger  # noqa: E402
 
 VENUE_CHOICES = ["huntr", "ghsa", "ibb-h1", "h1", "bugcrowd", "intigriti", "direct-maintainer", "manual-form"]
-STAGE_1_FULL = {"manual-form", "ghsa"}
+STAGE_1_FULL = {"manual-form", "ghsa", "huntr"}
 
 
 def _utc_now() -> str:
@@ -271,6 +274,31 @@ def _dispatch_stub(venue: str, trace_id: str) -> tuple[bool, str | None]:
     return False, f"stage-1-stub-{venue}"
 
 
+def _select_dispatcher(venue: str):
+    """Return (dispatch_fn, is_manual_alias) for the given venue.
+
+    huntr has no public submission API (scripts/fetchers/huntr.py's own fetched scope
+    self-declares submission.protocol="manual-form") -- it reuses the manual-form
+    dispatcher directly rather than a fake API integration. is_manual_alias
+    distinguishes this from a real confirmed submission for status derivation (see
+    _status_for_dispatch below); see
+    docs/superpowers/specs/2026-07-01-discovery-loop-validation-design.md §2.4.
+    """
+    if venue in ("manual-form", "huntr"):
+        return _dispatch_manual_form, True
+    if venue == "ghsa":
+        return _dispatch_ghsa, False
+    return (lambda trace_id, finding_dir, scope_data: _dispatch_stub(venue, trace_id)), False
+
+
+def _status_for_dispatch(is_manual_alias: bool) -> str:
+    """Status must reflect which dispatch function actually ran, not the venue string
+    -- keying off venue alone would stamp huntr (or any future manual-form alias) with
+    a false, fully-confirmed "submitted" even though only the manual browser+clipboard
+    hand-off occurred, with no way to verify the human actually completed the paste."""
+    return "submitted-manual" if is_manual_alias else "submitted"
+
+
 def _load_program_scope(program_slug: str) -> dict | None:
     from lib.paths import PROGRAMS_DIR
     path = PROGRAMS_DIR / program_slug / "scope.yaml"
@@ -333,15 +361,11 @@ def main() -> int:
     )
 
     # Dispatch
-    if args.venue == "manual-form":
-        ok, info = _dispatch_manual_form(args.trace, finding_dir, scope_data)
-    elif args.venue == "ghsa":
-        ok, info = _dispatch_ghsa(args.trace, finding_dir, scope_data)
-    else:
-        ok, info = _dispatch_stub(args.venue, args.trace)
+    dispatch_fn, is_manual_alias = _select_dispatcher(args.venue)
+    ok, info = dispatch_fn(args.trace, finding_dir, scope_data)
 
     if ok:
-        new_status = "submitted-manual" if args.venue == "manual-form" else "submitted"
+        new_status = _status_for_dispatch(is_manual_alias)
         _update_finding_status(finding_dir, new_status, venue_response=info)
         ledger.append_event(
             "submission-succeeded",
