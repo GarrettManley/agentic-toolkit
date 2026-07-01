@@ -10,7 +10,7 @@ All hooks are **hard-block** (per workspace charter). The override mechanism is 
 | ID | Event | Triggers on | Blocks if... | Override |
 |-----|-------|-------------|---------------|----------|
 | **PT-1** | PreToolUse | HTTP/browser/fetch tool calls | target host not in any loaded `programs/<slug>/scope.yaml` | signed token |
-| **PT-2** | PreToolUse | submission scripts / API calls to bounty venues | missing `--approval-token <id>` referencing valid signed token | **none — hard wall** |
+| **PT-2** | PreToolUse | submission scripts / API calls to bounty venues; **also** any Bash invocation of `sign_approval.py`/`sign_override.py` carrying `--test-mode-confirm` | missing `--approval-token <id>` referencing valid signed token; **or** `--test-mode-confirm` present on a direct Bash invocation of either confirmation script | **none — hard wall** |
 | **PT-3** | PreToolUse | Edit/Write/MultiEdit | file_path resolves outside `sec-research/` | signed token |
 | **PT-4** | PreToolUse | Edit/Write to `findings/**/*.md` | content has unverifiable CVE-ID, `pkg@version`, or commit SHA | signed token |
 | **PT-5** | PreToolUse | Bash invoking PoC code or registry installs | doesn't go through `sandbox_server.py` | signed token |
@@ -33,6 +33,7 @@ All hooks are **hard-block** (per workspace charter). The override mechanism is 
 - Each hook is a dispatcher — it inspects the event payload, identifies which rule(s) apply, runs them in order, exits non-zero on first violation
 - Hooks emit structured JSON to stderr: `{rule_id, action, target, reason, override_path}` — Claude can present clear actionable error messages
 - Shared utilities live in `hooks/lib/` (sign_verify, scope_match, nvd_lookup, registry_lookup, git_lookup, secret_scan, schema_validate, credentials)
+- **PT-2's `--test-mode-confirm` extension (layered defense):** `sign_approval.py`/`sign_override.py` both accept a `--test-mode-confirm` flag so automated tests can skip their interactive human-typed confirmation. Left unguarded, that flag would be a live bypass of the same human-approval boundary PT-2 protects. Two layers close it: (1) `hooks/lib/test_mode_gate.py`'s `test_mode_confirm_allowed()` gates the flag inside both scripts behind `PYTEST_CURRENT_TEST` being present in the environment — set automatically by pytest, and inherited automatically by any `subprocess.run(...)` a real test spawns; (2) `hooks/pretooluse.py`'s `check_pt2_test_mode_bypass` hard-blocks (no override) any Bash-tool command whose text names either script *and* carries the flag — closing the gap that the env-var check alone is spoofable by anyone willing to set that variable before a direct invocation. A real `pytest ...` invocation's own Bash command text never contains `--test-mode-confirm` (it's assembled inside the subprocess call at runtime), so layer (2) cannot false-positive-block the test suite.
 
 ## Override mechanism (the auditable bypass)
 

@@ -58,7 +58,7 @@ These are protective — they prevent you from triggering hooks that would block
 | Rule | Event | Blocks if... | Override |
 |------|-------|--------------|----------|
 | PT-1 | PreToolUse / network | target host not in any loaded scope | signed |
-| PT-2 | PreToolUse / submit | no `--token` or invalid token | **NONE** |
+| PT-2 | PreToolUse / submit | no `--token` or invalid token; **or** direct Bash `--test-mode-confirm` on sign_approval.py/sign_override.py | **NONE** |
 | PT-3 | PreToolUse / Edit-Write | file_path outside `sec-research/` | signed |
 | PT-4 | PreToolUse / Edit-Write to findings/**.md | unverifiable CVE/pkg/SHA | signed |
 | PT-5 | PreToolUse / Bash | runs PoC or registry install outside sandbox | signed |

@@ -41,12 +41,14 @@ rules:
   notes: "Maintainer prefers responsible disclosure timeline; coordinates via GitHub Security Advisories."
 
 submission:
-  protocol: huntr-api
-  endpoint: https://api.huntr.com/v1/reports
-  auth_ref:
-    service: huntr-api
-    username: garrettmanley
+  protocol: manual-form
+  endpoint: https://huntr.com/repos/acme-org/acme-pkg
 ```
+
+huntr.com has no public API (`api.huntr.com` does not resolve — confirmed in
+`scripts/fetchers/huntr.py`'s own docstring); its scope objects self-declare
+`manual-form` as the real submission protocol, dispatched via `submit.py --venue huntr`
+(aliased to the same handler as `--venue manual-form`; see `docs/SUBMISSION_GATE.md`).
 
 ## Required top-level fields
 
