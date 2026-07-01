@@ -43,6 +43,18 @@ def _command_invokes_submit_py(cmd: str) -> bool:
     return any(re.search(p, cmd, re.IGNORECASE) for p in SUBMIT_SCRIPT_PATTERNS)
 
 
+CONFIRMATION_SCRIPT_PATTERNS = [
+    r"\bscripts[\\/]sign_approval\.py\b",
+    r"\bsec-research[\\/]scripts[\\/]sign_approval\.py\b",
+    r"\bscripts[\\/]sign_override\.py\b",
+    r"\bsec-research[\\/]scripts[\\/]sign_override\.py\b",
+]
+
+
+def _command_invokes_confirmation_script(cmd: str) -> bool:
+    return any(re.search(p, cmd, re.IGNORECASE) for p in CONFIRMATION_SCRIPT_PATTERNS)
+
+
 def _approval_token_provided(cmd: str) -> str | None:
     m = re.search(r"--(?:approval-)?token(?:[=\s])\s*([A-Za-z0-9-]+)", cmd)
     return m.group(1) if m else None
@@ -157,6 +169,42 @@ def check_pt2_submission(event: dict) -> int | None:
         )
 
     return None
+
+
+def check_pt2_test_mode_bypass(event: dict) -> int | None:
+    """PT-2 (extended): a Bash command that directly invokes sign_approval.py or
+    sign_override.py with --test-mode-confirm is blocked unconditionally, no override.
+
+    Layered defense alongside lib/test_mode_gate.py's PYTEST_CURRENT_TEST check inside
+    those scripts: that env-var check correctly lets a real pytest run's own internal
+    subprocess.run(...) calls through, but cannot stop something with Bash access from
+    directly typing `PYTEST_CURRENT_TEST=x python scripts/sign_override.py ...
+    --test-mode-confirm` -- an ordinary env var is not a secret, so a self-attested check
+    inside the same process being gated can always be spoofed by whoever controls the
+    invocation. This hook closes that: it fires on the literal Bash COMMAND TEXT an agent
+    writes, which a legitimate `pytest ...` invocation never contains (pytest builds the
+    flagged subprocess call internally, not as an agent-authored Bash command string), so
+    this cannot false-positive-block the real test suite while still hard-blocking any
+    direct Bash-issued attempt to use the flag outside of it. See
+    docs/superpowers/specs/2026-07-01-discovery-loop-validation-design.md §3.
+    """
+    tool_name = event.get("tool_name", "")
+    if tool_name != "Bash":
+        return None
+    tool_input = event.get("tool_input", {}) or {}
+    cmd = tool_input.get("command", "") or ""
+    if not _command_invokes_confirmation_script(cmd):
+        return None
+    if "--test-mode-confirm" not in cmd:
+        return None
+    return block(
+        "PT-2",
+        "sign_approval.py/sign_override.py --test-mode-confirm",
+        "Direct Bash invocation of --test-mode-confirm is never allowed outside a real "
+        "pytest run -- this flag exists for automated tests only, not to bypass the "
+        "human confirmation step. No override path (same as PT-2 itself).",
+        override_path=None,
+    )
 
 
 def check_pt3_path(event: dict) -> int | None:
@@ -339,7 +387,7 @@ def main() -> int:
 
     session_log("pretooluse", {"tool_name": event.get("tool_name", "")})
 
-    for check in (check_pt1_scope, check_pt2_submission, check_pt3_path, check_pt4_fab_refs, check_pt5_sandbox, check_pt6_secrets):
+    for check in (check_pt1_scope, check_pt2_submission, check_pt2_test_mode_bypass, check_pt3_path, check_pt4_fab_refs, check_pt5_sandbox, check_pt6_secrets):
         result = check(event)
         if result is not None:
             return result
