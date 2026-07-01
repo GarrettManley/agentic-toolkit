@@ -42,6 +42,7 @@ def _recon_one_asset(slug, asset, disclosed_dir, source_root, ts):
     closure = deps.Closure(no_lockfile=True)
     resolved_asset = asset
     repo_id = None
+    resolved_version = None
     try:
         eco = asset.get("ecosystem")
         eco_declared = bool(eco)
@@ -62,6 +63,9 @@ def _recon_one_asset(slug, asset, disclosed_dir, source_root, ts):
                             resolved_asset = {"asset_type": "package", "identifier": pkg_name,
                                               "ecosystem": eco}
                             extra_flags.append("package_identity_inferred_from_repo")
+                            resolved_version = deps.infer_package_version(clone_path, eco)
+                            if not resolved_version:
+                                extra_flags.append("package_version_unresolved")
                         else:
                             extra_flags.append("package_name_unresolved")
         advs, adv_errors = advisories.correlate(closure.deps, disclosed_dir)
@@ -72,7 +76,7 @@ def _recon_one_asset(slug, asset, disclosed_dir, source_root, ts):
         extra_flags.append(f"recon_error:{type(e).__name__}")
         advs = []
     item = build_recon_item(slug, resolved_asset, md, closure, clone_res, advs, extra_flags,
-                            ts=ts, repo_identifier=repo_id)
+                            ts=ts, repo_identifier=repo_id, resolved_version=resolved_version)
     return item, closure
 
 

@@ -194,6 +194,10 @@ def test_generate_stamps_package_name_from_relabeled_ghsa_asset(scoped, tmp_path
     item = {
         "slug": "huntr-acme",
         "asset": {"asset_type": "package", "identifier": "minimatch", "ecosystem": "npm"},
+        # "3.0.4" is not an arbitrary hand-picked value: it's what deps.infer_package_version
+        # actually resolves for minimatch's real package.json (see test_recon_deps.py's
+        # test_infer_package_version_npm_reads_real_shape) — this fixture reflects what the
+        # real pipeline now produces for this exact scenario, post hb-7hf Fix 1.
         "resolved_version": "3.0.4", "recon_ts": "2026-06-22T08:00:00Z",
         "known_advisories": [{"id": "GHSA-x", "cve": "CVE-2022-3517",
                               "affected_range": "<3.0.5", "fixed": "3.0.5",

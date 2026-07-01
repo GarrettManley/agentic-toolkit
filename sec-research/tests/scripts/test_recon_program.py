@@ -103,6 +103,7 @@ def test_run_recon_relabels_ghsa_repo_asset_when_ecosystem_and_name_resolve(tmp_
                                                              commit_sha="sha1"))
     monkeypatch.setattr(rp.deps, "infer_ecosystem", lambda src: "npm")
     monkeypatch.setattr(rp.deps, "infer_package_name", lambda src, eco: "minimatch")
+    monkeypatch.setattr(rp.deps, "infer_package_version", lambda src, eco: "3.0.4")
     monkeypatch.setattr(rp.deps, "resolve_closure",
                         lambda src, eco: Closure(direct=[], deps=[Dep("brace-expansion", "1.1.11", eco)],
                                                  lockfile="package-lock.json", total_before_cap=1))
@@ -118,6 +119,35 @@ def test_run_recon_relabels_ghsa_repo_asset_when_ecosystem_and_name_resolve(tmp_
     assert "package_identity_inferred_from_repo" in items[0]["flags"]
     # original repo provenance is preserved separately, via the repo_identifier fix (Steps 1-5)
     assert items[0]["repo"]["identifier"] == "github.com/isaacs/minimatch"
+    assert items[0]["resolved_version"] == "3.0.4"
+
+
+def test_run_recon_relabels_repo_asset_but_flags_unresolved_version(tmp_path, monkeypatch):
+    """Package name resolves but the manifest has no parseable version — still relabel
+    (package identity is independently useful) but flag the version gap distinctly, and
+    leave resolved_version None (generate.py's own hypothesis-version-unresolved gate
+    correctly drops any dependency-cve hypothesis with no version — this is expected,
+    not a new failure mode)."""
+    import recon_program as rp
+    from recon.deps import Closure
+    from recon.clone import CloneResult
+
+    monkeypatch.setattr(rp.clone, "clone_repo",
+                        lambda repo, dest, **kw: CloneResult(cloned=True, clone_path=str(dest), commit_sha="sha1"))
+    monkeypatch.setattr(rp.deps, "infer_ecosystem", lambda src: "npm")
+    monkeypatch.setattr(rp.deps, "infer_package_name", lambda src, eco: "minimatch")
+    monkeypatch.setattr(rp.deps, "infer_package_version", lambda src, eco: None)
+    monkeypatch.setattr(rp.deps, "resolve_closure", lambda src, eco: Closure(no_lockfile=True))
+    monkeypatch.setattr(rp.advisories, "correlate", lambda deps, disc, **kw: ([], []))
+
+    scopes = _scope("ghsa-isaacs-minimatch",
+                    {"asset_type": "repo", "identifier": "github.com/isaacs/minimatch", "ecosystem": None})
+    items = rp.run_recon(scopes, recon_root=tmp_path, ts="t")
+
+    assert len(items) == 1
+    assert items[0]["asset"]["asset_type"] == "package"
+    assert items[0]["resolved_version"] is None
+    assert "package_version_unresolved" in items[0]["flags"]
 
 
 def test_run_recon_leaves_repo_asset_unrelabeled_when_package_name_unresolved(tmp_path, monkeypatch):
