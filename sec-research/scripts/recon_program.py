@@ -40,18 +40,30 @@ def _recon_one_asset(slug, asset, disclosed_dir, source_root, ts):
     extra_flags: list[str] = []
     md = clone_res = None
     closure = deps.Closure(no_lockfile=True)
+    resolved_asset = asset
+    repo_id = None
     try:
         eco = asset.get("ecosystem")
+        eco_declared = bool(eco)
         if asset["asset_type"] == "package" and eco:
             md = metadata.fetch_metadata(asset["identifier"], eco)
         repo_id = md.repo_url if md else (asset["identifier"] if asset["asset_type"] == "repo" else None)
         if repo_id:
             clone_res = clone.clone_repo(repo_id, source_root)
             if clone_res.cloned and clone_res.clone_path:
+                clone_path = Path(clone_res.clone_path)
                 # repo assets may carry no ecosystem (e.g. GHSA) — infer from the clone.
-                eco = eco or deps.infer_ecosystem(Path(clone_res.clone_path))
+                eco = eco or deps.infer_ecosystem(clone_path)
                 if eco:
-                    closure = deps.resolve_closure(Path(clone_res.clone_path), eco)
+                    closure = deps.resolve_closure(clone_path, eco)
+                    if asset["asset_type"] == "repo" and not eco_declared:
+                        pkg_name = deps.infer_package_name(clone_path, eco)
+                        if pkg_name:
+                            resolved_asset = {"asset_type": "package", "identifier": pkg_name,
+                                              "ecosystem": eco}
+                            extra_flags.append("package_identity_inferred_from_repo")
+                        else:
+                            extra_flags.append("package_name_unresolved")
         advs, adv_errors = advisories.correlate(closure.deps, disclosed_dir)
         extra_flags += [f"advisory_source_error:{e.split(':')[0]}" for e in adv_errors]
     except ScopeViolation:
@@ -59,7 +71,8 @@ def _recon_one_asset(slug, asset, disclosed_dir, source_root, ts):
     except Exception as e:  # per-asset isolation — one bad asset doesn't sink the run
         extra_flags.append(f"recon_error:{type(e).__name__}")
         advs = []
-    item = build_recon_item(slug, asset, md, closure, clone_res, advs, extra_flags, ts=ts)
+    item = build_recon_item(slug, resolved_asset, md, closure, clone_res, advs, extra_flags,
+                            ts=ts, repo_identifier=repo_id)
     return item, closure
 
 
@@ -75,8 +88,11 @@ def run_recon(scopes: dict, *, recon_root: Path | None = None, ts: str | None = 
             if asset.get("asset_type") not in _RECON_ASSET_TYPES:
                 continue
             item, closure = _recon_one_asset(slug, asset, disclosed_dir, source_root, ts)
+            item_id = item["asset"]["identifier"]
+            if item_id in closures:
+                item["flags"].append(f"closure_identifier_collision:{item_id}")
             items.append(item)
-            closures[asset["identifier"]] = closure
+            closures[item_id] = closure
         if items:
             write_program_recon(slug, items, closures, recon_root)
         all_items.extend(items)
