@@ -147,3 +147,25 @@ def infer_package_name(source_dir: Path, ecosystem: str) -> str | None:
     if not manifest.exists():
         return None
     return _read_npm_name(manifest)
+
+
+def _read_npm_version(path: Path) -> str | None:
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError, UnicodeDecodeError):
+        return None
+    version = data.get("version") if isinstance(data, dict) else None
+    return version if isinstance(version, str) and version else None
+
+
+def infer_package_version(source_dir: Path, ecosystem: str) -> str | None:
+    """Resolve the declared version from *ecosystem*'s manifest under *source_dir*.
+    v1: npm only (package.json's "version" field), mirroring infer_package_name.
+    Returns None on a missing manifest, parse failure, missing version field, or
+    any non-npm ecosystem."""
+    if ecosystem != "npm":
+        return None
+    manifest = source_dir / "package.json"
+    if not manifest.exists():
+        return None
+    return _read_npm_version(manifest)

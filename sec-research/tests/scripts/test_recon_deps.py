@@ -135,3 +135,31 @@ def test_infer_package_name_non_npm_ecosystem_returns_none(tmp_path):
     _write(tmp_path / "Cargo.toml", '[package]\nname = "ripgrep"\n')
     assert infer_package_name(tmp_path, "cargo") is None
     assert infer_package_name(tmp_path, "unknown-eco") is None
+
+
+def test_infer_package_version_npm_reads_real_shape(tmp_path):
+    from recon.deps import infer_package_version
+    _write(tmp_path / "package.json", json.dumps({"name": "minimatch", "version": "3.0.4"}))
+    assert infer_package_version(tmp_path, "npm") == "3.0.4"
+
+
+def test_infer_package_version_npm_missing_manifest_returns_none(tmp_path):
+    from recon.deps import infer_package_version
+    assert infer_package_version(tmp_path, "npm") is None
+
+
+def test_infer_package_version_npm_malformed_json_returns_none(tmp_path):
+    from recon.deps import infer_package_version
+    _write(tmp_path / "package.json", "{not valid json")
+    assert infer_package_version(tmp_path, "npm") is None
+
+
+def test_infer_package_version_npm_missing_version_field_returns_none(tmp_path):
+    from recon.deps import infer_package_version
+    _write(tmp_path / "package.json", json.dumps({"name": "minimatch"}))
+    assert infer_package_version(tmp_path, "npm") is None
+
+
+def test_infer_package_version_non_npm_ecosystem_returns_none(tmp_path):
+    from recon.deps import infer_package_version
+    assert infer_package_version(tmp_path, "cargo") is None
