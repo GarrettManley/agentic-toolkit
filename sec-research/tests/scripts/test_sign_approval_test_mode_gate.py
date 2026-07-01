@@ -17,14 +17,27 @@ for _p in (_WORKSPACE_ROOT, _SCRIPTS):
 
 @pytest.fixture(autouse=True)
 def _isolate_ledger(monkeypatch):
-    """draft_findings() appends a real "draft-created" ledger event; capture it instead
-    of writing to the real, git-tracked submissions/ledger.jsonl (same pattern as
-    tests/scripts/test_draft_drafter.py's own _isolate_ledger fixture)."""
-    import scripts.draft.drafter as d
-    class _Cap:
-        def __init__(self): self.events = []
-        def append_event(self, et, **f): self.events.append((et, f)); return {}
-    monkeypatch.setattr(d, "ledger", _Cap(), raising=False)
+    """draft_findings() and sign_approval.main() each append real ledger events
+    ("draft-created", "approval-issued"); capture them instead of writing to the real,
+    git-ignored-but-locally-persisted submissions/ledger.jsonl.
+
+    Patched on the canonical lib.ledger module -- not on drafter's or sign_approval's
+    locally-bound `ledger` name -- because this test's sys.path makes
+    scripts/draft/drafter.py importable under two distinct module identities
+    (`scripts.draft.drafter` and `draft.drafter`; Python treats these as separate
+    module objects, each with its own `ledger` attribute binding, so patching only one
+    leaves callers of the other unpatched). lib.ledger itself has exactly one
+    resolvable location on this sys.path, so every caller's
+    `from lib import ledger; ledger.append_event(...)` resolves `append_event` via
+    attribute lookup on that single shared object at call time -- patching it here
+    isolates every caller uniformly, regardless of which drafter/sign_approval import
+    spelling it used."""
+    import lib.ledger as ledger_module
+    events: list[tuple[str, dict]] = []
+    def _fake_append_event(event_type, **fields):
+        events.append((event_type, fields))
+        return {}
+    monkeypatch.setattr(ledger_module, "append_event", _fake_append_event)
 
 
 def _draft_verified_finding(tmp_path: Path) -> str:

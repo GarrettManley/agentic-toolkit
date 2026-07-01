@@ -48,6 +48,14 @@ CONFIRMATION_SCRIPT_PATTERNS = [
     r"\bsec-research[\\/]scripts[\\/]sign_approval\.py\b",
     r"\bscripts[\\/]sign_override\.py\b",
     r"\bsec-research[\\/]scripts[\\/]sign_override\.py\b",
+    # Bare-filename variants: a cwd-relative invocation (e.g. `cd scripts && python
+    # sign_override.py ...`) never contains a `scripts/` prefix, so the path-qualified
+    # patterns above alone let it slip past. Safe against over-match because
+    # check_pt2_test_mode_bypass ALSO requires the literal `--test-mode-confirm` flag
+    # in the same command string before blocking anything -- a bare filename mention
+    # alone (commit-message prose, `ls scripts/`) never blocks by itself.
+    r"\bsign_approval\.py\b",
+    r"\bsign_override\.py\b",
 ]
 
 
