@@ -95,3 +95,43 @@ def test_infer_ecosystem_from_present_lockfile(tmp_path):
     assert infer_ecosystem(tmp_path) is None
     (tmp_path / "Cargo.lock").write_text("", encoding="utf-8")
     assert infer_ecosystem(tmp_path) == "cargo"
+
+
+def test_infer_package_name_npm_reads_real_shape(tmp_path):
+    """Real captured minimatch package.json shape — hb-322's actual live target
+    (fetched via huntr, not ghsa, but the same real npm manifest bytes this GHSA
+    fix must also parse correctly) — proves the reader against real bytes."""
+    from recon.deps import infer_package_name
+    _write(tmp_path / "package.json", json.dumps({
+        "author": "Isaac Z. Schlueter <i@izs.me> (http://blog.izs.me)",
+        "name": "minimatch",
+        "description": "a glob matcher in javascript",
+        "version": "3.0.4",
+    }))
+    assert infer_package_name(tmp_path, "npm") == "minimatch"
+
+
+def test_infer_package_name_npm_missing_manifest_returns_none(tmp_path):
+    from recon.deps import infer_package_name
+    assert infer_package_name(tmp_path, "npm") is None
+
+
+def test_infer_package_name_npm_malformed_json_returns_none(tmp_path):
+    from recon.deps import infer_package_name
+    _write(tmp_path / "package.json", "{not valid json")
+    assert infer_package_name(tmp_path, "npm") is None
+
+
+def test_infer_package_name_npm_missing_name_field_returns_none(tmp_path):
+    from recon.deps import infer_package_name
+    _write(tmp_path / "package.json", json.dumps({"version": "1.0.0"}))
+    assert infer_package_name(tmp_path, "npm") is None
+
+
+def test_infer_package_name_non_npm_ecosystem_returns_none(tmp_path):
+    """cargo/pypi/rubygems are deferred (see plan Out of scope) — infer_package_name
+    must not silently mis-handle them; it returns None, same as any unknown ecosystem."""
+    from recon.deps import infer_package_name
+    _write(tmp_path / "Cargo.toml", '[package]\nname = "ripgrep"\n')
+    assert infer_package_name(tmp_path, "cargo") is None
+    assert infer_package_name(tmp_path, "unknown-eco") is None

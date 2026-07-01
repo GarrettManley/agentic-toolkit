@@ -124,3 +124,26 @@ def infer_ecosystem(source_dir: Path) -> str | None:
         if (source_dir / filename).exists():
             return eco
     return None
+
+
+def _read_npm_name(path: Path) -> str | None:
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError, UnicodeDecodeError):
+        return None
+    name = data.get("name") if isinstance(data, dict) else None
+    return name if isinstance(name, str) and name else None
+
+
+def infer_package_name(source_dir: Path, ecosystem: str) -> str | None:
+    """Resolve the real registry package name from *ecosystem*'s manifest under
+    *source_dir*. v1: npm only (package.json's "name" field) — cargo/pypi/rubygems
+    are deferred (see docs/superpowers/plans/2026-07-01-hb-7hf-*.md Out of scope).
+    Returns None on a missing manifest, parse failure, missing name field, or any
+    non-npm ecosystem — never guesses from the directory/repo name."""
+    if ecosystem != "npm":
+        return None
+    manifest = source_dir / "package.json"
+    if not manifest.exists():
+        return None
+    return _read_npm_name(manifest)
