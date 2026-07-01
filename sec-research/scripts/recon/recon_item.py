@@ -31,7 +31,7 @@ def _closure_path(slug: str, asset_id: str) -> str:
 
 
 def build_recon_item(slug, asset, metadata, closure, clone_result, advisories,
-                     extra_flags, *, ts):
+                     extra_flags, *, ts, repo_identifier=None):
     flags = list(extra_flags)
     if closure.no_lockfile:
         flags.append("no_lockfile")
@@ -42,7 +42,8 @@ def build_recon_item(slug, asset, metadata, closure, clone_result, advisories,
         if not clone_result.cloned and clone_result.skipped_reason:
             flags.append(f"clone_skipped:{clone_result.skipped_reason}")
         repo = {
-            "identifier": (metadata.repo_url if metadata else None),
+            "identifier": (repo_identifier if repo_identifier is not None
+                          else (metadata.repo_url if metadata else None)),
             "clone_path": clone_result.clone_path,
             "commit_sha": clone_result.commit_sha,
             "cloned": clone_result.cloned,

@@ -99,3 +99,34 @@ def test_write_program_recon_handles_repo_asset_id_with_slashes(tmp_path):
     assert expected.exists()
     # The recorded path in recon.json must match the file actually written.
     assert item["transitive_closure"]["path"].endswith(_safe_asset_filename(asset_id) + ".closure.jsonl")
+
+
+def test_build_recon_item_repo_identifier_falls_back_when_no_metadata():
+    """Pre-existing gap (found via review of the hb-7hf plan, not introduced by it):
+    repo.identifier was None for any repo-type asset, since metadata is only ever
+    fetched for package-type assets. repo_identifier lets the caller supply the real
+    clone-driving identifier explicitly."""
+    from recon.recon_item import build_recon_item
+    from recon.clone import CloneResult
+    item = build_recon_item(
+        "ghsa-isaacs-minimatch",
+        {"asset_type": "repo", "identifier": "github.com/isaacs/minimatch", "ecosystem": None},
+        None, _closure(),
+        CloneResult(cloned=True, clone_path="runtime/recon/ghsa-isaacs-minimatch/source/x", commit_sha="abc"),
+        [], extra_flags=[], ts="2026-07-01T00:00:00Z",
+        repo_identifier="github.com/isaacs/minimatch")
+    assert item["repo"]["identifier"] == "github.com/isaacs/minimatch"
+
+
+def test_build_recon_item_repo_identifier_defaults_to_metadata_when_omitted():
+    """Backward-compat: omitting repo_identifier preserves today's behavior exactly."""
+    from recon.recon_item import build_recon_item
+    from recon.metadata import AssetMetadata
+    from recon.clone import CloneResult
+    item = build_recon_item(
+        "huntr-acme", {"asset_type": "package", "identifier": "acme", "ecosystem": "npm"},
+        AssetMetadata("acme", "npm", latest="4.2.1", repo_url="github.com/acme-org/acme"),
+        _closure(),
+        CloneResult(cloned=True, clone_path="runtime/recon/huntr-acme/source/acme-org-acme", commit_sha="abc"),
+        [], extra_flags=[], ts="2026-06-21T00:00:00Z")
+    assert item["repo"]["identifier"] == "github.com/acme-org/acme"
