@@ -231,19 +231,34 @@ def test_run_recon_closures_keyed_by_resolved_identifier(tmp_path, monkeypatch):
 
 def test_run_recon_flags_closure_identifier_collision(tmp_path, monkeypatch):
     """Two in-scope assets resolving to the same post-relabel identifier must not
-    silently overwrite one closure with the other — flag it visibly instead. (No
-    current fetcher can trigger this — GHSA emits exactly one in_scope asset,
-    huntr assets are already package-typed and never relabeled — but the guard is
-    cheap and the failure mode is silent data loss if it ever does occur.)"""
+    silently overwrite one closure with the other — first-wins: the first asset's
+    closure is what actually gets persisted to disk under the shared identifier, so
+    the SECOND (colliding) item is the one flagged and whose own transitive_closure
+    path is nulled (it cannot claim a path that doesn't hold its data). (No current
+    fetcher can trigger this — GHSA emits exactly one in_scope asset, huntr assets
+    are already package-typed and never relabeled — but the guard is cheap and the
+    failure mode is silent data loss if it ever does occur.)"""
+    import json
     import recon_program as rp
-    from recon.deps import Closure
+    from recon.deps import Closure, Dep
     from recon.clone import CloneResult
 
     monkeypatch.setattr(rp.clone, "clone_repo",
-                        lambda repo, dest, **kw: CloneResult(cloned=True, clone_path=str(dest), commit_sha="sha1"))
+                        lambda repo, dest, **kw: CloneResult(
+                            cloned=True, clone_path=str(dest / repo.rsplit("/", 1)[-1]), commit_sha="sha1"))
     monkeypatch.setattr(rp.deps, "infer_ecosystem", lambda src: "npm")
     monkeypatch.setattr(rp.deps, "infer_package_name", lambda src, eco: "same-name")
-    monkeypatch.setattr(rp.deps, "resolve_closure", lambda src, eco: Closure(no_lockfile=True))
+
+    def _resolve_closure(src, eco):
+        # Distinguish the two assets' closures by their distinct clone paths ("one" vs
+        # "two") so the test can prove which asset's real dependency data landed on disk.
+        if str(src).endswith("one"):
+            return Closure(deps=[Dep("dep-a", "1.0.0", eco)], lockfile="package-lock.json",
+                           total_before_cap=1)
+        return Closure(deps=[Dep("dep-b", "2.0.0", eco), Dep("dep-c", "3.0.0", eco)],
+                       lockfile="package-lock.json", total_before_cap=2)
+
+    monkeypatch.setattr(rp.deps, "resolve_closure", _resolve_closure)
     monkeypatch.setattr(rp.advisories, "correlate", lambda deps, disc, **kw: ([], []))
 
     scopes = _scope("ghsa-collision", [
@@ -254,3 +269,15 @@ def test_run_recon_flags_closure_identifier_collision(tmp_path, monkeypatch):
 
     assert len(items) == 2
     assert any(f.startswith("closure_identifier_collision:") for f in items[1]["flags"])
+    # The losing (second) item's own recorded path must be nulled — it never held its
+    # own data, and pointing at the shared path would misattribute the first item's deps.
+    assert items[1]["transitive_closure"]["path"] is None
+    # The winning (first) item's path must point at a real file containing ITS deps.
+    winning_path = items[0]["transitive_closure"]["path"]
+    assert winning_path is not None
+    from recon.recon_item import _safe_asset_filename
+    closure_file = tmp_path / "ghsa-collision" / "dep-graph" / (_safe_asset_filename("same-name") + ".closure.jsonl")
+    assert winning_path.endswith(closure_file.name)
+    lines = [json.loads(l) for l in closure_file.read_text(encoding="utf-8").splitlines()]
+    names = {d["name"] for d in lines}
+    assert names == {"dep-a"}  # asset "one"'s real closure, not asset "two"'s

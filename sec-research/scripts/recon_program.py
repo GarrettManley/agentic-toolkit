@@ -94,9 +94,17 @@ def run_recon(scopes: dict, *, recon_root: Path | None = None, ts: str | None = 
             item, closure = _recon_one_asset(slug, asset, disclosed_dir, source_root, ts)
             item_id = item["asset"]["identifier"]
             if item_id in closures:
+                # First-wins: an earlier asset already claimed this identifier, and its
+                # closure is what write_program_recon will persist under this identifier's
+                # filename. Overwriting `closures[item_id]` here would silently discard the
+                # earlier asset's real dependency data while this item's recon.json entry
+                # kept pointing at a path that actually holds someone else's deps. Flag THIS
+                # item (the one losing the persistence race) and null out its own path.
                 item["flags"].append(f"closure_identifier_collision:{item_id}")
+                item["transitive_closure"] = {**item["transitive_closure"], "path": None}
+            else:
+                closures[item_id] = closure
             items.append(item)
-            closures[item_id] = closure
         if items:
             write_program_recon(slug, items, closures, recon_root)
         all_items.extend(items)
