@@ -15,9 +15,20 @@ $startedAt = [DateTime]::UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ")
 Write-Host "[run_nightly.ps1] starting at $startedAt"
 
 $python = "python"
+# Watchdog: normal runs finish in ~1s; 2026-06-25 and 2026-07-03 hung 9-11 min
+# and died with exit 99 and no inner run-record. Exit 98 = watchdog kill,
+# distinct from 99 = failed to invoke.
+$watchdogSeconds = 900
 try {
-    & $python "$workspaceRoot\scripts\nightly.py"
-    $exitCode = $LASTEXITCODE
+    $proc = Start-Process -FilePath $python -ArgumentList "$workspaceRoot\scripts\nightly.py" `
+        -WorkingDirectory $workspaceRoot -NoNewWindow -PassThru
+    if ($proc.WaitForExit($watchdogSeconds * 1000)) {
+        $exitCode = $proc.ExitCode
+    } else {
+        Write-Error "nightly.py exceeded ${watchdogSeconds}s watchdog; killing process tree (pid $($proc.Id))"
+        taskkill /PID $proc.Id /T /F | Out-Null
+        $exitCode = 98
+    }
 } catch {
     Write-Error "Failed to invoke nightly.py: $_"
     $exitCode = 99
