@@ -21,14 +21,14 @@
         ]
       },
       {
-        "matcher": ".*",
+        "matcher": "^(Bash|PowerShell|Edit|Write|MultiEdit|NotebookEdit|WebFetch)$|^mcp__plugin_chrome-devtools-mcp|^mcp__plugin_playwright|^mcp__plugin_firecrawl_firecrawl",
         "hooks": [
           { "type": "command", "command": "python \"${CLAUDE_PROJECT_DIR}/.claude/hooks/hook_router.py\"", "timeout": 20 }
         ]
       }
     ],
     "PostToolUse": [
-      { "matcher": ".*", "hooks": [ { "type": "command", "command": "python \"${CLAUDE_PROJECT_DIR}/.claude/hooks/hook_router.py\"", "timeout": 20 } ] }
+      { "matcher": "^(Bash|PowerShell|Edit|Write|MultiEdit|NotebookEdit|WebFetch)$|^mcp__plugin_chrome-devtools-mcp|^mcp__plugin_playwright|^mcp__plugin_firecrawl_firecrawl", "hooks": [ { "type": "command", "command": "python \"${CLAUDE_PROJECT_DIR}/.claude/hooks/hook_router.py\"", "timeout": 20 } ] }
     ],
     "Stop": [
       { "matcher": ".*", "hooks": [ { "type": "command", "command": "python \"${CLAUDE_PROJECT_DIR}/.claude/hooks/hook_router.py\"", "timeout": 20 } ] }

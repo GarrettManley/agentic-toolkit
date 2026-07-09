@@ -1,5 +1,12 @@
 {
   "enabled": true,
   "ignore": [],
+  "$matchers_comment": "Documentation echo only -- hook_router_lib.load_config/route_event never read this key. The actual matcher Claude Code honors lives in Workspace/.claude/settings.json; keep this block in sync by hand so readers see the intended set.",
+  "matchers": {
+    "PreToolUse": "^(Bash|PowerShell|Edit|Write|MultiEdit|NotebookEdit|WebFetch)$|^mcp__plugin_chrome-devtools-mcp|^mcp__plugin_playwright|^mcp__plugin_firecrawl_firecrawl",
+    "PostToolUse": "^(Bash|PowerShell|Edit|Write|MultiEdit|NotebookEdit|WebFetch)$|^mcp__plugin_chrome-devtools-mcp|^mcp__plugin_playwright|^mcp__plugin_firecrawl_firecrawl",
+    "Stop": ".*",
+    "UserPromptSubmit": ".*"
+  },
   "timeout_seconds": 15
 }

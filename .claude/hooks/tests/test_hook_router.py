@@ -189,3 +189,48 @@ def test_route_event_crash_child_surfaces_stderr_rc0(fake_root):
     rc, out, err = lib.route_event(event, root, lib.load_config(root / "x.json"))
     assert rc == 0                  # exit 1 (crash) is not exit 2 -> non-blocking
     assert "stub crashed" in err    # surfaced, not swallowed
+
+
+# --- registered matcher scoping (hb-0nh: read-only tools must not spawn the router) ---
+
+WORKSPACE_SETTINGS = Path(__file__).resolve().parents[2] / "settings.json"  # .claude/settings.json
+
+READ_ONLY_TOOLS = ["Read", "Grep", "Glob", "Task", "LS", "WebSearch", "NotebookRead",
+                   "TodoWrite", "BashOutput"]  # substring-collision guards: Write<-TodoWrite, Bash<-BashOutput
+SIDE_EFFECTING_TOOLS = ["Bash", "PowerShell", "Edit", "Write", "MultiEdit", "NotebookEdit", "WebFetch",
+                        "mcp__plugin_chrome-devtools-mcp_chrome-devtools__navigate_page",
+                        "mcp__plugin_playwright_playwright__browser_navigate",
+                        "mcp__plugin_firecrawl_firecrawl"]  # PT-1 NETWORK_TOOLS (sec-research/hooks/common.py)
+
+
+def _router_matcher(event_name):
+    """Extract the matcher registered for hook_router.py under the given event in the
+    committed Workspace/.claude/settings.json (the settings Claude Code actually loads)."""
+    settings = json.loads(WORKSPACE_SETTINGS.read_text(encoding="utf-8"))
+    for entry in settings["hooks"][event_name]:
+        for h in entry.get("hooks", []):
+            if "hook_router.py" in h.get("command", ""):
+                return entry.get("matcher")
+    raise AssertionError(f"no hook_router.py entry found under {event_name} in {WORKSPACE_SETTINGS}")
+
+
+@pytest.mark.parametrize("event_name", ["PreToolUse", "PostToolUse"])
+def test_router_matcher_excludes_read_only_tools(event_name):
+    """Read-only/orchestration tools must never spawn the router (the amplifier fix)."""
+    import hook_router_lib as lib
+    matcher = _router_matcher(event_name)
+    for tool in READ_ONLY_TOOLS:
+        assert not lib.matcher_matches(matcher, tool), (
+            f"{event_name} router matcher {matcher!r} still matches read-only tool {tool!r}"
+        )
+
+
+@pytest.mark.parametrize("event_name", ["PreToolUse", "PostToolUse"])
+def test_router_matcher_includes_side_effecting_tools(event_name):
+    """Side-effecting tools must still route so sec-research governance is preserved."""
+    import hook_router_lib as lib
+    matcher = _router_matcher(event_name)
+    for tool in SIDE_EFFECTING_TOOLS:
+        assert lib.matcher_matches(matcher, tool), (
+            f"{event_name} router matcher {matcher!r} no longer matches side-effecting tool {tool!r}"
+        )
