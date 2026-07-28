@@ -1,13 +1,14 @@
 ---
 name: local-orchestrator
 description: Guides the hand-off to local models within the Architecture of Hybrid Context Synthesis. Use for multi-file searches or high-volume log compaction.
-compatibility: Requires Ollama, DeepSeek-R1 (8B or 14B), and ollama-mcp-bridge.
 metadata:
   version: "1.2.0"
   author: Agentic Architect
 ---
 
 # Local-Orchestrator Skill
+
+Superseded by `orchestration:local-orchestrator` (marketplace plugin).
 
 This skill optimizes the Architecture of Hybrid Context Synthesis by offloading reasoning to local hardware.
 

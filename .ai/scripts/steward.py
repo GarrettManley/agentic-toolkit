@@ -1,3 +1,7 @@
+"""Ollama-era; posts to the retired ollama-mcp-bridge endpoint and is
+superseded by the stewardship plugin's nightly steward. Parked, not ported —
+do not run against a live bridge."""
+
 import os
 import re
 import subprocess
@@ -27,7 +31,7 @@ def run_agent_loop(prompt, max_rounds=3):
         print(f"🤖 Round {round_num + 1}...")
         try:
             payload = {
-                "model": "qwen-orchestrator",
+                "model": "qwen2.5-coder-7b",
                 "messages": messages,
                 "stream": False
             }

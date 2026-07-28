@@ -9,6 +9,8 @@ metadata:
 
 # Horizon Scanning Skill
 
+Superseded by `orchestration:horizon-scanning` (marketplace plugin).
+
 This skill ensures the Architecture of Hybrid Context Synthesis stays "Best-in-Class" by preventing model lock-in.
 
 ## Core Directives
