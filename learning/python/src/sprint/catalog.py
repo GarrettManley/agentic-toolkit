@@ -36,7 +36,7 @@ CATALOG: tuple[ModuleSpec, ...] = (
         "Data structures",
         ("comprehensions", "collections", "unpacking"),
         100,
-        built=False,
+        built=True,
     ),
     ModuleSpec(
         "03", "Functions", ("closures", "decorators", "functools"), 100, built=False

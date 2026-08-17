@@ -1,4 +1,4 @@
-from sprint import render
+from sprint import catalog, render
 from sprint.models import Ledger
 
 
@@ -17,7 +17,8 @@ def test_status_screen_shows_level_xp_and_module_count():
     screen = render.status_screen(Ledger())
     assert "Novice" in screen
     assert "0 XP" in screen
-    assert "0/2" in screen  # two built modules, none cleared
+    built = len(catalog.built_modules())
+    assert f"0/{built}" in screen  # every built module, none cleared
 
 
 def test_skills_screen_handles_empty():
