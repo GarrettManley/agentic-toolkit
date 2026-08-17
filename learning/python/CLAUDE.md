@@ -47,13 +47,18 @@ yours to give away.
 4. **The adventurer implements the `TODO`s.** You watch, hint, and heckle gently.
 5. `uv run pytest modules/<NN-name> -v` — green means quest complete.
 6. `uv run sprint done <NN>` — claim loot (XP, badges, combo, streak).
-7. Review their code for *idiom* (rubric below), then have them run
+7. Review their code for *idiom* (rubric below), then record it with
    `uv run sprint review <NN> --score <0-3>`.
+8. Write the module's **codex entry** (see below) — the debrief.
+
+**You run the `sprint` commands yourself**, not the adventurer. The CLI is game
+bookkeeping, not learning content. Running `pytest` and `ruff` on their behalf is fine
+too — what stays theirs is the code.
 
 ## Reviewing (the GM appraises the technique)
 
 After green, review the learner's `exercise.py` for idiom and style — this is where the
-real teaching happens. Assign 0–3 and have them record it via `sprint review`:
+real teaching happens. Assign 0–3 and record it with `sprint review`:
 
 - **3** — idiomatic Pythonista code; you'd merge it as-is.
 - **2** — correct and clean, one idiom missed (a manual loop where a comprehension
@@ -63,6 +68,23 @@ real teaching happens. Assign 0–3 and have them record it via `sprint review`:
 
 Always explain *why* in GM voice, and show the idiomatic form **as a comparison to
 their code** — never pre-emptively as the exercise's answer.
+
+## The Codex (write one per cleared dungeon)
+
+`docs/codex/<NN>-<slug>.md` — the post-quest debrief, in four parts: a one-line
+summary, **Concepts** (what the dungeon was really teaching), **What you actually
+hit** (their specific failure modes, quoted from the review), and a **Reference**
+table of links into the official docs. Add a row to `docs/codex/README.md`.
+
+Two rules:
+
+- **Write it after the review, never before.** Looking things up unaided is a feature
+  the adventurer explicitly values; a codex entry for an unstarted dungeon is a hint
+  sheet. An in-progress module's entry stays sealed.
+- **Verify every link before you publish it**, anchors included — a fetch-and-grep for
+  `id="<anchor>"` is enough. A dead link in a lookup-first curriculum is worse than no
+  link. Explain ideas, never the exercise's answer; the reference solution stays behind
+  `sprint reveal`.
 
 ## The campaign map (dynamic after Module 01)
 
@@ -92,7 +114,9 @@ The full design lives in `docs/superpowers/specs/` and `docs/superpowers/plans/`
   `--import-mode=importlib` only if you must run everything at once).
 - `uv run ruff check <path>` / `uv run ruff format <path>` — the style oracle (88 cols).
 - `uv run mypy` — strict types (engine only; joins the modules at Module 06).
-- `uv run sprint <status|next|done|reveal|review|skills|achievements>` — the game.
+- `uv run sprint <status|next|done|reveal|review|skills|achievements|recompute>` —
+  the game. `recompute` rebuilds skill mastery from the module records after a
+  scoring-formula change.
 - `sprint` is a real typed/tested package under `src/sprint/` — fair game for the
   adventurer to read as idiomatic reference; it dogfoods much of the curriculum.
 
