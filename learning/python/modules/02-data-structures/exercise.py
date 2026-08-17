@@ -44,27 +44,11 @@ def loot_by_adventurer(entries: list[Entry]) -> dict[str, list[str]]:
 
 
 def split_party(members: list[str]) -> tuple[str, list[str], str]:
-    """Split a marching order into (scout, middle, rearguard).
-
-    ``["Vex", "Mira", "Doran", "Kel"]`` -> ``("Vex", ["Mira", "Doran"], "Kel")``
-    A two-person party has an empty middle.
-
-    TODO: starred unpacking. ``first, *rest = seq`` binds ``rest`` to a list of
-    everything left over -- and the star may sit in the middle of the targets.
-    No slicing, no indexing.
-    """
     first, *middle, last = members
     return (first, middle, last)
 
 
 def merge_inventories(*inventories: dict[str, int]) -> dict[str, int]:
-    """Merge any number of packs into one; later packs win on conflict.
-
-    TODO: ``*inventories`` collects the arguments into a tuple, so this must work
-    for zero packs too. Build a NEW dict -- mutating ``inventories[0]`` would
-    edit the caller's data. Both ``{**a, **b}`` and the ``|`` operator (3.9+)
-    merge without mutating; ``functools.reduce`` is one way to fold many.
-    """
     inventory = dict[str, int]()
     for inv in inventories:
         inventory = inventory | inv
