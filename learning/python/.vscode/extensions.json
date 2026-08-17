@@ -1,0 +1,18 @@
+{
+  "recommendations": [
+    "ms-python.python",
+    "charliermarsh.ruff"
+  ],
+  // AI autocomplete assistants — deliberately flagged as unwanted so VS Code
+  // won't nudge you to install them in this learning workspace.
+  "unwantedRecommendations": [
+    "github.copilot",
+    "github.copilot-chat",
+    "codeium.codeium",
+    "sourcegraph.cody-ai",
+    "tabnine.tabnine-vscode",
+    "continue.continue",
+    "amazonwebservices.amazon-q-vscode",
+    "visualstudioexptteam.vscodeintellicode"
+  ]
+}

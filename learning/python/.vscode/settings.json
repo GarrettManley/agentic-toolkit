@@ -1,0 +1,47 @@
+{
+  // ── AI autocomplete is OFF on purpose ──────────────────────────────────────
+  // This is a learning workspace. Inline AI suggestions would write the
+  // exercises for you and defeat the entire point. Do not re-enable these.
+
+  // GitHub Copilot
+  "github.copilot.enable": {
+    "*": false,
+    "python": false,
+    "markdown": false,
+    "plaintext": false
+  },
+  "github.copilot.editor.enableAutoCompletions": false,
+  "github.copilot.nextEditSuggestions.enabled": false,
+
+  // The built-in inline-suggestion (ghost text) channel that every AI
+  // assistant renders into — the single most effective switch.
+  "editor.inlineSuggest.enabled": false,
+
+  // Other common third-party assistants (settings are inert if not installed).
+  "codeium.enabled": false,
+  "cody.autocomplete.enabled": false,
+  "continue.enableTabAutocomplete": false,
+  "tabnine.disable_line_regex": [".*"],
+  "aws.codeWhisperer.enableCodeSuggestions": false,
+  "amazonQ.inlineChat.enableCodeSuggestions": false,
+
+  // ── The real tools stay ON ─────────────────────────────────────────────────
+  "editor.formatOnSave": true,
+  "[python]": {
+    "editor.defaultFormatter": "charliermarsh.ruff",
+    "editor.codeActionsOnSave": { "source.organizeImports": "explicit" }
+  },
+  "python.defaultInterpreterPath": ".venv/Scripts/python.exe",
+  "python.testing.pytestEnabled": true,
+  // Test Explorer points at the engine suite (always green, no import-name
+  // collisions). Run module exercises through the loop / integrated terminal:
+  //   uv run pytest modules/<NN-name>
+  "python.testing.pytestArgs": ["tests"],
+
+  "files.exclude": {
+    "**/__pycache__": true,
+    "**/.pytest_cache": true,
+    "**/.ruff_cache": true,
+    "**/.mypy_cache": true
+  }
+}

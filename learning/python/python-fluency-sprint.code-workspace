@@ -1,0 +1,15 @@
+{
+  "folders": [
+    { "path": "." }
+  ],
+  "settings": {
+    // Critical AI-off switches repeated at workspace scope (belt-and-braces —
+    // the full set lives in .vscode/settings.json and still applies).
+    "editor.inlineSuggest.enabled": false,
+    "github.copilot.enable": { "*": false }
+  },
+  "extensions": {
+    "recommendations": ["ms-python.python", "charliermarsh.ruff"],
+    "unwantedRecommendations": ["github.copilot", "github.copilot-chat"]
+  }
+}
