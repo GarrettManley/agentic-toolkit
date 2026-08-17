@@ -59,6 +59,7 @@ learning/**/__pycache__/
 learning/**/*.pyc
 learning/**/.pytest_cache/
 learning/**/.ruff_cache/
+learning/**/.mypy_cache/
 learning/**/.venv/
 learning/**/.sprint/
 learning/**/*.egg-info/
