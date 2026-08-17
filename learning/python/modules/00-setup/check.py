@@ -9,6 +9,7 @@ see a short report confirming your toolchain is ready:
 from __future__ import annotations
 
 import platform
+import sys
 
 
 def python_version() -> tuple[int, int]:
@@ -17,7 +18,7 @@ def python_version() -> tuple[int, int]:
     TODO: return the major and minor numbers from ``sys.version_info`` (it has
     ``.major`` and ``.minor`` attributes). You will need to ``import sys``.
     """
-    raise NotImplementedError
+    return sys.version_info.major, sys.version_info.minor
 
 
 def environment_report() -> dict[str, str]:
