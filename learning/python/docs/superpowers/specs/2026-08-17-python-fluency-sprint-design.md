@@ -78,7 +78,7 @@ Grounded in this workspace's Python standards (`.ai/context/python-standards.md`
 
 - **Python**: pinned via `.python-version` (target 3.12+; exact pin set in Module 00).
 - **Environment / packaging**: `uv`, `pyproject.toml`. The project **is** an installable
-  package (hatchling build) so `sprint` is a real console script; module/solution dirs
+  package (uv_build backend) so `sprint` is a real console script; module/solution dirs
   are excluded from the wheel.
 - **Format + lint**: `ruff format`, `ruff check` (line length 88).
 - **Types**: type hints on all public signatures; `mypy` from Module 06 (and on the
@@ -90,7 +90,7 @@ Grounded in this workspace's Python standards (`.ai/context/python-standards.md`
 ```text
 learning/python/
 ├── README.md              # curriculum overview, setup, the loop
-├── pyproject.toml         # uv + hatchling; ruff/pytest/mypy config; sprint entry point
+├── pyproject.toml         # uv + uv_build; ruff/pytest/mypy config; sprint entry point
 ├── .python-version        # pinned interpreter
 ├── src/sprint/            # the gamified progress engine (installed console script)
 │   ├── __init__.py
@@ -212,7 +212,7 @@ spec is written into `capstone/README.md` at that point.
 
 ## First increment (for the implementation plan)
 
-1. `learning/python/` skeleton: `pyproject.toml` (uv + hatchling + `sprint` entry point,
+1. `learning/python/` skeleton: `pyproject.toml` (uv + uv_build + `sprint` entry point,
    ruff/pytest/mypy config), `.python-version`, root `README.md`, `.gitignore` update for
    `.sprint/`, empty `modules/` `capstone/` `solutions/`.
 2. The **`sprint` engine** (`src/sprint/*` + `tests/*`), TDD, `mypy --strict` clean.

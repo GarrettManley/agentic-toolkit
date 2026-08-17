@@ -1,0 +1,35 @@
+[project]
+name = "python-fluency-sprint"
+version = "0.1.0"
+description = "Gamified, test-driven Python fluency tutorial (experienced dev -> idiomatic Python)."
+requires-python = ">=3.12"
+dependencies = []
+
+[project.scripts]
+sprint = "sprint.cli:main"
+
+[dependency-groups]
+dev = ["pytest>=8", "ruff>=0.6", "mypy>=1.11"]
+
+[build-system]
+requires = ["uv_build>=0.10.7,<0.11"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "sprint"
+module-root = "src"
+
+[tool.ruff]
+line-length = 88
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.pytest.ini_options]
+addopts = "-q"
+python_files = ["test_*.py"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+files = ["src/sprint"]

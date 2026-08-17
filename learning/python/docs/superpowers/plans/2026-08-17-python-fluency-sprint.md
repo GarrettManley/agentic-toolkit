@@ -4,9 +4,9 @@
 
 **Goal:** Scaffold a self-paced, test-driven Python tutorial with a gamified progress engine (`sprint`) — delivering a runnable skeleton, the `sprint` XP/achievements/mastery CLI (with its own tests), and the first two modules (Setup, Data model). All later modules are generated on demand.
 
-**Architecture:** The project is an installable `uv`/hatchling package exposing a `sprint` console script (`src/sprint/`). Each module is a self-contained dir (`README.md` + `exercise.py` stub + `test_exercise.py`); reference answers in `solutions/` are revealed via `sprint reveal` (which records a peek). `sprint` scores completions (XP, combo, streak, per-skill mastery), and `sprint next` picks what to reinforce — so the curriculum after Module 01 is data-driven, not fixed.
+**Architecture:** The project is an installable `uv`/uv_build package exposing a `sprint` console script (`src/sprint/`). Each module is a self-contained dir (`README.md` + `exercise.py` stub + `test_exercise.py`); reference answers in `solutions/` are revealed via `sprint reveal` (which records a peek). `sprint` scores completions (XP, combo, streak, per-skill mastery), and `sprint next` picks what to reinforce — so the curriculum after Module 01 is data-driven, not fixed.
 
-**Tech Stack:** Python ≥3.12, `uv` + `hatchling`, `ruff`, `pytest`, `mypy --strict` (on `src/sprint/`).
+**Tech Stack:** Python ≥3.12, `uv` + `uv_build`, `ruff`, `pytest`, `mypy --strict` (on `src/sprint/`).
 
 ## Global Constraints
 
@@ -26,7 +26,7 @@
 ```text
 learning/python/
 ├── README.md              # Task 1
-├── pyproject.toml         # Task 1 — uv + hatchling; sprint entry point; ruff/pytest/mypy
+├── pyproject.toml         # Task 1 — uv + uv_build; sprint entry point; ruff/pytest/mypy
 ├── .python-version        # Task 1 — "3.12"
 ├── src/sprint/            # Task 2 — the engine
 │   ├── __init__.py
@@ -56,7 +56,7 @@ learning/python/
 
 **Files:** Create `pyproject.toml`, `.python-version`, `README.md`, `capstone/README.md`, `solutions/README.md`, `src/sprint/__init__.py`; modify root `.gitignore` (ignore `.sprint/`).
 
-**Interfaces:** Produces a `uv`/hatchling project where `uv sync` installs the `sprint` console script (entry `sprint.cli:main`). Module/solution/test dirs are excluded from the wheel.
+**Interfaces:** Produces a `uv`/uv_build project where `uv sync` installs the `sprint` console script (entry `sprint.cli:main`). Module/solution/test dirs are excluded from the wheel.
 
 - [ ] **Step 1: `.python-version`** → `3.12`
 
@@ -77,11 +77,12 @@ sprint = "sprint.cli:main"
 dev = ["pytest>=8", "ruff>=0.6", "mypy>=1.11"]
 
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+requires = ["uv_build>=0.10.7,<0.11"]
+build-backend = "uv_build"
 
-[tool.hatch.build.targets.wheel]
-packages = ["src/sprint"]
+[tool.uv.build-backend]
+module-name = "sprint"
+module-root = "src"
 
 [tool.ruff]
 line-length = 88
@@ -379,7 +380,7 @@ Planned skill tags per module live in `catalog.py`; subjects firm up at authorin
 
 ## Self-Review
 
-**Spec coverage:** learner profile/goals/non-goals → README + constraints; learning model → README + Tasks 3–4 + constraints; toolchain (uv/hatchling/ruff/pytest/mypy) → Task 1; directory structure → File Structure + Tasks 1–2; **gamification subsystem** (architecture, scoring, levels, mastery, peek, CLI, badges) → Task 2 contracts + tests; module breakdown 00–01 → Tasks 3–4, 02–07 → Dynamic protocol; capstone → placeholder (Task 1) + Dynamic protocol; resolved decisions (dynamic cadence, sprint CLI, quality+arcade scoring, curated badges, reveal-gated solutions) → Tasks 1–2 + Dynamic protocol; first increment → Tasks 1–4. **Covered.**
+**Spec coverage:** learner profile/goals/non-goals → README + constraints; learning model → README + Tasks 3–4 + constraints; toolchain (uv/uv_build/ruff/pytest/mypy) → Task 1; directory structure → File Structure + Tasks 1–2; **gamification subsystem** (architecture, scoring, levels, mastery, peek, CLI, badges) → Task 2 contracts + tests; module breakdown 00–01 → Tasks 3–4, 02–07 → Dynamic protocol; capstone → placeholder (Task 1) + Dynamic protocol; resolved decisions (dynamic cadence, sprint CLI, quality+arcade scoring, curated badges, reveal-gated solutions) → Tasks 1–2 + Dynamic protocol; first increment → Tasks 1–4. **Covered.**
 
 **Placeholder scan:** `capstone/README.md` and modules 02–07 are spec-sanctioned deferrals with a concrete authoring protocol, not gaps. `TODO`s inside `check.py`/`exercise.py` are the learner's fill-in points, each backed by a verified reference solution. Engine contracts specify signatures + formulas + a test manifest (built inline TDD), not hand-waving.
 
