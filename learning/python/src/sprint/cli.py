@@ -89,9 +89,8 @@ def _cmd_done(root: Path, module_id: str, ledger: Ledger) -> int:
     )
     ledger.xp += gained
     streak_xp = scoring.register_active_day(ledger, date.today())
-    scoring.apply_mastery(
-        ledger, spec.skills, no_peek=no_peek, review_score=record.review_score
-    )
+    # Mastery is deliberately NOT touched here: passing tests proves the code is
+    # correct, not that it is idiomatic. It is applied once, at review time.
 
     record.status = "passed"
     record.ruff_clean = ruff_ok
@@ -159,6 +158,20 @@ def _cmd_review(root: Path, module_id: str, score: int, ledger: Ledger) -> int:
     return 0
 
 
+def _cmd_recompute(root: Path, ledger: Ledger) -> int:
+    """Rebuild skill mastery from the module records (after a formula change)."""
+    before = {skill_id: entry.mastery for skill_id, entry in ledger.skills.items()}
+    scoring.recompute_mastery(ledger, lambda module_id: catalog.get(module_id).skills)
+    store.save(_ledger_path(root), ledger)
+
+    print("Recomputed skill mastery from module records.")
+    for skill_id, entry in sorted(ledger.skills.items()):
+        was = before.get(skill_id)
+        delta = "new" if was is None else f"{was:.0%} -> {entry.mastery:.0%}"
+        print(f"  {skill_id:<18} {entry.mastery:.0%}   ({delta})")
+    return 0
+
+
 def _cmd_next(root: Path, ledger: Ledger) -> int:
     for spec in catalog.built_modules():
         record = ledger.modules.get(spec.id)
@@ -194,6 +207,7 @@ def _build_parser() -> argparse.ArgumentParser:
     sub.add_parser("skills", help="per-skill mastery meters")
     sub.add_parser("achievements", help="badges earned and locked")
     sub.add_parser("next", help="what to do (or reinforce) next")
+    sub.add_parser("recompute", help="rebuild skill mastery from module records")
     return parser
 
 
@@ -215,6 +229,8 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "skills":
         print(render.skills_screen(ledger))
         return 0
+    if args.command == "recompute":
+        return _cmd_recompute(root, ledger)
     if args.command == "achievements":
         print(render.achievements_screen(ledger))
         return 0
