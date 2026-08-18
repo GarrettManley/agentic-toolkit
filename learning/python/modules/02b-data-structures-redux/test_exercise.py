@@ -1,3 +1,5 @@
+import pytest
+
 from exercise import (
     assign_mounts,
     by_rarity,
@@ -73,6 +75,11 @@ def test_top_items_ranks_by_count():
     assert top_items(items, 2) == [("rope", 3), ("torch", 2)]
 
 
+def test_top_items_ranks_by_count_not_by_first_appearance():
+    """The rare-but-early item must not outrank the common-but-late one."""
+    assert top_items(["dagger", "rope", "rope", "rope"], 1) == [("rope", 3)]
+
+
 def test_top_items_returns_everything_when_n_is_large():
     assert top_items(["rope", "rope", "torch"], 99) == [("rope", 2), ("torch", 1)]
     assert top_items([], 3) == []
@@ -90,7 +97,8 @@ def test_by_rarity_returns_a_plain_dict_that_invents_nothing():
     result = by_rarity(CATALOGUE)
     assert by_rarity({}) == {}
     assert "mythic" not in result
-    result["rare"]  # touching a real key must not change the mapping
+    with pytest.raises(KeyError):
+        result["mythic"]  # reading a missing key must not insert it
     assert set(result) == {"rare", "common", "legendary"}
 
 
