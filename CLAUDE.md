@@ -93,3 +93,9 @@ Applied to the agentic workflow: every per-task test design names the level of e
 justifies any case above unit level; test-strategy reviews reject a case at the wrong level; a
 fixture or end-to-end gate that catches a bug with no failing unit test is a review finding
 (write the unit test) rather than a pass.
+
+## Architecture standard (all projects under Workspace/)
+
+The SOLID + Clean Architecture standard lives at [`docs/standards/solid-clean-architecture.md`](docs/standards/solid-clean-architecture.md). `/deliver` binds it as `constitution`, and `review:architecture-conformance` measures diffs against its reviewer checklist.
+
+- **Tests live in sibling test files, never inline in implementation files** (all languages; in Rust, a `#[cfg(test)] mod tests;` declaration in the source points at a sibling `tests.rs`).

@@ -1,11 +1,11 @@
 ---
 topic: Workspace Conventions
-last_verified: 2026-06-09
+last_verified: 2026-10-29
 source_tier: 1 (Canonical)
 proof_type: Internal (Empirical)
 verification_cmd: "dir"
-evidence: "Dir listing + cross-check against workspace CLAUDE.md, 2026-06-09"
-model_used: Claude Fable 5
+evidence: "docs/standards/solid-clean-architecture.md committed on feat/hb-w4h-1-architecture-standard, 2026-10-29"
+model_used: Claude Sonnet 5.5
 ---
 
 # Global Workspace Conventions
@@ -29,3 +29,8 @@ Standard engineering practices for all repositories in this workspace.
 - **Python**: Preferred for automation and utility scripts.
 - **Node.js/Vite**: Preferred for modern front-end applications.
 - **Flutter**: Preferred for cross-platform mobile apps.
+
+## 4. Software design
+
+- The workspace architecture standard (SOLID + Clean Architecture) is `docs/standards/solid-clean-architecture.md`.
+- The reviewer checklist there is the architecture gate for every `/deliver` run.
