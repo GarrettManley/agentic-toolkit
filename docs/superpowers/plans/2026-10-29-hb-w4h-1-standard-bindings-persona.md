@@ -1,6 +1,6 @@
 # Wave 1: Architecture Standard, Constitution Bindings, Review Persona — Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Publish the workspace SOLID + Clean Architecture standard, bind it as the delivery `constitution` in six repos, and ship a code-diff review persona that enforces it.
 
@@ -52,7 +52,7 @@
 ## Review Focus
 
 1. A `constitution:` relative path that resolves from the repo root but not from a subdirectory the operator launches `/deliver` in — every binding's body states the path is root-relative, and Task 3 verifies each with `test -f` from its repo root after stripping `\r`.
-2. The persona demanding a port for pure in-process code with one implementation (the spec's anti-goal) — Verification runs the persona text against a seeded diff containing one single-implementation Protocol and one outward import; it must flag the import and not the Protocol.
+2. The persona demanding a port for pure in-process code with one implementation (the spec's anti-goal) — Verification runs the persona text against a seeded diff containing one single-implementation Protocol and one outward import; it must flag the import. Correction at execution (controller ruling): a Protocol the diff *adds* with no IO and one implementation is itself an earned-abstraction violation, so flagging it is correct; the anti-goal probe is a second seeded diff with a concrete pure class used directly and sibling tests, on which the persona must request no interface.
 3. Checklist drift between standard and persona — Task 5's diff fails the plan if the five items differ; Task 4's test pins the persona side in CI. A durable cross-repo gate is deferred to `hb-w4h.4` (see `.review.md` I26).
 4. A `docs/` or `.ai/` commit deploying the dirty `site/` tree — Task 0's valve, and every Workspace commit step expects the skip line in its output.
 5. `pre_commit_audit.ps1` rejecting a commit on a stray `TBD` in a walked file — Task 1, 2 and 3 grep every touched `.md` before committing.
@@ -70,17 +70,17 @@
 **Interfaces:**
 - Produces: the `WORKSPACE_SKIP_PUBLISH` env valve every later Workspace commit sets; an audit that exits 0 on the current tree.
 
-- [ ] **Step 1: Snapshot and branch**
+- [x] **Step 1: Snapshot and branch**
 
 Run: `cd /c/Users/Garre/Workspace && git status --short > "$SCRATCH/workspace-status-before.txt" && git switch -c feat/hb-w4h-1-architecture-standard master && git branch --show-current`
 Expected: `feat/hb-w4h-1-architecture-standard`. The pre-existing modifications (`CLAUDE.md`, `site/**`, `learning/.../exercise.py`) carry over unstaged; the snapshot is the reference for the abort procedure.
 
-- [ ] **Step 2: Baseline the audits on the current tree (expected to fail today)**
+- [x] **Step 2: Baseline the audits on the current tree (expected to fail today)**
 
 Run: `cd /c/Users/Garre/Workspace && pwsh -NoProfile -File _scripts/pre_commit_audit.ps1; echo "audit=$?"; pwsh -NoProfile -File _scripts/verify_workspace.ps1; echo "verify=$?"`
 Expected: `audit=1` with `TBD` hits under `claude-marketplace/` (and possibly `Career/`, `mtga-companion/target`); `verify=0`. Record the output.
 
-- [ ] **Step 3: Add the skip valve to `publish.ps1`** as the first executable lines:
+- [x] **Step 3: Add the skip valve to `publish.ps1`** as the first executable lines:
 
 ```powershell
 # Skip valve: WORKSPACE_SKIP_PUBLISH=1 lets a docs/.ai commit land without a live deploy
@@ -91,14 +91,14 @@ if ($env:WORKSPACE_SKIP_PUBLISH -eq '1') {
 }
 ```
 
-- [ ] **Step 4: Extend the prune pattern in `_scripts/pre_commit_audit.ps1`** — add these segment names to the alternation on line 25: `claude-marketplace|mtga-companion|Career|libs|worktrees|target|\.venv`. Update the "Pruned (never descended)" comment block (lines 13-22) to list them with the reason "nested clone with its own gate" or "build output".
+- [x] **Step 4: Extend the prune pattern in `_scripts/pre_commit_audit.ps1`** — add these segment names to the alternation on line 25: `claude-marketplace|mtga-companion|Career|libs|worktrees|target|\.venv`. Update the "Pruned (never descended)" comment block (lines 13-22) to list them with the reason "nested clone with its own gate" or "build output".
 
-- [ ] **Step 5: Verify both repairs**
+- [x] **Step 5: Verify both repairs**
 
 Run: `cd /c/Users/Garre/Workspace && WORKSPACE_SKIP_PUBLISH=1 powershell.exe -NoProfile -File publish.ps1; echo "publish=$?"; pwsh -NoProfile -File _scripts/pre_commit_audit.ps1; echo "audit=$?"; pwsh -NoProfile -File _scripts/verify_workspace.ps1; echo "verify=$?"`
 Expected: the skip line then `publish=0` (no Hugo/Firebase output); `audit=0`; `verify=0`.
 
-- [ ] **Step 6: Commit the gate repair**
+- [x] **Step 6: Commit the gate repair**
 
 ```bash
 cd /c/Users/Garre/Workspace && git add publish.ps1 _scripts/pre_commit_audit.ps1 && git diff --cached --name-only
@@ -106,7 +106,7 @@ WORKSPACE_SKIP_PUBLISH=1 git commit -m "fix(scripts): prune nested clones and bu
 ```
 Expected: staged list is exactly the two files; the gate runs the repaired audit from the working tree and allows; post-commit prints `no publish-relevant paths` (neither file is a trigger path).
 
-- [ ] **Step 7: Commit the spec, plan and review file**
+- [x] **Step 7: Commit the spec, plan and review file**
 
 ```bash
 git add docs/superpowers/specs/2026-10-29-solid-clean-workspace-standard-design.md docs/superpowers/plans/2026-10-29-hb-w4h-1-standard-bindings-persona.md docs/superpowers/plans/2026-10-29-hb-w4h-1-standard-bindings-persona.md.review.md && git diff --cached --name-only
@@ -126,12 +126,12 @@ Expected: three files staged; commit output contains `Skip-publish valve`.
 - Consumes: spec Deliverable 1 sections 1-7; the five checklist items and the earned-abstraction rule from Global Constraints.
 - Produces: the file path every later task binds or points to; the `## Reviewer checklist` section Task 5 diffs against the persona.
 
-- [ ] **Step 1: Confirm the exemplar paths exist**
+- [x] **Step 1: Confirm the exemplar paths exist**
 
 Run: `cd /c/Users/Garre/Workspace && for f in System.Control/src/system_control/effects/registry.py Roleplaying/src/llm/provider.ts Roleplaying/src/world-map/store.ts; do test -f "$f" && echo "OK $f" || echo "MISSING $f"; done; grep -rln "interface LLMProvider" Roleplaying/src | head -3`
 Expected: three `OK` lines. If `provider.ts` is `MISSING`, cite the file the grep returns instead.
 
-- [ ] **Step 2: Write the file with this frontmatter and these seven H2 sections in this order**
+- [x] **Step 2: Write the file with this frontmatter and these seven H2 sections in this order**
 
 Frontmatter (exact keys): `title: SOLID and Clean Architecture standard`, `status: active`, `author: Garrett Manley`, `created: 2026-10-29`, `diataxis: reference`, `tracker: hb-w4h`.
 
@@ -145,12 +145,12 @@ Opening paragraph: what the standard governs (every project under the Workspace,
 6. `## 6. Reference layouts` — one fenced tree each (at most six lines each) for Python (`src/<pkg>/{domain,app,adapters,cli}` + `tests/`), Rust (`crates/core` pure + `crates/<entry>`; `foo.rs` + `foo/tests.rs`), TypeScript (`src/{domain,app,adapters}` + `src/<entry>.ts` + `tests/{unit,integration,contract}`), PowerShell (`lib/*.psm1` + `*.ps1` + `tests/*.Tests.ps1`), prefixed once: "mandatory for new projects and the template; descriptive for existing ones". No `##` inside the fences.
 7. `## Reviewer checklist` — one sentence ("These five items are the `## Checklist` of the `review:architecture-conformance` persona in the garrettmanley marketplace; edit both or neither.") then the five numbered items from Global Constraints, verbatim.
 
-- [ ] **Step 3: Verify lint preconditions**
+- [x] **Step 3: Verify lint preconditions**
 
 Run: `cd /c/Users/Garre/Workspace && grep -c "TBD" docs/standards/solid-clean-architecture.md; head -8 docs/standards/solid-clean-architecture.md | grep -cE "^(status|author|created|diataxis):"; grep -c "^## " docs/standards/solid-clean-architecture.md`
 Expected: `0`, `4`, `7`.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 cd /c/Users/Garre/Workspace && git add docs/standards/solid-clean-architecture.md && git diff --cached --name-only
@@ -172,7 +172,7 @@ Expected: one file staged; gate allows (exit 0); output contains `Skip-publish v
 - Consumes: Task 1's file path.
 - Produces: nothing later tasks call.
 
-- [ ] **Step 1: Confirm the pending `CLAUDE.md` diff is only the testing-strategy section, then commit it on its own**
+- [x] **Step 1: Confirm the pending `CLAUDE.md` diff is only the testing-strategy section, then commit it on its own**
 
 Run: `cd /c/Users/Garre/Workspace && git diff --stat CLAUDE.md && git diff CLAUDE.md | grep -E '^[+-][^+-]' | grep -vc "^+" `
 Expected: one file, additions only (the `-` count is `0`), and every added line belongs to the `## Testing strategy (all projects under Workspace/)` section. **If any other hunk is present, stop and report; do not commit.** Then:
@@ -183,16 +183,16 @@ WORKSPACE_SKIP_PUBLISH=1 git commit -m "docs(claude): record the Workspace testi
 ```
 Expected: `CLAUDE.md` only; gate allows (an LF-to-CRLF warning is noise).
 
-- [ ] **Step 2: Append to `Workspace/CLAUDE.md`** a section `## Architecture standard (all projects under Workspace/)` with: a link to `docs/standards/solid-clean-architecture.md`; one sentence that `/deliver` binds it as `constitution` and `review:architecture-conformance` measures diffs against its checklist; one bullet with the tests-in-sibling-files rule (Rust form included). Do not copy the earned-abstraction rule here (two pinned copies exist already).
+- [x] **Step 2: Append to `Workspace/CLAUDE.md`** a section `## Architecture standard (all projects under Workspace/)` with: a link to `docs/standards/solid-clean-architecture.md`; one sentence that `/deliver` binds it as `constitution` and `review:architecture-conformance` measures diffs against its checklist; one bullet with the tests-in-sibling-files rule (Rust form included). Do not copy the earned-abstraction rule here (two pinned copies exist already).
 
-- [ ] **Step 3: Add to `.ai/context/conventions.md`** a `## 4. Software design` section (sections 1-3 exist) with two bullets (the standard's path; "the reviewer checklist there is the architecture gate for every `/deliver` run"), and update frontmatter `last_verified: 2026-10-29`, `evidence: "docs/standards/solid-clean-architecture.md committed on feat/hb-w4h-1-architecture-standard, 2026-10-29"`, `model_used:` the executing model's name.
+- [x] **Step 3: Add to `.ai/context/conventions.md`** a `## 4. Software design` section (sections 1-3 exist) with two bullets (the standard's path; "the reviewer checklist there is the architecture gate for every `/deliver` run"), and update frontmatter `last_verified: 2026-10-29`, `evidence: "docs/standards/solid-clean-architecture.md committed on feat/hb-w4h-1-architecture-standard, 2026-10-29"`, `model_used:` the executing model's name.
 
-- [ ] **Step 4: Verify**
+- [x] **Step 4: Verify**
 
 Run: `cd /c/Users/Garre/Workspace && grep -c "docs/standards/solid-clean-architecture.md" CLAUDE.md .ai/context/conventions.md; grep -c "TBD" CLAUDE.md .ai/context/conventions.md`
 Expected: first command `1` or more per file; second command `0` per file.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add CLAUDE.md .ai/context/conventions.md && git diff --cached --name-only
@@ -220,7 +220,7 @@ Expected: two files; gate allows; output contains `Skip-publish valve`.
 - Consumes: Task 1's file path.
 - Produces: `constitution:` resolved by the `deliver` skill at step 1 of every run in these repos.
 
-- [ ] **Step 1: Write the four new files.** Frontmatter, exactly (substitute the value from the table):
+- [x] **Step 1: Write the four new files.** Frontmatter, exactly (substitute the value from the table):
 
 ```yaml
 ---
@@ -231,7 +231,7 @@ constitution: <value from the table>
 ```
 Body: one sentence naming the file as the SOLID + Clean Architecture standard that plan and code review are measured against (plus the sec-research sentence from the table). No `TBD`. The two `CLAUDE.md` carry-over lines from the table are written in the same step.
 
-- [ ] **Step 2: Roleplaying (gitignored): back up, then insert only if absent**
+- [x] **Step 2: Roleplaying (gitignored): back up, then insert only if absent**
 
 ```bash
 R=/c/Users/Garre/Workspace/Roleplaying/.claude/delivery.local.md; cp "$R" "$SCRATCH/Roleplaying-delivery.local.md.bak"
@@ -240,7 +240,7 @@ grep -n '^constitution:' "$R"
 ```
 Expected: the backup exists; exactly one `constitution:` line inside the frontmatter (if `sed` leaves the file malformed, restore from the backup and insert the two lines by hand before the closing `---`).
 
-- [ ] **Step 3: Verify every binding resolves from its repo root**
+- [x] **Step 3: Verify every binding resolves from its repo root**
 
 ```bash
 for r in /c/Users/Garre/Workspace /c/Users/Garre/Workspace/sec-research /c/Users/Garre/Workspace/System.Control /c/Users/Garre/Workspace/mtga-companion /c/Users/Garre/Workspace/Roleplaying; do p=$(grep -m1 '^constitution:' "$r/.claude/delivery.local.md" | sed 's/constitution: *//' | tr -d '\r'); test -f "$r/$p" && echo "OK $r" || echo "MISSING $r -> $p"; done
@@ -249,7 +249,7 @@ cd /c/Users/Garre/Workspace && git check-ignore -v .claude/delivery.local.md sec
 ```
 Expected: five `OK` lines (the marketplace is checked in Task 4); `0` and `0`; `ignored=1` (neither file ignored).
 
-- [ ] **Step 4: Commit — Workspace root, then sec-research, each alone**
+- [x] **Step 4: Commit — Workspace root, then sec-research, each alone**
 
 ```bash
 cd /c/Users/Garre/Workspace && git add .claude/delivery.local.md && git diff --cached --name-only
@@ -259,7 +259,7 @@ WORKSPACE_SKIP_PUBLISH=1 git commit -m "chore(deliver): bind the architecture st
 ```
 Expected: two commits, one file each; the second prints `Workspace verify gate skipped: sec-research/-only`. If a sec-research hook blocks the write or the commit, report its message and stop (do not override).
 
-- [ ] **Step 5: Commit — System.Control on `master`**
+- [x] **Step 5: Commit — System.Control on `master`**
 
 ```bash
 cd /c/Users/Garre/Workspace/System.Control && git branch --show-current && git status --short && git add .claude/delivery.local.md CLAUDE.md && git diff --cached --name-only
@@ -267,7 +267,7 @@ git commit -m "chore(deliver): bind the Workspace architecture standard as const
 ```
 Expected: `master`, clean before staging, exactly the two files.
 
-- [ ] **Step 6: Commit — mtga-companion on `main` via a throwaway worktree**
+- [x] **Step 6: Commit — mtga-companion on `main` via a throwaway worktree**
 
 ```bash
 cd /c/Users/Garre/Workspace/mtga-companion && git worktree add "$SCRATCH/mtga-main" main
@@ -294,17 +294,17 @@ Expected: the commit is on `main`; the active checkout is still `feat/phase-4-sl
 - Consumes: the five checklist items and the earned-abstraction rule from Global Constraints.
 - Produces: `subagent_type: review:architecture-conformance`, consumed by Task 5's dispatch row.
 
-- [ ] **Step 0: Baseline the marketplace gates on clean `main`**
+- [x] **Step 0: Baseline the marketplace gates on clean `main`**
 
 Run: `cd /c/Users/Garre/Workspace/claude-marketplace && git status --short && python3 --version && python3 -m pytest plugins/review/tests -q && python3 -m pytest ci/tests -q && bash scripts/verify.sh`
 Expected: clean tree; a Python 3 version; both suites pass; every stage `[verify] OK`. Record the output. If `python3` is not on PATH in Git Bash, say so and run the same with `python` (the user hooks use `python`).
 
-- [ ] **Step 1: Branch, scaffold, and bind**
+- [x] **Step 1: Branch, scaffold, and bind**
 
 Run: `git switch -c feat/architecture-conformance-persona main && python3 plugins/review/scripts/review_cli.py scaffold architecture-conformance --description "Use when reviewing a code diff or PR for dependency direction, earned abstraction, test placement, and duplication of shared-library utilities. Catches imports that point outward, interfaces with no IO boundary and no second implementation, inline test modules, and re-implemented utilities." --apply --agents-dir plugins/review/agents`
 Expected: a line starting `scaffolded architecture-conformance ->` naming the new file (Windows path separators and a trailing "Fill its pushback triggers" sentence are fine).
 
-- [ ] **Step 2: Add the marketplace binding and commit it alone**
+- [x] **Step 2: Add the marketplace binding and commit it alone**
 
 Insert into the existing frontmatter of `.claude/delivery.local.md`: a comment line `# Constitution: the parent workspace architecture standard, relative to this repo root (unresolvable on other clones; deliver warns and treats it as unset).` and `constitution: ../docs/standards/solid-clean-architecture.md`. Backticked path only, no markdown link.
 
@@ -314,7 +314,7 @@ git add .claude/delivery.local.md && git diff --cached --name-only && git commit
 ```
 Expected: `OK`; one file in the commit.
 
-- [ ] **Step 3: Write the failing tests** `plugins/review/tests/test_architecture_conformance.py`:
+- [x] **Step 3: Write the failing tests** `plugins/review/tests/test_architecture_conformance.py`:
 
 ```python
 from pathlib import Path
@@ -339,9 +339,9 @@ def test_persona_checklist_has_exactly_five_items():
     assert [item[:2] for item in _checklist_items(text)] == ["1.", "2.", "3.", "4.", "5."]
 ```
 
-- [ ] **Step 4: Run them to verify they fail** — `python3 -m pytest plugins/review/tests/test_architecture_conformance.py -q` — Expected: 2 failed (the scaffold has neither the phrase nor a `## Checklist`).
+- [x] **Step 4: Run them to verify they fail** — `python3 -m pytest plugins/review/tests/test_architecture_conformance.py -q` — Expected: 2 failed (the scaffold has neither the phrase nor a `## Checklist`).
 
-- [ ] **Step 5: Fill the persona body, keeping the scaffold's bold-bullet shape.** Frontmatter: `name: architecture-conformance`, the Step 1 description, `tools: Read, Grep, Glob, Bash`. Title line `# Architecture Conformance — reads the imports, not the prose`. Fill every scaffold bullet:
+- [x] **Step 5: Fill the persona body, keeping the scaffold's bold-bullet shape.** Frontmatter: `name: architecture-conformance`, the Step 1 description, `tools: Read, Grep, Glob, Bash`. Title line `# Architecture Conformance — reads the imports, not the prose`. Fill every scaffold bullet:
   - **Cares about:** the dependency rule and earned abstraction.
   - **Knowledge:** Clean Architecture rings; Python/Rust/TypeScript/PowerShell import and module conventions; out of depth on style, naming, error handling, performance.
   - **Pushback triggers:** as bullets (never a numbered list): an import from an inner ring to an outer one; a new protocol/trait/interface with no IO behind it and one implementation; a test module inside an implementation file; a re-implemented utility the repo or its shared library already has; an adapter instantiated inside domain or application code.
@@ -352,17 +352,17 @@ def test_persona_checklist_has_exactly_five_items():
   - Then an H2 `## Checklist` as the last section, whose body is the five items from Global Constraints verbatim. This is the only numbered list in the file.
   - No project, repo, or person names anywhere in the file.
 
-- [ ] **Step 6: Update the count sites and regenerate the index** per the Files list; then `python3 ci/gen-skill-index.py --write`.
+- [x] **Step 6: Update the count sites and regenerate the index** per the Files list; then `python3 ci/gen-skill-index.py --write`.
 
 Run: `grep -rn "16 archetype\|Sixteen\|sixteen\|16 review" --include=*.md --include=*.json --include=*.py . | grep -v CHANGELOG | grep -v plugin-schema-gotchas; echo "stale=$?"`
 Expected: `stale=1` (no hits).
 
-- [ ] **Step 7: Run the gates**
+- [x] **Step 7: Run the gates**
 
 Run: `python3 -m pytest plugins/review/tests -q && python3 -m pytest ci/tests -q && python3 ci/gen-skill-index.py --check && bash scripts/verify.sh`
 Expected: both suites pass including the two new tests; `up to date`; every stage `[verify] OK`.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add plugins/review/agents/architecture-conformance.agent.md plugins/review/tests/test_architecture_conformance.py plugins/review/.claude-plugin/plugin.json .claude-plugin/marketplace.json plugins/review/README.md README.md plugins/review/skills/reviewer-personas/SKILL.md ci/tests/test_agent_contract.py docs/skill-index.md && git diff --cached --name-only
@@ -384,15 +384,15 @@ Expected: exactly the nine files.
 - Consumes: Task 4's `review:architecture-conformance`.
 - Produces: `--constitution <path>` on `adversarial-review-code`, forwarded by `deliver` step 10.
 
-- [ ] **Step 1: Interface** — add `[--constitution <path>]  # governance doc forwarded to agents that accept one` to the usage block and a row `| `--constitution` | unset | Path to a governance document; forwarded to `review:architecture-conformance`, which cites its section numbers |` to the Arguments table.
+- [x] **Step 1: Interface** — add `[--constitution <path>]  # governance doc forwarded to agents that accept one` to the usage block and a row `| `--constitution` | unset | Path to a governance document; forwarded to `review:architecture-conformance`, which cites its section numbers |` to the Arguments table.
 
-- [ ] **Step 2: Step 1 bullets** — add after the `type-design-analyzer` bullet: "If any `.py`, `.rs`, `.ts`, `.tsx`, `.cs`, `.ps1`, `.psm1`, `.mjs` or `.js` file appears in the diff and the `review` plugin is installed, include `review:architecture-conformance`; if the plugin is absent, print `architecture-conformance: review plugin not installed — skipped` and continue."
+- [x] **Step 2: Step 1 bullets** — add after the `type-design-analyzer` bullet: "If any `.py`, `.rs`, `.ts`, `.tsx`, `.cs`, `.ps1`, `.psm1`, `.mjs` or `.js` file appears in the diff and the `review` plugin is installed, include `review:architecture-conformance`; if the plugin is absent, print `architecture-conformance: review plugin not installed — skipped` and continue."
 
-- [ ] **Step 3: Step 2 table** — add row `| `review:architecture-conformance` | Dependency direction, earned abstraction, test placement, shared-library duplication (source files only; receives `--constitution` when given) |`. Cross-references: add `- **Soft prerequisite:** `review` (`garrettmanley`) for the architecture-conformance dispatch; skipped with a printed note when absent.`
+- [x] **Step 3: Step 2 table** — add row `| `review:architecture-conformance` | Dependency direction, earned abstraction, test placement, shared-library duplication (source files only; receives `--constitution` when given) |`. Cross-references: add `- **Soft prerequisite:** `review` (`garrettmanley`) for the architecture-conformance dispatch; skipped with a printed note when absent.`
 
-- [ ] **Step 4: `deliver` step 10** — change "treat it as binding context the diff is measured against, in addition to the standard review." to "treat it as binding context the diff is measured against, in addition to the standard review, and pass its path as `--constitution` so `review:architecture-conformance` reads it."
+- [x] **Step 4: `deliver` step 10** — change "treat it as binding context the diff is measured against, in addition to the standard review." to "treat it as binding context the diff is measured against, in addition to the standard review, and pass its path as `--constitution` so `review:architecture-conformance` reads it."
 
-- [ ] **Step 5: Regenerate the index and verify the two documents agree**
+- [x] **Step 5: Regenerate the index and verify the two documents agree**
 
 ```bash
 cd /c/Users/Garre/Workspace/claude-marketplace && python3 ci/gen-skill-index.py --write && git diff --stat docs/skill-index.md
@@ -402,7 +402,7 @@ python3 ci/gen-skill-index.py --check && bash scripts/verify.sh
 ```
 Expected: `IDENTICAL` with no diff lines; `leak=1`; `up to date`; all `[verify] OK`.
 
-- [ ] **Step 6: Commit (two commits, plugin-scoped)**
+- [x] **Step 6: Commit (two commits, plugin-scoped)**
 
 ```bash
 git add plugins/docs/skills/adversarial-review-code/SKILL.md docs/skill-index.md && git diff --cached --name-only && git commit -m "feat(docs): dispatch review:architecture-conformance on source diffs; add --constitution (hb-w4h.1)"
@@ -415,13 +415,15 @@ git add plugins/delivery/skills/deliver/SKILL.md && git diff --cached --name-onl
 
 Run after all tasks; record command, output and exit code under each line (Iron Law evidence):
 
-- [ ] Workspace branch: `git log master..HEAD --format=%s` lists exactly these subjects in order: `fix(scripts): …(hb-64f)`, `docs(plans): …`, `docs(standards): …`, `docs(claude): record the Workspace testing strategy …`, `docs: point CLAUDE.md and conventions …`, `chore(deliver): … Workspace constitution …`, `chore(deliver): … sec-research's constitution …` (7 commits). `git status --short` equals `$SCRATCH/workspace-status-before.txt` minus `CLAUDE.md`.
-- [ ] `cd /c/Users/Garre/Workspace && pwsh -NoProfile -File _scripts/pre_commit_audit.ps1 && pwsh -NoProfile -File _scripts/verify_workspace.ps1 && echo BOTH_OK` prints `BOTH_OK`.
-- [ ] Task 3 Step 3's loop extended with `/c/Users/Garre/Workspace/claude-marketplace` prints six `OK`.
-- [ ] Marketplace branch: `git log main..HEAD --format=%s` shows the four commits (`chore(deliver)`, `feat(review)`, `feat(docs)`, `feat(delivery)`); `python3 -m pytest plugins/review/tests -q`, `python3 -m pytest ci/tests -q`, `python3 ci/gen-skill-index.py --check`, `bash scripts/verify.sh` all pass; `git fetch --tags && python3 ci/release.py --dry-run` includes minor bumps for `review`, `docs` and `delivery` (report any other plugin it proposes).
-- [ ] Task 5 Step 5's diff prints `IDENTICAL`; `grep -n -i "Garre\|System.Control\|mtga\|aether\|sec-research\|gm-common\|hb-w4h\|Roleplaying" plugins/review/agents/architecture-conformance.agent.md` prints nothing.
-- [ ] Spec acceptance 1 (constitution bound): paste the hand-resolved slot table for `System.Control` (read `System.Control/.claude/delivery.local.md`; all slots default except `constitution = ../docs/standards/solid-clean-architecture.md`) verbatim under this line.
-- [ ] Spec acceptance 2, pre-release proxy (persona behaviour): write `$SCRATCH/seed.diff` adding `src/shop/domain/order.py` that (a) imports `from shop.cli.main import print_receipt` and (b) defines `class Pricer(Protocol)` with one in-process implementation `FlatPricer` and no IO. Dispatch one `general-purpose` agent (model `sonnet`) whose prompt is the full text of `architecture-conformance.agent.md` followed by the diff and "Review this diff; emit findings in your severity vocabulary." Expected: a `blocker` naming the outward import; **no** `must_fix` or `blocker` for `Pricer`. Paste the agent's findings here. Live dispatch through `/adversarial-review-code` is only possible after the marketplace release is installed (Landing) and is recorded there.
+Evidence (raw output, exit codes, both probes) is recorded in the sibling file `2026-10-29-hb-w4h-1-standard-bindings-persona.evidence.md`; every line below passed on 2026-10-29.
+
+- [x] Workspace branch: `git log master..HEAD --format=%s` lists exactly these subjects in order: `fix(scripts): …(hb-64f)`, `docs(plans): …`, `docs(standards): …`, `docs(claude): record the Workspace testing strategy …`, `docs: point CLAUDE.md and conventions …`, `chore(deliver): … Workspace constitution …`, `chore(deliver): … sec-research's constitution …` (7 planned subjects; 9 commits on the branch because Task 0 and Task 1 each took one review-fix commit — `fix(scripts): escape .venv …` and `docs(standards): fix the DIP exemplar …` — plus this evidence commit). `git status --short` equals `$SCRATCH/workspace-status-before.txt` minus `CLAUDE.md`.
+- [x] `cd /c/Users/Garre/Workspace && pwsh -NoProfile -File _scripts/pre_commit_audit.ps1 && pwsh -NoProfile -File _scripts/verify_workspace.ps1 && echo BOTH_OK` prints `BOTH_OK`.
+- [x] Task 3 Step 3's loop extended with `/c/Users/Garre/Workspace/claude-marketplace` prints six `OK`.
+- [x] Marketplace branch: `git log main..HEAD --format=%s` shows the four planned commits (`chore(deliver)`, `feat(review)`, `feat(docs)`, `feat(delivery)`) plus one review-fix commit (`fix(review): make the architecture-conformance rubric decidable …`); `python3 -m pytest plugins/review/tests -q`, `python3 -m pytest ci/tests -q`, `python3 ci/gen-skill-index.py --check`, `bash scripts/verify.sh` all pass; `git fetch --tags && python3 ci/release.py --dry-run` includes minor bumps for `review`, `docs` and `delivery` (report any other plugin it proposes).
+- [x] Task 5 Step 5's diff prints `IDENTICAL`; `grep -n -i "Garre\|System.Control\|mtga\|aether\|sec-research\|gm-common\|hb-w4h\|Roleplaying" plugins/review/agents/architecture-conformance.agent.md` prints nothing.
+- [x] Spec acceptance 1 (constitution bound): paste the hand-resolved slot table for `System.Control` (read `System.Control/.claude/delivery.local.md`; all slots default except `constitution = ../docs/standards/solid-clean-architecture.md`) verbatim under this line.
+- [x] Spec acceptance 2, pre-release proxy (persona behaviour): write `$SCRATCH/seed.diff` adding `src/shop/domain/order.py` that (a) imports `from shop.cli.main import print_receipt` and (b) defines `class Pricer(Protocol)` with one in-process implementation `FlatPricer` and no IO. Dispatch one `general-purpose` agent (model `sonnet`) whose prompt is the full text of `architecture-conformance.agent.md` followed by the diff and "Review this diff; emit findings in your severity vocabulary." Expected: a `blocker` naming the outward import; **no** `must_fix` or `blocker` for `Pricer`. Paste the agent's findings here. Live dispatch through `/adversarial-review-code` is only possible after the marketplace release is installed (Landing) and is recorded there.
 
 ## Landing
 
@@ -444,3 +446,5 @@ Order: Workspace first (so the standard exists on `master` before anything point
 ## Retrospective
 
 Written after landing via `retrospective:plan-retrospective` by explicit path (plan-mode tracks the epic plan file, not this one).
+
+**Completion (2026-10-29):** Tasks 0-5 complete and task-reviewed (two fix rounds total: Task 0 `.venv` escape, Task 4 rubric decidability). Workspace branch `feat/hb-w4h-1-architecture-standard` (unmerged, unpushed); System.Control `master` 443ccad and mtga-companion `main` 88e59d4 committed, unpushed; Roleplaying binding edited (gitignored); marketplace branch `feat/architecture-conformance-persona` (five commits, PR not yet opened). Landing and tracker closure await authorization per the Landing section.
