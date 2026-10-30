@@ -10,8 +10,9 @@ tracker: hb-w4h
 # SOLID and Clean Architecture standard
 
 This standard governs every project under the Workspace: all new code, and any existing code a
-change touches. It does not require retrofits; an existing module is brought into line only where a
-diff already changes it, and a project's current layout is not a violation in itself. `/deliver`
+change touches. It does not require retrofits. The scope rule for every diff: a diff must not add a
+violation; pre-existing violations in lines it does not change are out of scope, and a project's
+current layout is not a violation in itself. `/deliver`
 reads this file as the binding `constitution`, and reviewers measure diffs against the
 [Reviewer checklist](#reviewer-checklist) at the end.
 
@@ -33,10 +34,13 @@ or an adapter module is a violation regardless of how small the call is.
 
 | Ring | Python | Rust | TypeScript | PowerShell |
 |---|---|---|---|---|
-| Domain | `<pkg>.domain` subpackage, or `domain_*.py` modules in a flat package | `domain` module of a pure `core` crate | `src/domain/` | pure functions in a `.psm1` module, no IO cmdlets |
-| Application | `<pkg>.app` subpackage, or `app_*.py` modules | `app` module of the `core` crate | `src/app/` | `.psm1` functions that take IO as parameters |
-| Adapters | `<pkg>.adapters` subpackage, or `adapter_*.py` modules | `adapters` module of the entry crate, or its own crate | `src/adapters/` | `.psm1` functions that call IO cmdlets (`Get-Content`, `Invoke-RestMethod`, `Start-Process`) |
+| Domain | `<pkg>.domain` subpackage, or a module classified by the ring definitions above | `domain` module of a pure `core` crate | `src/domain/` | pure functions in a `.psm1` module, no IO cmdlets |
+| Application | `<pkg>.app` subpackage, or a module classified by the ring definitions above | `app` module of the `core` crate | `src/app/` | `.psm1` functions that take IO as parameters |
+| Adapters | `<pkg>.adapters` subpackage, or a module classified by the ring definitions above | `adapters` module of the entry crate, or its own crate | `src/adapters/` | `.psm1` functions that call IO cmdlets (`Get-Content`, `Invoke-RestMethod`, `Start-Process`) |
 | Entrypoints | `<pkg>.cli` (or `__main__.py`, hook scripts) | `main.rs` of a binary crate | `src/<entry>.ts` | `.ps1` entrypoint scripts that import the modules |
+
+In PowerShell the rule is applied per function: a domain or application function does not call IO
+cmdlets, even when it shares a `.psm1` with adapter functions.
 
 ## 2. Earned abstraction
 
@@ -51,7 +55,7 @@ waits until a second real implementation exists.
 
 **Single responsibility.** A module has one reason to change: one rule set, one IO boundary, or one
 entrypoint's wiring. A module that both parses a file format and decides what to do with the
-result has two, and splits along that line when a diff touches it.
+result has two, and a new module is not created with both.
 
 **Open/closed via registries.** New variants are added by registering them, not by editing a
 dispatch. `System.Control/src/system_control/effects/registry.py` maps effect names to factories
@@ -61,7 +65,9 @@ to reach for a registry, once there are real variants to register.
 
 **Liskov substitution via conformance assertions.** Every implementation of a protocol carries a
 module-level assertion that the type checker verifies, as System.Control's device drivers do with
-`_: type[Device] = MyDevice` (for example `devices/govee_lan.py`). An implementation that cannot
+`_: type[Device] = MyDevice` (for example `devices/govee_lan.py`). That assertion is the form for
+Python's structural protocols; TypeScript `implements` and Rust trait impls are already
+compiler-checked and need nothing extra. An implementation that cannot
 satisfy the assertion without suppressing the type checker does not substitute and is not an
 implementation.
 
@@ -72,13 +78,13 @@ never calls is a sign the port is too wide.
 
 **Dependency inversion via ports composed at the entrypoint.** IO sits behind ports, and the
 entrypoint constructs the concrete adapters and passes them in. aether's `DungeonMaster(deps)`
-(`Roleplaying/src/dm.ts`) receives its `llm`, `bridge` and `memory` collaborators through a `deps`
-object rather than instantiating them. Domain and application code never call a constructor for an
-adapter.
+(`Roleplaying/src/dm.ts`) accepts its `llm`, `bridge` and `memory` collaborators through a `deps`
+object; the `??` fallback constructors in that constructor are the legacy part, not the pattern.
+New domain and application code never calls a constructor for an adapter.
 
 ## 4. Clean code rules already in force
 
-- Public APIs are typed: Python type hints checked by mypy, TypeScript without `any` at exported
+- Public APIs are typed: Python type hints checked by the project's type checker, TypeScript without `any` at exported
   boundaries, PowerShell `[Parameter()]` with declared types.
 - Public functions, classes and modules carry substantive docstrings that state intent and
   contract, not a restatement of the name.
