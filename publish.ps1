@@ -2,6 +2,13 @@
 # Agentic Workspace - Local CI/CD Orchestrator (v1.1)
 # Use: .\publish.ps1
 
+# Skip valve: WORKSPACE_SKIP_PUBLISH=1 lets a docs/.ai commit land without a live deploy
+# (e.g. when site/ has unrelated uncommitted edits). The hook output names the skip, so it is auditable.
+if ($env:WORKSPACE_SKIP_PUBLISH -eq '1') {
+    Write-Host "Skip-publish valve: WORKSPACE_SKIP_PUBLISH=1 is set. No publish." -ForegroundColor Yellow
+    exit 0
+}
+
 # Skip-publish guard: if the most recent commit only changed sec-research/ paths,
 # skip the entire pipeline. sec-research/ is operational data (findings, programs,
 # evidence) — NOT documentation to publish. Avoids unnecessary Firebase redeploys
