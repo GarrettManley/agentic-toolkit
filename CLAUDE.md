@@ -61,3 +61,35 @@ own git hooks.
 Published work (the lab site under `site/` → garrettmanley.com) must be purged of
 internal project names and repository identifiers (GEMINI.md §4). Corporate repos
 (`Duracell*`, `malachite/`) are never touched, scanned, or read.
+
+## Testing strategy (all projects under Workspace/)
+
+Follow the Practical Test Pyramid (https://martinfowler.com/articles/practical-test-pyramid.html).
+Garrett set this as the rule for every project here (2026-10-26). The operative points:
+
+- **Shape.** Many small, fast unit tests; fewer narrow integration tests; very few end-to-end
+  tests. "Write tests with different granularity" and "the more high-level you get the fewer
+  tests you should have."
+- **Unit tests** test observable behaviour through the public interface (given inputs, expect
+  result), never the calls between collaborators and never private functions; if a private
+  function wants a test, split it into its own unit. Solitary or sociable per case. No tests
+  for code without conditional logic.
+- **Integration tests** cover one external integration point each (database, filesystem,
+  process, service), with the others doubled; every serialisation boundary gets one. Local
+  dependencies only; never the production system or the production data store.
+- **Contract tests** at service boundaries are consumer-driven (the consumer writes what it
+  needs; the provider runs them).
+- **End-to-end** covers only the most valuable journeys and is expected to be slow and flaky;
+  acceptance checks sit at the lowest level that can express them.
+- **No duplication across levels.** "If a higher-level test spots an error and there is no
+  lower-level test failing, you need to write a lower-level test." "Push your tests as far down
+  the test pyramid as you can." Delete a higher-level test that adds no confidence beyond the
+  lower ones; keep it only if it genuinely adds confidence.
+- **Test code is production code.** Arrange/act/assert, one condition per test, readable over
+  DRY (Rule of Three before extracting helpers).
+- **Pipelines** order stages by speed and scope, fast feedback first.
+
+Applied to the agentic workflow: every per-task test design names the level of each case and
+justifies any case above unit level; test-strategy reviews reject a case at the wrong level; a
+fixture or end-to-end gate that catches a bug with no failing unit test is a review finding
+(write the unit test) rather than a pass.
