@@ -21,8 +21,7 @@ layout: hextra-home
 </div>
 
 <div class="hx:mb-10 hx:flex hx:gap-4 hx:flex-wrap">
-{{< hextra/hero-button text="Resume (designed PDF)" link="/resume/Garrett_Manley_Resume_Styled.pdf" >}}
-{{< hextra/hero-button text="Resume (ATS plain)" link="/resume/Garrett_Manley_Resume_ATS.pdf" style="background:transparent;color:inherit;box-shadow:inset 0 0 0 1px currentColor" >}}
+{{< hextra/hero-button text="Resume" link="https://garrettmanley.com/resume/" >}}
 {{< hextra/hero-button text="LinkedIn" link="https://www.linkedin.com/in/garrettmanley/" style="background:transparent;color:inherit;box-shadow:inset 0 0 0 1px currentColor" >}}
 </div>
 
