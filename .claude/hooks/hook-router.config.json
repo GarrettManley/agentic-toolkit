@@ -8,5 +8,9 @@
     "Stop": ".*",
     "UserPromptSubmit": ".*"
   },
-  "timeout_seconds": 15
+  "timeout_seconds": 15,
+  "event_timeouts": {
+    "Stop": 60
+  },
+  "$event_timeouts_comment": "Per-event child timeout (seconds), overriding timeout_seconds. Stop=60 matches Roleplaying's deferred_typecheck budget; keep the Stop registration's outer timeout in .claude/settings.json above it (75)."
 }

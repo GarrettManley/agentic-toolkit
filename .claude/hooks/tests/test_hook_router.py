@@ -234,3 +234,58 @@ def test_router_matcher_includes_side_effecting_tools(event_name):
         assert lib.matcher_matches(matcher, tool), (
             f"{event_name} router matcher {matcher!r} no longer matches side-effecting tool {tool!r}"
         )
+
+
+# --- per-event timeout + concurrent fan-out ----------------------------------
+
+def test_timeout_for_uses_event_override():
+    import hook_router_lib as lib
+    cfg = {"timeout_seconds": 15, "event_timeouts": {"Stop": 60}}
+    assert lib.timeout_for(cfg, "Stop") == 60
+
+
+def test_timeout_for_falls_back_to_global():
+    import hook_router_lib as lib
+    cfg = {"timeout_seconds": 15, "event_timeouts": {"Stop": 60}}
+    assert lib.timeout_for(cfg, "PreToolUse") == 15
+
+
+def test_timeout_for_defaults_without_overrides():
+    import hook_router_lib as lib
+    assert lib.timeout_for(lib.load_config(Path("missing.json")), "Stop") == 15
+
+
+def test_route_event_runs_children_concurrently(fake_root):
+    """Integration (process boundary): two 1.5 s children finish in ~1.5 s, not ~3 s."""
+    import time
+    import hook_router_lib as lib
+    root, mk = fake_root
+    py, stub = Path(sys.executable).as_posix(), (STUBS / "sleep_hook.py").as_posix()
+    mk("alpha", {"Stop": [{"hooks": [{"command": f"{py} {stub} 1.5 A"}]}]})
+    mk("beta", {"Stop": [{"hooks": [{"command": f"{py} {stub} 1.5 B"}]}]})
+    event = json.dumps({"hook_event_name": "Stop"}).encode()
+    start = time.monotonic()
+    rc, out, _err = lib.route_event(event, root, lib.load_config(root / "x.json"))
+    assert time.monotonic() - start < 2.7
+
+
+def test_route_event_concurrent_output_keeps_discovery_order(fake_root):
+    import hook_router_lib as lib
+    root, mk = fake_root
+    py, stub = Path(sys.executable).as_posix(), (STUBS / "sleep_hook.py").as_posix()
+    mk("alpha", {"Stop": [{"hooks": [{"command": f"{py} {stub} 0.8 A"}]}]})  # finishes last
+    mk("beta", {"Stop": [{"hooks": [{"command": f"{py} {stub} 0 B"}]}]})
+    event = json.dumps({"hook_event_name": "Stop"}).encode()
+    rc, out, _err = lib.route_event(event, root, lib.load_config(root / "x.json"))
+    assert (rc, out) == (0, "AB")
+
+
+def test_route_event_applies_event_timeout(fake_root):
+    import hook_router_lib as lib
+    root, mk = fake_root
+    py, stub = Path(sys.executable).as_posix(), (STUBS / "sleep_hook.py").as_posix()
+    mk("alpha", {"Stop": [{"hooks": [{"command": f"{py} {stub} 3"}]}]})
+    event = json.dumps({"hook_event_name": "Stop"}).encode()
+    cfg = {"enabled": True, "ignore": [], "timeout_seconds": 15, "event_timeouts": {"Stop": 1}}
+    rc, out, err = lib.route_event(event, root, cfg)
+    assert rc == 0 and "timed out (1s)" in err

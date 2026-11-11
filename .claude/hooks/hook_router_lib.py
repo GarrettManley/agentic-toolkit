@@ -8,6 +8,7 @@ import os
 import re
 import shlex
 import subprocess
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -115,28 +116,43 @@ def aggregate(event_name: str, results: list[tuple[int, str, str]]) -> tuple[int
     return 0, out, err
 
 
+def timeout_for(config: dict, event_name: str) -> float:
+    """Per-child timeout: `event_timeouts[event_name]` if set, else `timeout_seconds`.
+
+    Stop needs headroom for children that typecheck (Roleplaying's deferred_typecheck
+    allows itself 60 s); a flat 15 s killed them mid-run and dropped their errors."""
+    overrides = config.get("event_timeouts") or {}
+    return overrides.get(event_name, config.get("timeout_seconds", 15))
+
+
 def route_event(stdin_bytes: bytes, root: Path, config: dict) -> tuple[int, str, str]:
-    """Parse the event, fan out to matching child hooks, short-circuit on first block."""
+    """Parse the event and run every matching child hook concurrently.
+
+    Concurrent so an event costs the slowest child, not the sum (multi-agent runs fire
+    Stop constantly). Results keep discovery order, so `aggregate` still lets the first
+    child (in that order) that exits 2 win. Children are no longer skipped after a block:
+    they already run in parallel, and federated hooks are guards, not side effects."""
     try:
         event = json.loads(stdin_bytes.decode("utf-8")) if stdin_bytes.strip() else {}
     except (ValueError, UnicodeDecodeError):
         return 0, "", ""  # can't parse -> fail open
     event_name = event.get("hook_event_name", "")
     tool_name = event.get("tool_name", "")
-    timeout = config.get("timeout_seconds", 15)
+    timeout = timeout_for(config, event_name)
 
-    results: list[tuple[int, str, str]] = []
+    jobs: list[tuple[list[str], Path]] = []
     for proj in discover_projects(root, config):
         for entry in (proj.settings.get("hooks", {}).get(event_name) or []):
             if not matcher_matches(entry.get("matcher"), tool_name):
                 continue
             for h in (entry.get("hooks") or []):
                 command = h.get("command")
-                if not command:
-                    continue
-                argv = resolve_command(command, proj.dir)
-                rc, out, err = run_child_hook(argv, proj.dir, stdin_bytes, timeout)
-                results.append((rc, out, err))
-                if rc == 2:
-                    return 2, "", err  # short-circuit: a block is terminal
+                if command:
+                    jobs.append((resolve_command(command, proj.dir), proj.dir))
+    if len(jobs) <= 1:
+        results = [run_child_hook(argv, d, stdin_bytes, timeout) for argv, d in jobs]
+    else:
+        with ThreadPoolExecutor(max_workers=len(jobs)) as pool:
+            results = list(pool.map(
+                lambda job: run_child_hook(job[0], job[1], stdin_bytes, timeout), jobs))
     return aggregate(event_name, results)
