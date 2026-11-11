@@ -299,6 +299,8 @@ Squarespace extras:
 | 2026-11-10 ~14:38    | garrettmanley.com   | NS propagated instantly; CF zone **Active**; Mailgun MX x2 + SPF + DKIM deleted; CF Email Routing enabled (MX x3, SPF, DKIM added); brief (~2 min) mail window where sending MTAs queued on 4xx | **Live** |
 | 2026-11-10 ~15:12    | garrettmanley.com   | Deleted `kayla.hughes.manley@gmail.com` destination (unused); added `_dmarc` TXT = `v=DMARC1; p=quarantine` | **Done** |
 | 2026-11-10 ~15:12    | garrettmanley.dev   | Added `_dmarc` TXT = `v=DMARC1; p=quarantine`; added `git` A → 192.0.2.1 (Proxied, TEST-NET placeholder); CF Single Redirect Rule: `https://git.garrettmanley.dev/claude-marketplace` → `https://github.com/GarrettManley/claude-marketplace` (301). Verified end-to-end. | **Done** |
+| 2026-11-10 ~19:00    | garrettmanley.com   | Added Resend sending subdomain for the jobs@ probe: TXT `resend._domainkey.probe` (DKIM), CNAME `rsend.probe` → `rsend.forge.rmta.net`, CNAME `send.probe` → `send.forge.rmta.net` (all DNS only). Resend domain `probe.garrettmanley.com` verified. | **Done** |
+| 2026-11-10 ~20:03    | garrettmanley.dev   | `jobs@` verified end-to-end (Resend → CF Email Routing → Gmail, DKIM/DMARC/ARC pass, ~17-36 s). Weekly probe `Workspace/apps/mail-probe` registered as Task `mail-probe-weekly` (Mon 07:00 MT). Gmail filter `from:probe@probe.garrettmanley.com` = never spam + skip inbox (new-domain probe was spam-filtered despite auth pass). | **Done** |
 
 ## Current status (as of 2026-11-10 ~15:12 MT)
 
