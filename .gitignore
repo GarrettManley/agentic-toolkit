@@ -50,6 +50,13 @@ apps/hw-dashboard/.pytest_cache/
 apps/hw-dashboard/web/node_modules/
 apps/hw-dashboard/web/dist/
 apps/hw-dashboard/web/*.tsbuildinfo
+# apps/mail-probe — weekly jobs@ delivery probe. Run log is per-machine runtime.
+!apps/mail-probe/
+apps/mail-probe/data/
+apps/mail-probe/.venv/
+apps/mail-probe/**/__pycache__/
+apps/mail-probe/**/*.pyc
+apps/mail-probe/.pytest_cache/
 
 # learning/ — self-paced tutorial projects (track source; caches/venv are per-machine).
 # /* is non-recursive, so a single re-include tracks the whole subtree; then re-ignore
