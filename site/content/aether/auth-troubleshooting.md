@@ -3,7 +3,7 @@ title: "Auth Troubleshooting"
 weight: 60
 ---
 
-Problems connecting to a **locally-running** engine with the `aether-cli`, and what to do
+Problems connecting to a **locally running** engine with the `aether-cli`, and what to do
 about each.
 
 > **Local play today.** The transport is being rebuilt (spec 043): the old SSH +
@@ -47,8 +47,9 @@ that environment variable before starting it.
 **What's happening.** There's no `universe/characters/<name>.json` matching the name you
 passed.
 
-**What to do.** Check spelling and case (names are case-sensitive). Ask the GM to create
-the character file, or connect and run `/session0` to create the character.
+**What to do.** Check spelling and case (names are case-sensitive). If the character
+genuinely doesn't exist yet, reconnect with `--create` to open the Session-0 wizard and
+create it — see [Player onboarding](/aether/player-onboarding/).
 
 ## The stream closes immediately, or the DM never responds
 
@@ -56,18 +57,19 @@ the character file, or connect and run `/session0` to create the character.
 
 **What to do.** Check the **engine terminal**. Common causes:
 
-- The model backend isn't running — Ollama not started or its models not pulled (see
-  [Your First Campaign](/aether/tutorial-first-campaign/), Step 3).
+- The model backend isn't running — `llama-server` not started. Probe its `/health`
+  endpoint per docs/runbooks/llamacpp-phase1-setup.md
+  (see also [Your First Campaign](/aether/tutorial-first-campaign/), Step 3).
 - The Rust core isn't built — run `cargo build --release` under `core/`.
 - A network error reaching Gemini (if you're on the Gemini provider).
 
 ## "Rate limited"
 
-**What's happening.** The brute-force filter is rate-limiting repeated connection
-attempts (default: 20 per 60 seconds).
+**What's happening.** The application-layer rate limiter was removed with Transport
+v2. If you are seeing a rate-limit error it is coming from a firewall or
+upstream proxy, not the Aether server itself.
 
-**What to do.** Wait 60 seconds and retry. If you were retrying in a loop because of a
-config problem, fix the config first—each attempt counts.
+**What to do.** Wait a few minutes and retry. If the problem persists, contact your GM.
 
 ## Remote sign-in (coming)
 

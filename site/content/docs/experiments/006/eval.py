@@ -21,17 +21,19 @@ import time
 import urllib.request
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-LLAMA = r"C:\llama\llama-server.exe"
-RAW_DIR = r"C:\Users\Garre\Workspace\.exp006-scratch\raw"  # outside the published bundle
+# Machine-specific locations come from the environment so the published copy carries no local paths.
+LLAMA = os.environ.get("LLAMA_SERVER", "llama-server")
+MODELS_DIR = os.environ.get("MODELS_DIR", "models")
+RAW_DIR = os.environ.get("EXP006_RAW_DIR", os.path.join(os.path.expanduser("~"), ".exp006-scratch", "raw"))  # outside the published bundle
 PORT = 8099
 BASE = f"http://127.0.0.1:{PORT}"
 
 MODELS = [
-    {"slug": "deepseek-r1-7b",   "gguf": r"C:\models\deepseek-r1-7b-Q4_K_M.gguf"},
-    {"slug": "qwen2.5-coder-7b", "gguf": r"C:\models\qwen2.5-coder-7b-Q4_K_M.gguf"},
-    {"slug": "llama3.1-8b",      "gguf": r"C:\models\llama3.1-8b-Q4_K_M.gguf"},
-    {"slug": "gemma-4-E4B",      "gguf": r"C:\models\gemma-4-E4B-it-Q4_K_M.gguf"},
-    {"slug": "phi4-mini",        "gguf": r"C:\models\phi4-mini-Q4_K_M.gguf"},
+    {"slug": "deepseek-r1-7b",   "gguf": os.path.join(MODELS_DIR, "deepseek-r1-7b-Q4_K_M.gguf")},
+    {"slug": "qwen2.5-coder-7b", "gguf": os.path.join(MODELS_DIR, "qwen2.5-coder-7b-Q4_K_M.gguf")},
+    {"slug": "llama3.1-8b",      "gguf": os.path.join(MODELS_DIR, "llama3.1-8b-Q4_K_M.gguf")},
+    {"slug": "gemma-4-E4B",      "gguf": os.path.join(MODELS_DIR, "gemma-4-E4B-it-Q4_K_M.gguf")},
+    {"slug": "phi4-mini",        "gguf": os.path.join(MODELS_DIR, "phi4-mini-Q4_K_M.gguf")},
 ]
 
 SCHEMA = {"name": "scheduling_answer", "strict": True, "schema": {

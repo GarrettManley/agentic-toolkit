@@ -3,7 +3,6 @@ title: "Character Creation"
 weight: 20
 ---
 
-
 The Aether Engine drives Pass-2 prose from the contents of your
 character JSON file. **Mechanical fields** (HP, AC, abilities,
 proficiencies) drive Sage and combat. **Narrative-identity fields**
@@ -25,12 +24,13 @@ field useful, and how to author the trickiest one (the patron entity).
 
 ## 1. Quick start
 
-1. Copy `universe/characters/_pc-template.json` to
-   `universe/characters/<your-name>.json` (lowercase, no leading
-   underscore — the validator skips files starting with `_`).
-2. Replace every placeholder. Mechanical fields can stay at the
-   template defaults if you're rolling a fresh level-1 warlock; the
-   narrative fields must each be filled.
+1. Create your character with the in-game wizard —
+   `aether play <name> --create` (or `aether-tui play <name> --create`) — which
+   drives class, ability scores, and inventory and writes
+   `universe/characters/<name>.json`. See [Player onboarding](/aether/player-onboarding/).
+2. Open that file and fill in the narrative-identity fields below (`pronouns`,
+   `appearance`, `personality`, `backstory`, `bonds`, `ideals`, `flaws`, `goals`).
+   The wizard only writes mechanical fields—these are on you.
 3. Run `npm run characters:check`. The script walks
    `universe/characters/*.json` and warns if any required narrative
    field is empty. Default mode is advisory (exit 0); pass
@@ -165,10 +165,10 @@ node scripts/check-character-fields.mjs universe/characters/gurga.json
 
 The validator skips:
 
-- Files whose basename starts with `_` (e.g. `_pc-template.json`).
+- Files whose basename starts with `_` (for example `_pc-template.json`).
 - Known test/scenario fixtures (currently `druid_harness.json`).
 - Files that lack a `class_features` field — these are presumed
-  NPCs (e.g. `void-stalker.json`).
+  NPCs (for example `void-stalker.json`).
 
 The boot-time warning in `src/server.ts` uses the same set of
 rules; it is non-blocking and prints one line per affected
@@ -176,10 +176,15 @@ character.
 
 ## 6. See also
 
+- [Player guide: aether-cli](/aether/aether-cli/) — for wire-based first-time character
+  creation using `aether play <name> --create`, which drives the Session-0 wizard
+  for the mechanical fields (class, ability scores, inventory) over the Connect-RPC
+  transport. Add the narrative-identity fields from this guide to the resulting
+  JSON file afterward.
 - [GM onboarding manual](/aether/gm-onboarding-manual/) — for the GM
   operator who composes Pass-2 prose in manual mode.
 - internal design notes
-  — the live-play session that exposed the gap and motivated #121.
+  — the live-play session that exposed the gap and motivated the change.
 - `universe/characters/gurga.json`
   — the worked example referenced throughout this guide.
 

@@ -3,7 +3,7 @@ title: "Player Onboarding"
 weight: 10
 ---
 
-Welcome. This tutorial walks you through connecting to a locally-running Aether
+Welcome. This tutorial walks you through connecting to a locally running Aether
 Engine with the `aether-cli` and seeing your first game prompt. By the end you'll
 have the engine running, connected as your character, and typed your first action.
 
@@ -17,7 +17,7 @@ have the engine running, connected as your character, and typed your first actio
 
 - The **Aether repo** checked out, with `npm install` run once. The engine and the
   CLI both live here (`packages/aether-cli`).
-- The engine's **model backend** available — Ollama by default (`npm start`); see
+- The engine's **model backend** available — `llama-server` by default (`npm start`); see
   [Your First Campaign](/aether/tutorial-first-campaign/) for the one-time setup.
 - The **character name** you want to play. Example: `gurga`, `korrin`, `valen`.
   Case matters—use the exact string from the character's JSON file.
@@ -33,7 +33,7 @@ npm start
 ```
 
 This boots the HTTPS Connect-RPC gateway on `localhost` with the **loopback bypass**
-enabled (`AETHER_EXPOSE_LOOPBACK=1`) and the Ollama provider. Leave it running; it
+enabled (`AETHER_EXPOSE_LOOPBACK=1`) and the `llama-server` provider. Leave it running; it
 prints a line when it's listening (default port `443`, or `8443` if `443` is taken).
 
 ## Step 2—Connect with the CLI

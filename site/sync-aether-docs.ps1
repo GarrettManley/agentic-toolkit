@@ -55,8 +55,12 @@ foreach ($base in $docs.Keys) {
     # Pass 2b: redact the PRIVATE repo coordinate in ANY form -- bare https/SSH URLs in code
     # fences (e.g. `git clone git@github.com:GarrettManley/aether-engine.git`) that the
     # markdown-link passes cannot see. The owner/slug coordinate must never reach published output.
-    $body = $body -replace 'git@github\.com:GarrettManley/aether-engine(\.git)?', '<your-aether-engine-remote>'
-    $body = $body -replace 'https?://github\.com/GarrettManley/aether-engine(\.git)?', '<your-aether-engine-remote>'
+    $body = $body -replace 'git@github\.com:GarrettManley/aether-engine(\.git)?', '<your-aether-remote>'
+    $body = $body -replace 'https?://github\.com/GarrettManley/aether-engine(\.git)?', '<your-aether-remote>'
+    # The private repo's slug is itself blocked by the site privacy gate (private-repo-slug):
+    # clone into an explicitly named `aether` dir so later `cd` steps stay correct.
+    $body = $body -replace 'git clone <your-aether-remote>(?=\s*$|\r?\n)', 'git clone <your-aether-remote> aether'
+    $body = $body -replace '\baether-engine\b', 'aether'
     # Pass 2c: an internal engineering doc whose link TEXT is itself a repo path leaks structure
     # (e.g. `docs/engineering/plans/...md`). Drop the whole reference; titled engineering links
     # keep their human title via Pass 3 below.
@@ -68,11 +72,27 @@ foreach ($base in $docs.Keys) {
     # avoid mangling sentences ("(#138)", "(#138, #139)", "(spec 043, #138)" are handled).
     $body = $body -replace '\s*\(#\d+(?:[,/]\s*#\d+)*\)', ''
     $body = $body -replace '\((spec [^),]+?)(?:,\s*(?:issue\s+)?#\d+(?:[,/]\s*#\d+)*)\)', '($1)'
+    # Pass 4b: inline tracker refs in prose. The site's privacy gate (scrub-check tracker-issue)
+    # blocks any bare #N in published text, so rewrite the common phrasings, then drop the rest.
+    $issue = '#\d+(?:/#\d+)*'
+    $body = $body -replace "(?m)^\s*-\s*$issue\s*\S.*(\r?\n|$)", ''                 # "- #138 — tracking issue."
+    $body = $body -replace "\s*\((?:[Ss]ee\s+)?(?:issue\s+)?$issue[^()]*\)", ''    # "(see #40)", "(See issue #105 ...)"
+    $body = $body -replace "coming with $issue", 'coming soon'
+    $body = $body -replace "\bthe $issue ", 'the '                                  # "the #34 auth rework"
+    $body = $body -replace "\bSince $issue,", 'Now,'
+    $body = $body -replace "motivated $issue", 'motivated the change'
+    $body = $body -replace "\s$issue\b", ''                                         # "pending #139" -> "pending"
 
     # Fail-closed: never publish the private repo coordinate. If any pass above missed it, abort
     # the whole sync rather than silently leak (the previous design failed OPEN on bare URLs).
     if ($body -match 'github\.com[:/]GarrettManley/aether-engine') {
         throw "ABORT: private repo coordinate 'GarrettManley/aether-engine' survived redaction in '$base' -- fix the source or the stripper before re-running."
+    }
+
+    # Fail-closed: no bare tracker ref may survive in prose (code spans/fences excluded).
+    $prose = [regex]::Replace($body, '(?s)```.*?```|`[^`]*`', '')
+    if ($prose -match '(?<![&\w/#])#\d+\b') {
+        throw "ABORT: tracker reference '$($Matches[0])' survived redaction in '$base' -- extend Pass 4b."
     }
 
     $meta = $docs[$base]

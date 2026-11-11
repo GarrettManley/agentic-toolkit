@@ -3,7 +3,6 @@ title: "GM Onboarding"
 weight: 70
 ---
 
-
 This guide is for the **GM operator**—a human or agent (typically
 Claude over a Monitor stream) who writes Pass-2 prose for the
 Aether Engine while it runs in manual GM mode (spec 041).
@@ -16,7 +15,7 @@ A player connects to the engine with the CLI and types something like
 "I climb the rope" or "I attack the bandit." The engine
 classifies their intent (Pass 1), resolves any mechanics through
 the Rust core (Sage), then builds a Pass-2 prompt that asks for
-narrative prose. In normal mode an LLM (Ollama, Gemini) answers
+narrative prose. In normal mode an LLM (llama-server, Gemini) answers
 that prompt. In **manual mode**, you do.
 
 The engine writes the Pass-2 prompt to a file under
@@ -123,7 +122,7 @@ Then write prose that:
   actor's response unless `systemInstruction` says you should.
   When the next actor is an NPC, set up their action; do not
   resolve it. When the next actor is the player, leave agency
-  open. (See issue #105 for the rationale.)
+  open.
 - **Stays under 200 words.** Hard cap. Long prose breaks pacing
   and inflates the prompt cache for the next cycle.
 - **Names entities consistently.** No parenthetical aliases. If the prompt says `Kira`, write `Kira`, not
@@ -180,7 +179,7 @@ session) execute these from a GM CLI session:
 
 | Command | Effect |
 |---|---|
-| `/gm startencounter <names...>` | Roll initiative, enter combat. |
+| `/gm encounter start <names...>` | Roll initiative, enter combat. |
 | `/gm endencounter` | Exit combat. |
 | `/gm delegate <character> <identity-key>` | Grant operator status. |
 | `/gm revoke <character> <identity-key>` | Revoke operator status. |

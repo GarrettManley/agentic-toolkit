@@ -30,15 +30,17 @@ port, add `--server https://localhost:8443`.
 
 First-time players should read [player-onboarding.md](/aether/player-onboarding/) first.
 Connection problems are listed in [auth-troubleshooting.md](/aether/auth-troubleshooting/).
-**Remote players** (another machine, Google sign-in) are coming with #138/#139.
+**Remote players** (another machine, Google sign-in) are coming soon.
 
 ---
 
 ## Character creation
 
-Type `/session0` at any time to start the character creation flow. The
-engine walks you through name, race, class, and background. You only
-need to complete Session 0 once per character.
+First-time character creation happens when you connect with `--create` (see
+[Player onboarding](/aether/player-onboarding/)), which opens the Session-0 wizard for
+class, ability scores, and inventory. You only need to complete it once per
+character. Typing `/session0` in an already-connected session starts the same
+flow manually.
 
 Your status bar appears on completion:
 

@@ -3,7 +3,6 @@ title: "Claude as GM"
 weight: 90
 ---
 
-
 This guide catalogs the four prompt shapes a manual-mode operator
 encounters in spec 041, each with the marker that signals
 the shape, the system-instruction excerpt that gates operator
@@ -30,7 +29,7 @@ which shape you're in:
 | Post-roll resolution | `Mechanical Result: { … }` JSON | Standard 1–2 paragraph form | Narration of the already-rolled outcome (success or failure) |
 | Speech-to-NPC | Player addresses an NPC ("I want to ask V…") | Exception clause: "you may offer one or two example replies inline" | Prose that voices the NPC; example replies optional |
 
-Of the 17 cycles in Shape A, the distribution was 13 open-action,
+Of the 18 cycles in Shape A, the distribution was 13 open-action,
 2 roll-proposal preamble, 2 post-roll resolution, and 1
 speech-to-NPC. Roll-proposal and post-roll always come in pairs:
 the engine first asks you to set up the roll, then (after the
@@ -105,7 +104,7 @@ Skill to propose: <skill-slug>
 > The player will accept the roll on their next turn.
 
 **What you produce.** One or two sentences. No paragraphs. End
-with a question that proposes the skill explicitly, e.g. "That
+with a question that proposes the skill explicitly, for example "That
 feels like an Insight check — roll it?". Do **not** describe
 the result; the dice haven't been thrown.
 

@@ -3,7 +3,6 @@ title: "GM Manual"
 weight: 80
 ---
 
-
 This manual covers everything a GM or operator needs to run a
 campaign: gaining GM privileges, injecting narrative, triggering
 distillation, managing combat, and reading overseer telemetry.
@@ -65,7 +64,7 @@ recent events before the next session.
 ### Start an encounter
 
 ```bash
-/gm startencounter Kira Vex skeleton-guard
+/gm encounter start Kira Vex skeleton-guard
 ```
 
 The engine rolls initiative for every combatant, announces the turn
@@ -162,7 +161,7 @@ cd core && cargo build --release
 ## Character access management
 
 Every character JSON under `universe/characters/` has two
-optional access fields introduced by the #34 auth rework:
+optional access fields introduced by the auth rework:
 
 - `primary_owner`: a single `<provider-id>:<sub>` identity key
   (for example `google:1234567890`) identifying the player who owns the
@@ -172,11 +171,11 @@ optional access fields introduced by the #34 auth rework:
 
 ### Delegating access (`/gm delegate`, `/gm revoke`)
 
-Since #37, GMs grant and revoke operator status from a GM
+Now, GMs grant and revoke operator status from a GM
 terminal—no JSON edits, no git commits. The mutations write to
 `universe/characters/<name>.json` via the same atomic tmp+rename
 path the access resolver uses, and emit `DELEGATE_GRANT` /
-`DELEGATE_REVOKE` events to OVERSEER for audit (see #40).
+`DELEGATE_REVOKE` events to OVERSEER for audit.
 
 Grant a permanent operator:
 

@@ -50,10 +50,20 @@ cd site
 uvx hugo --cleanDestinationDir
 if ($LASTEXITCODE -ne 0) { Write-Error "Hugo build failed."; exit 1 }
 
-# 4. Firebase Deploy
-Write-Host "Deploying to Firebase..." -ForegroundColor Gray
-npx firebase-tools deploy --only hosting:documentation
-if ($LASTEXITCODE -ne 0) { Write-Error "Firebase deployment failed."; exit 1 }
+# 4. Privacy gate: the web platform's scrub-check over the built output (path dependency on
+#    the sibling websites repo; build it there with `pnpm turbo run build` if dist is missing).
+Write-Host "Privacy gate (scrub-check)..." -ForegroundColor Gray
+$scrub = Join-Path $PSScriptRoot 'websites\packages\tools\dist\cli\scrub-check.js'
+node $scrub public
+if ($LASTEXITCODE -ne 0) { Write-Error "scrub-check blocked the publish (see hits above)."; cd ..; exit 1 }
+
+# 5. Cloudflare deploy. The token lives in a 1Password vault the automation service account
+#    cannot read, so this pops one Windows Hello prompt; dismissing it skips the deploy.
+Write-Host "Deploying to Cloudflare (approve the Windows Hello prompt)..." -ForegroundColor Gray
+Import-Module (Join-Path $HOME 'scripts\lib\Secrets.psm1') -Force
+$wrangler = Join-Path $PSScriptRoot 'websites\apps\garrettmanley-com\node_modules\.bin\wrangler.cmd'
+Invoke-WithSecrets -Interactive -EnvFile (Join-Path $PWD '.env.tpl') -- $wrangler deploy
+if ($LASTEXITCODE -ne 0) { Write-Error "Cloudflare deployment failed or was not approved."; cd ..; exit 1 }
 
 Write-Host "Global Sync Complete! Site is live." -ForegroundColor Green
 cd ..

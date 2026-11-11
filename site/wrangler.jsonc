@@ -1,0 +1,13 @@
+{
+  // Lab (Hugo) on Cloudflare Workers Static Assets. Built by publish.ps1 into ./public.
+  "$schema": "../websites/node_modules/wrangler/config-schema.json",
+  "name": "garrettmanley-lab",
+  "compatibility_date": "2026-11-01",
+  "assets": {
+    "directory": "./public",
+    "not_found_handling": "404-page"
+  },
+  "workers_dev": true,
+  "preview_urls": false,
+  "routes": [{ "pattern": "garrettmanley.dev", "custom_domain": true }]
+}

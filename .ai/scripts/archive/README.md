@@ -1,8 +1,8 @@
 # Archived scripts
 
 Retired 2026-06-12 when Ollama was uninstalled from this machine (Aether
-retired it from production in aether-engine#173; the local GGUFs were
-extracted to `C:\models` and llama-server is the only local runtime).
+retired it from production first; the local GGUFs were extracted to a local
+models directory and llama-server is the only local runtime).
 
 - `fast_orchestrator.py` — local orchestration loop via `ollama.chat`
   (`qwen-orchestrator`). ADR-002-era; nothing scheduled or imported it.
@@ -12,4 +12,4 @@ extracted to `C:\models` and llama-server is the only local runtime).
 All three depend on the `ollama` Python client and the Ollama daemon, neither
 of which is installed anymore. If a local-model tier is revived it will be on
 llama-server (OpenAI `/v1/chat/completions`, one-model-per-process) — scoped
-under harness-backlog hb-28u.8, not by resurrecting these as-is.
+in the harness backlog, not by resurrecting these as-is.

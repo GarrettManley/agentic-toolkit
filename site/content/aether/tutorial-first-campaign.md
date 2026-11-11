@@ -17,16 +17,16 @@ exchange with the Dungeon Master.
 - Git
 - Node.js 20 or later
 - Rust toolchain—install from [rustup.rs](https://rustup.rs)
-- Either a Gemini API key **or** a local [Ollama](https://ollama.com)
-  instance (see Step 3)
+- Either a Gemini API key **or** a local `llama-server` instance (see Step 3;
+  setup: docs/runbooks/llamacpp-phase1-setup.md)
 
 ---
 
 ## Step 1: Clone and install
 
 ```bash
-git clone <your-aether-engine-remote>
-cd aether-engine
+git clone <your-aether-remote> aether
+cd aether
 npm install
 ```
 
@@ -58,17 +58,13 @@ Set your API key in the shell before starting the engine:
 export GEMINI_API_KEY=your-key-here
 ```
 
-### Option B—Ollama (local, no API key)
+### Option B—llama-server (local, no API key)
 
-1. Install Ollama from [ollama.com](https://ollama.com).
-2. Pull the required models:
-
-   ```bash
-   ollama pull mistral:7b-instruct
-   ollama pull gemma3:4b
-   ```
-
-3. Start the engine with the Ollama provider in Step 4.
+Follow docs/runbooks/llamacpp-phase1-setup.md to
+install and start `llama-server`—it's the single source for install steps, the model to
+load, and the port to use, so this tutorial doesn't restate specifics that can drift out
+of sync with it. By default one local `llama-server` instance serves both the classifier
+and prose roles (ADR-0013).
 
 ---
 
@@ -78,7 +74,7 @@ export GEMINI_API_KEY=your-key-here
 # Gemini provider
 npm run start:gemini
 
-# Ollama provider (default)
+# llama-server provider (default)
 npm start
 ```
 
@@ -96,23 +92,17 @@ Leave this terminal running.
 
 ## Step 5: Connect with the CLI
 
-Open a **second** terminal and connect as your character:
+Open a **second** terminal. `kira` doesn't have a character file yet, so connect with
+`--create` to open the Session-0 wizard over the wire:
 
 ```bash
-npm run play -w @garrettmanley/aether-cli -- Kira --insecure
+npm run play -w @garrettmanley/aether-cli -- kira --insecure --create
 ```
 
-The first positional argument (`Kira`) is the character name. On `localhost` the
+The first positional argument (`kira`) is the character name. On `localhost` the
 loopback bypass authenticates you automatically—no browser, no Google sign-in. The
 `--insecure` flag accepts the gateway's self-signed dev certificate (localhost only;
 use `--ca <gateway-cert.pem>` to verify it instead).
-
-The engine responds with a campaign recap. If this is a new character
-you will see:
-
-```text
-[SYSTEM]: Awaiting character creation for Kira...
-```
 
 > Connecting from **another machine** (with Google sign-in) is being rebuilt as part of
 > transport v2; until it ships, play is local.
@@ -121,14 +111,16 @@ you will see:
 
 ## Step 6: Create your character
 
-Type `/session0` and press Enter to start character creation.
+The wizard opens immediately and greets you by name:
 
 ```text
-/session0
+Greetings, kira. What is your class? (e.g., Warrior, Mage, Rogue)
 ```
 
-The engine guides you through name, race, class, and background.
-Answer each prompt. Character creation takes about two minutes.
+Answer each prompt—class, ability scores, then inventory. Character creation takes
+about two minutes. See [character-creation.md](/aether/character-creation/) for the
+narrative-identity fields (personality, backstory, bonds) that make your character
+come alive in prose; the wizard covers the mechanical fields.
 
 When it completes, your status bar appears:
 
@@ -137,6 +129,12 @@ When it completes, your status bar appears:
 ║             KIRA                     ║
 ║  HP: 10/10 | AC: 12                  ║
 ╚══════════════════════════════════════╝
+```
+
+Reconnect without `--create` for every session after this one:
+
+```bash
+npm run play -w @garrettmanley/aether-cli -- kira --insecure
 ```
 
 ---
@@ -148,6 +146,10 @@ Type a natural-language description of what your character does:
 ```text
 I look around the tavern and try to get a feel for the room.
 ```
+
+> **Tip.** If the engine instead says it is another combatant's turn in a
+> session you only just started, an encounter from an earlier run survived in
+> the campaign state. Type `/end-combat` to clear it and act normally.
 
 The Dungeon Master thinks for a moment and then narrates a response.
 The engine may propose a skill check—for example:
@@ -167,7 +169,8 @@ the outcome.
 
 - The engine separates your input (your text) from mechanical resolution
   (the Rust core) and prose generation (the LLM).
-- `/session0` creates a new character. You only need it once per character.
+- `--create` opens the Session-0 wizard for a new character. You only need it once
+  per character.
 - Natural-language actions flow through intent classification, optional
   dice proposals, and narrative generation.
 

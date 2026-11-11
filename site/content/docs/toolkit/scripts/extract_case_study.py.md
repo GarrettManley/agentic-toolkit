@@ -1,6 +1,6 @@
 ---
 title: "Core Script: extract_case_study.py"
-date: 2026-06-22
+date: 2026-11-10
 draft: false
 ---
 

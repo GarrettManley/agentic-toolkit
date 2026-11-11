@@ -1,6 +1,6 @@
 ---
 title: "Agent Skill: horizon-scanning / SKILL.md"
-date: 2026-06-22
+date: 2026-11-10
 draft: false
 ---
 
@@ -17,6 +17,8 @@ metadata:
 ---
 
 # Horizon Scanning Skill
+
+Superseded by `orchestration:horizon-scanning` (marketplace plugin).
 
 This skill ensures the Architecture of Hybrid Context Synthesis stays "Best-in-Class" by preventing model lock-in.
 

@@ -1,6 +1,6 @@
 ---
 title: "Agent Skill: truth-seeker / references / VERIFICATION_GUIDE.md"
-date: 2026-06-22
+date: 2026-11-10
 draft: false
 ---
 

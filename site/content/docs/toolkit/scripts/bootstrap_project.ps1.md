@@ -1,6 +1,6 @@
 ---
 title: "Core Script: bootstrap_project.ps1"
-date: 2026-06-22
+date: 2026-11-10
 draft: false
 ---
 
