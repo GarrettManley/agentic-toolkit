@@ -428,3 +428,13 @@ If mail flow regresses after an NS swap:
 3. Confirm with `dig @1.1.1.1 <domain> NS +short` and a round-trip test email.
 4. Do NOT proceed with any registrar transfer until root cause is understood and the DNS
    mirror has been corrected.
+
+## 2026-11-10 — garrettmanley.dev lab moved from Firebase to Cloudflare Workers
+
+- Worker `garrettmanley-lab` (Static Assets, `site/wrangler.jsonc`) attached as the apex custom domain.
+  Deploys run from `publish.ps1`: Hugo build → `scrub-check` privacy gate → `wrangler deploy` with the
+  token from the Hello-gated 1Password `Deploy` vault (`site/.env.tpl`).
+- Deleted: `*` A 199.36.158.100 (Firebase wildcard) and `_acme-challenge` TXT (Firebase cert). `www` and
+  other subdomains now NXDOMAIN; `git.` (proxied, redirect to GitHub) untouched; mail records untouched.
+- Verified (DoH): apex, `/hire/`, `/docs/` 200; unknown path 404; `git.…/claude-marketplace` 301 → GitHub.
+- Firebase hosting site `garrettmanley-lab` still live at its web.app URL until Phase 3 (redirect + key revoke).
