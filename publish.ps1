@@ -11,7 +11,7 @@ if ($env:WORKSPACE_SKIP_PUBLISH -eq '1') {
 
 # Skip-publish guard: if the most recent commit only changed sec-research/ paths,
 # skip the entire pipeline. sec-research/ is operational data (findings, programs,
-# evidence) — NOT documentation to publish. Avoids unnecessary Firebase redeploys
+# evidence) — NOT documentation to publish. Avoids unnecessary Cloudflare redeploys
 # and provides defense-in-depth against accidentally publishing undisclosed findings.
 $changed = git diff --name-only HEAD~1 HEAD 2>$null
 if ($LASTEXITCODE -eq 0 -and $changed) {

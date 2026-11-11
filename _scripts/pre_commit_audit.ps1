@@ -11,7 +11,7 @@
 # timeout and made it fail open); pruning at descent brings it to ~1-2s.
 #
 # Pruned (never descended):
-#   node_modules, themes, public, dist, .git, *cache, .firebase  - vendored / generated / VCS
+#   node_modules, themes, public, dist, .git, *cache  - vendored / generated / VCS
 #   Duracell*, malachite                                         - isolated corporate repos (NEVER scan - GEMINI.md §4)
 #   System.Control, Roleplaying                                  - nested independent repos with their own gates
 #   archetypes, .gemini, superpowers, .superpowers, retrospectives - spec/plan/scaffold/retro trees whose "TBD" markers are intentional or quoted narrative
@@ -26,7 +26,7 @@ $errorCount = 0
 
 # A path segment is pruned if it matches one of these names. Anchored on path
 # separators so it matches whole directory names, not substrings.
-$prunePattern = '[\\/](node_modules|themes|public|dist|\.git|\.ruff_cache|\.pytest_cache|\.firebase|\.superpowers|\.remember|Duracell[^\\/]*|malachite|System\.Control|Roleplaying|archetypes|\.gemini|superpowers|retrospectives|claude-marketplace|mtga-companion|Career|libs|worktrees|target|\.venv)([\\/]|$)'
+$prunePattern = '[\\/](node_modules|themes|public|dist|\.git|\.ruff_cache|\.pytest_cache|\.superpowers|\.remember|Duracell[^\\/]*|malachite|System\.Control|Roleplaying|archetypes|\.gemini|superpowers|retrospectives|claude-marketplace|mtga-companion|Career|libs|worktrees|target|\.venv)([\\/]|$)'
 
 function Get-AuditFiles {
     param([string]$Root, [string]$Prune, [string[]]$Extensions)

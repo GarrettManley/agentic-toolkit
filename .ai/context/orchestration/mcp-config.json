@@ -30,7 +30,7 @@
         "super-shell-mcp"
       ],
       "env": {
-        "COMMAND_WHITELIST": "firebase,git,npm,dotnet,dir,uv,uvx"
+        "COMMAND_WHITELIST": "git,npm,dotnet,dir,uv,uvx"
       }
     }
   }
