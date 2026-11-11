@@ -301,6 +301,9 @@ Squarespace extras:
 | 2026-11-10 ~15:12    | garrettmanley.dev   | Added `_dmarc` TXT = `v=DMARC1; p=quarantine`; added `git` A → 192.0.2.1 (Proxied, TEST-NET placeholder); CF Single Redirect Rule: `https://git.garrettmanley.dev/claude-marketplace` → `https://github.com/GarrettManley/claude-marketplace` (301). Verified end-to-end. | **Done** |
 | 2026-11-10 ~19:00    | garrettmanley.com   | Added Resend sending subdomain for the jobs@ probe: TXT `resend._domainkey.probe` (DKIM), CNAME `rsend.probe` → `rsend.forge.rmta.net`, CNAME `send.probe` → `send.forge.rmta.net` (all DNS only). Resend domain `probe.garrettmanley.com` verified. | **Done** |
 | 2026-11-10 ~20:03    | garrettmanley.dev   | `jobs@` verified end-to-end (Resend → CF Email Routing → Gmail, DKIM/DMARC/ARC pass, ~17-36 s). Weekly probe `Workspace/apps/mail-probe` registered as Task `mail-probe-weekly` (Mon 07:00 MT). Gmail filter `from:probe@probe.garrettmanley.com` = never spam + skip inbox (new-domain probe was spam-filtered despite auth pass). | **Done** |
+| 2026-11-11 ~10:05    | garrettmanley.com   | Pre-cutover snapshot (rollback reference): A `@` 198.185.159.144 + .145 (Proxied), CNAME `www` → ext-sq.squarespace.com (Proxied), CNAME `_domainconnect` → _domainconnect.domains.squarespace.com (Proxied); MX route1/2/3.mx.cloudflare.net (36/88/41), SPF, `cf2024-1._domainkey`, `_dmarc` p=quarantine, `_atproto`, Resend `probe` trio. **0 Redirect Rules** — apex/www → github.com/GarrettManley redirect is served by the Squarespace origin, not CF. | Snapshot |
+| 2026-11-11 ~10:10    | garrettmanley.com   | Garrett deleted apex A ×2, `www` CNAME, `_domainconnect` CNAME. websites#12 (394d7b9) deployed Workers custom domains `garrettmanley.com` + `www.garrettmanley.com` on Worker `garrettmanley-com` (CF auto-created DNS + certs). | **Done** |
+| 2026-11-11 ~10:22    | garrettmanley.com   | Single Redirect `www to apex`: `https://www.*` → `https://${1}`, 301, preserve query string. Dashboard warned "www may not be proxied" — false positive (Worker custom domain is proxied); deployed anyway. **Always Use HTTPS** enabled. Verified: apex `/` `/resume/` `/blog/` `/projects/` `/contact/` 200, unknown 404; `https://www…/blog/?y=1` → 301 apex with path+query; `http://www…` → https www → apex. MX/DMARC/_atproto unchanged; external-sender mail to garrett@ arrived. Lighthouse (after websites#14: favicon + Tailwind `@source` fix for @gm/ui utilities) perf 99 / a11y 100 / BP 96 / SEO 100 — BP 96 is only the CF Web Analytics beacon being DNS-blocked on the test machine. | **Live** |
 
 ## Current status (as of 2026-11-10 ~15:12 MT)
 
@@ -313,7 +316,7 @@ Active Email Routing rules (5 total — kayla@ dropped as unused):
 Other services preserved:
 - Firebase wildcard hosting `*.garrettmanley.dev` → 199.36.158.100 (DNS-only)
 - Bluesky handle verification `_atproto` TXT on both .com and .dev
-- Squarespace site on `garrettmanley.com` (apex A + www CNAME, Proxied — proxied through CF)
+- ~~Squarespace site on `garrettmanley.com`~~ → replaced 2026-11-11 by the Astro site on Worker `garrettmanley-com` (custom domains apex + www; www 301 → apex)
 - `_acme-challenge` TXT on .dev (wildcard cert)
 - CF Single Redirect: `https://git.garrettmanley.dev/claude-marketplace` → `https://github.com/GarrettManley/claude-marketplace` (301, verified)
 
@@ -326,10 +329,10 @@ Before Phase 4 kicks off, validate the following in-use paths:
 - [ ] **Mail round-trip (.com)**: send FROM an external account (not garrettmanley@gmail.com; Gmail suppresses self-loop) TO each of `email@`, `urgent@`, `garrett@garrettmanley.com`. Check Gmail "Show original" for `SPF=PASS`, `DKIM=PASS`, `DMARC=PASS`.
 - [ ] **Mail round-trip (.dev)**: send FROM external TO `guildmaster@` and `jobs@garrettmanley.dev`. Check auth headers.
 - [ ] **Firebase hosting**: visit a known `*.garrettmanley.dev` subdomain to confirm it still serves correctly (the wildcard A → 199.36.158.100 was preserved, but verify the cert chain isn't broken — `_acme-challenge` TXT was also preserved).
-- [ ] **Squarespace site**: visit `https://garrettmanley.com` — should still render the Squarespace page (apex A x2 are Proxied through CF to Squarespace edge).
+- [x] ~~**Squarespace site**~~ superseded 2026-11-11 (apex now serves the Cloudflare Worker site): visit `https://garrettmanley.com` — should still render the Squarespace page (apex A x2 are Proxied through CF to Squarespace edge).
 - [ ] **Bluesky handle**: in the Bluesky app, verify the `@garrettmanley.com` / `@garrettmanley.dev` handles still resolve (`_atproto` TXT was preserved on both).
 - [ ] **GitHub redirect**: browser-visit `https://git.garrettmanley.dev/claude-marketplace` → should end on `github.com/GarrettManley/claude-marketplace`. (Verified via curl at 15:12.)
-- [ ] **Old Squarespace apex redirect** (if any): did the old Squarespace apex URL-forward `garrettmanley.com` → `github.com/GarrettManley` need re-creating under CF? Currently NOT set up — only Squarespace site serves on the apex. If Garrett wants that back, add a Single Redirect Rule for `https://garrettmanley.com/*` → `https://github.com/GarrettManley$1` or similar.
+- [x] ~~**Old Squarespace apex redirect**~~ superseded 2026-11-11 (apex is the real site; no GitHub redirect wanted): did the old Squarespace apex URL-forward `garrettmanley.com` → `github.com/GarrettManley` need re-creating under CF? Currently NOT set up — only Squarespace site serves on the apex. If Garrett wants that back, add a Single Redirect Rule for `https://garrettmanley.com/*` → `https://github.com/GarrettManley$1` or similar.
 
 If any of the above fails, catch it here before Phase 4 — Squarespace still holds the registration, so DNS can be rolled back by swapping NS back to `ns-cloud-c*.googledomains.com` (zones at Google Cloud DNS were untouched during migration).
 
