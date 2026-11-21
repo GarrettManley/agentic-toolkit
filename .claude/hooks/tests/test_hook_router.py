@@ -209,7 +209,8 @@ def _router_matcher(event_name):
     settings = json.loads(WORKSPACE_SETTINGS.read_text(encoding="utf-8"))
     for entry in settings["hooks"][event_name]:
         for h in entry.get("hooks", []):
-            if "hook_router.py" in h.get("command", ""):
+            # Exec form keeps the script path in "args"; shell form keeps it in "command".
+            if "hook_router.py" in " ".join([h.get("command", ""), *h.get("args", [])]):
                 return entry.get("matcher")
     raise AssertionError(f"no hook_router.py entry found under {event_name} in {WORKSPACE_SETTINGS}")
 
