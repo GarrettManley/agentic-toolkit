@@ -56,6 +56,17 @@ message, or set `$env:WORKSPACE_VERIFY_OVERRIDE=1` (both auditable). Commits who
 staged files are entirely under `sec-research/` are skipped — that subtree has its
 own git hooks.
 
+The gate only ever answers "deny" or leaves a note; it never answers "allow" (an
+"allow" from a PreToolUse hook skips the permission prompt). Tests:
+`python -m pytest .claude/hooks/tests`.
+
+**Publish is deferred in agent sessions.** A commit touching `docs/`, `site/`, `.ai/`
+or `README.md` fires `publish.ps1` from the post-commit hook. Under `CLAUDECODE=1` the
+script exits before doing anything, because the deploy needs a Windows Hello approval.
+Say in the reply that the lab site was not published and that
+`pwsh -NoProfile -File publish.ps1` from the user's own shell publishes it
+(`WORKSPACE_FORCE_PUBLISH=1` overrides the deferral).
+
 ## Publishing privacy
 
 Published work (the lab site under `site/` → garrettmanley.com) must be purged of

@@ -9,6 +9,15 @@ if ($env:WORKSPACE_SKIP_PUBLISH -eq '1') {
     exit 0
 }
 
+# Agent sessions defer the publish. The deploy step needs a Windows Hello approval that an
+# agent's shell cannot give; running the generators and then timing out there leaves
+# generated files modified. WORKSPACE_FORCE_PUBLISH=1 runs it anyway.
+if ($env:CLAUDECODE -eq '1' -and $env:WORKSPACE_FORCE_PUBLISH -ne '1') {
+    Write-Host "Publish deferred: this is an agent session and it cannot approve the deploy prompt." -ForegroundColor Yellow
+    Write-Host "To publish, run from your own shell:  pwsh -NoProfile -File publish.ps1" -ForegroundColor Yellow
+    exit 0
+}
+
 # Skip-publish guard: if the most recent commit only changed sec-research/ paths,
 # skip the entire pipeline. sec-research/ is operational data (findings, programs,
 # evidence) — NOT documentation to publish. Avoids unnecessary Cloudflare redeploys
