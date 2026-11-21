@@ -7,7 +7,9 @@ was documentation-only — nothing enforced it. This hook turns it into a hard b
 at the natural completion boundary: the commit.
 
 Behavior:
-  - Allow immediately unless the command is a `git commit` (catches `commit --amend`).
+  - Say nothing unless the command is a `git commit` (catches `commit --amend`).
+    A hook that answers "allow" skips the user's permission prompt, so a command
+    this gate has no opinion on must produce no output at all.
   - Override valve: a `[verify-override: <reason>]` marker in the command OR the
     WORKSPACE_VERIFY_OVERRIDE env var bypasses the gate, with an auditable note.
   - Scope guard: if every staged path is under `sec-research/`, skip — that subtree
@@ -17,8 +19,9 @@ Behavior:
   - Fail OPEN on any internal error (no pwsh, timeout, git failure): a broken gate
     must never wedge every commit. Emits a warning instead.
 
-Output contract mirrors the other ~/.claude PreToolUse hooks: JSON on stdout with
-`hookSpecificOutput.permissionDecision`; always exit 0.
+Output contract: the only permission decision this hook ever emits is "deny".
+Every other outcome is either silence or a `systemMessage` note with no decision,
+which leaves the normal permission flow in charge. Always exit 0.
 
 Hooks load at session start — edits here need a Claude Code restart to take effect.
 """
@@ -48,18 +51,23 @@ _SCRIPTS = ("_scripts/pre_commit_audit.ps1", "_scripts/verify_workspace.ps1")
 _PER_SCRIPT_TIMEOUT_S = 12  # keep total under the hook's 30s ceiling
 
 
-def _emit(decision: str, *, reason: str | None = None, note: str | None = None) -> None:
-    output: dict[str, object] = {
-        "hookEventName": "PreToolUse",
-        "permissionDecision": decision,
+def _deny(reason: str) -> None:
+    """Block the commit. The one case where this hook decides a permission."""
+    payload = {
+        "hookSpecificOutput": {
+            "hookEventName": "PreToolUse",
+            "permissionDecision": "deny",
+            "permissionDecisionReason": reason,
+        },
+        "systemMessage": reason,
     }
-    payload: dict[str, object] = {"hookSpecificOutput": output}
-    if decision == "deny" and reason:
-        output["permissionDecisionReason"] = reason
-        payload["systemMessage"] = reason
-    elif note:
-        payload["systemMessage"] = note
     sys.stdout.write(json.dumps(payload))
+    sys.stdout.flush()
+
+
+def _note(text: str) -> None:
+    """Tell the user something without deciding the permission."""
+    sys.stdout.write(json.dumps({"systemMessage": text}))
     sys.stdout.flush()
 
 
@@ -125,21 +133,19 @@ def main() -> int:
     try:
         event = json.loads(raw) if raw else {}
     except json.JSONDecodeError:
-        _emit("allow")
         return 0
 
     command = (event.get("tool_input") or {}).get("command") or ""
     if not isinstance(command, str) or not _GIT_COMMIT.search(command):
-        _emit("allow")
         return 0
 
     # Override valve.
     marker = _OVERRIDE_MARKER.search(command)
     if marker:
-        _emit("allow", note=f"⚠ Workspace verify gate OVERRIDDEN: {marker.group(1).strip()}")
+        _note(f"⚠ Workspace verify gate OVERRIDDEN: {marker.group(1).strip()}")
         return 0
     if os.environ.get(_OVERRIDE_ENV):
-        _emit("allow", note=f"⚠ Workspace verify gate OVERRIDDEN via ${_OVERRIDE_ENV}.")
+        _note(f"⚠ Workspace verify gate OVERRIDDEN via ${_OVERRIDE_ENV}.")
         return 0
 
     root = _workspace_root()
@@ -148,11 +154,10 @@ def main() -> int:
     staged = _staged_paths(root)
     if staged is not None:
         if not staged:
-            _emit("allow")  # nothing staged; git will handle the empty commit
-            return 0
+            return 0  # nothing staged; git will handle the empty commit
         if all(p.startswith("sec-research/") for p in staged):
-            _emit("allow", note="Workspace verify gate skipped: sec-research/-only "
-                                 "commit (its own G-1..G-4 hooks apply).")
+            _note("Workspace verify gate skipped: sec-research/-only "
+                  "commit (its own G-1..G-4 hooks apply).")
             return 0
 
     # Run the gate. Fail OPEN on any run failure (rc == -1) so a broken gate
@@ -160,14 +165,14 @@ def main() -> int:
     for rel in _SCRIPTS:
         rc, tail = _run_script(root, rel)
         if rc == -1:
-            _emit("allow", note=f"⚠ Workspace verify gate could not run ({rel}): "
-                                f"{tail}. Allowing commit — verify manually.")
+            _note(f"⚠ Workspace verify gate could not run ({rel}): "
+                  f"{tail}. Not blocking the commit — verify manually.")
             return 0
         if rc != 0:
-            _emit("deny", reason=_deny_reason(rel, tail))
+            _deny(_deny_reason(rel, tail))
             return 0
 
-    _emit("allow", note="✓ Workspace verification passed (audit + verify_workspace).")
+    _note("✓ Workspace verification passed (audit + verify_workspace).")
     return 0
 
 
